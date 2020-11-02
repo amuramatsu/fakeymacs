@@ -396,10 +396,13 @@ if fc.toggle_input_method_key:
 # [section-extensions] -----------------------------------------------------------------------------
 
 # C-Enter に F2（編集モード移行）を割り当てる
-# exec(readConfigExtension("extension-edit_mode.py"), dict(globals(), **locals()))
+# exec(readConfigExtension(r"edit_mode\config.py"), dict(globals(), **locals()))
 
 # Emacs の場合、IME 切り替え用のキーを C-\ に置き換える
-# exec(readConfigExtension("extension-real_emacs.py"), dict(globals(), **locals()))
+# exec(readConfigExtension(r"real_emacs\config.py"), dict(globals(), **locals()))
 
 # 英語キーボード設定をした OS 上で、日本語キーボードを利用する場合の切り替えを行う
-# exec(readConfigExtension("extension-change_keyboard.py"), dict(globals(), **locals()))
+# exec(readConfigExtension(r"change_keyboard\config.py"), dict(globals(), **locals()))
+
+# Emacs の shell-command-on-region の機能をサポートする
+# exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
