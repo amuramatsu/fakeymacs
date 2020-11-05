@@ -27,16 +27,11 @@ keymap.setFont("ＭＳ ゴシック", 12)
 # [section-options] --------------------------------------------------------------------------------
 
 # IMEの設定（３つの設定のいずれか一つを True にする）
-fc.use_old_Microsoft_IME = False
-fc.use_new_Microsoft_IME = False
-fc.use_Google_IME = False
-# Dummy IME
-fc.ime_reconv_key = None
-fc.ime_cancel_key = None
-fc.ime_reconv_region = False
-fc.ime_reconv_space  = False
-fc.word_register_name = None
-fc.word_register_param = None
+# IMEの設定（次の設定のいずれかを有効にする）
+# fc.ime = "old_Microsoft_IME"
+# fc.ime = "new_Microsoft_IME"
+# fc.ime = "Google_IME"
+fc.ime = None
 
 # 追加機能オプションの設定
 fc.use_clipboardList = False
@@ -396,6 +391,15 @@ if fc.toggle_input_method_key:
 ####################################################################################################
 # [section-extensions] -----------------------------------------------------------------------------
 
+# Emacs の shell-command-on-region の機能をサポートする
+# fc.Linux_tool = "WSL"
+# fc.Linux_tool = "MSYS2"
+# fc.Linux_tool = "Cygwin"
+# fc.Linux_tool = "BusyBox"
+# fc.MSYS2_path = r"C:\msys64"
+# fc.Cygwin_path = r"C:\cygwin64"
+# exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
+
 # C-Enter に F2（編集モード移行）を割り当てる
 # exec(readConfigExtension(r"edit_mode\config.py"), dict(globals(), **locals()))
 
@@ -404,6 +408,3 @@ if fc.toggle_input_method_key:
 
 # 英語キーボード設定をした OS 上で、日本語キーボードを利用する場合の切り替えを行う
 # exec(readConfigExtension(r"change_keyboard\config.py"), dict(globals(), **locals()))
-
-# Emacs の shell-command-on-region の機能をサポートする
-# exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
