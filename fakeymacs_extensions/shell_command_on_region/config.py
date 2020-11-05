@@ -9,8 +9,22 @@ try:
     fc.Linux_tool
 except:
     # 次の設定のいずれかを有効にする
-    fc.Linux_tool = "Busybox"
-    # fc.Linux_tool = "WSL"
+    fc.Linux_tool = "WSL"
+    # fc.Linux_tool = "MSYS2"
+    # fc.Linux_tool = "Cygwin"
+    # fc.Linux_tool = "BusyBox"
+
+try:
+    # 設定されているか？
+    fc.MSYS2_path
+except:
+    fc.MSYS2_path = r"C:\msys64"
+
+try:
+    # 設定されているか？
+    fc.Cygwin_path
+except:
+    fc.Cygwin_path = r"C:\cygwin64"
 
 import subprocess
 
@@ -35,27 +49,48 @@ def shell_command_on_region():
             delay(0.5)
             clipboard_text = re.sub("\r", "", getClipboardText())
 
-            if fc.Linux_tool == "Busybox":
-                command = [dataPath() + r"\fakeymacs_extensions\shell_command_on_region\busybox64.exe",
-                           "bash", "-c"]
-                command += [shell_command]
-                encoding = "cp932"
+            env = dict(os.environ)
 
             if fc.Linux_tool == "WSL":
-                command = [r"C:\WINDOWS\SysNative\wsl.exe", "bash", "-c"]
+                command = [r"C:\WINDOWS\SysNative\wsl.exe", "bash", "-l", "-c"]
                 command += [r"tr -d '\r' | " + re.sub(r"(\$)", r"\\\1", shell_command)]
+
+                # bash に -l オプションを付けることにより処理が遅くなる場合には、次の設定をお試しください
+                # command = [r"C:\WINDOWS\SysNative\wsl.exe", "bash", "-c"]
+                # command += [r"cd; tr -d '\r' | " + re.sub(r"(\$)", r"\\\1", shell_command)]
+
+                env["LANG"] = "ja_JP.UTF8"
                 encoding = "utf-8"
+
+            elif fc.Linux_tool == "MSYS2":
+                command = [fc.MSYS2_path + r"\usr\bin\bash.exe", "-l", "-c"]
+                command += [shell_command]
+                env["LANG"] = "ja_JP.UTF8"
+                encoding = "utf-8"
+
+            elif fc.Linux_tool == "Cygwin":
+                command = [fc.Cygwin_path + r"\bin\bash.exe", "-l", "-c"]
+                command += [r"tr -d '\r' | " + shell_command]
+                env["LANG"] = "ja_JP.UTF8"
+                encoding = "utf-8"
+
+            elif fc.Linux_tool == "BusyBox":
+                command = [dataPath() + r"\fakeymacs_extensions\shell_command_on_region\busybox64.exe",
+                           "bash", "-l", "-c"]
+                command += [shell_command]
+                encoding = "cp932"
 
             try:
                 proc = subprocess.run(command,
                                       input=clipboard_text,
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.STDOUT,
+                                      timeout=10,
                                       creationflags=subprocess.CREATE_NO_WINDOW,
                                       encoding=encoding,
-                                      timeout=5)
+                                      env=env)
             except:
-                print("プログラムがエラー終了しました（タイムアウトによる終了含む）\n")
+                print("プログラムがエラー終了しました（タイムアウトによる終了も含む）\n")
                 return
 
             stdout_text = proc.stdout
@@ -63,9 +98,13 @@ def shell_command_on_region():
 
             print("$ cat region | " + shell_command)
             print("-" * 80)
-            print("\n".join(stdout_list[0:10]))
+
+            # Keyhac コンソールにタブを出力すると出力結果が不正になる場合があるため、expandtabs() で
+            # スペースに変換してから出力する
+            print("\n".join(stdout_list[0:10]).expandtabs())
             if len(stdout_list) > 10:
                 print("...")
+
             print("-" * 80)
             print("")
 
@@ -74,6 +113,7 @@ def shell_command_on_region():
                 keymap.clipboard_history._push(stdout_text)
 
             if fakeymacs.replace_region:
+                # delay() のコールでは yank に失敗することがあるため、delayedCall() 経由で実行する
                 keymap.delayedCall(yank, 30)
         else:
             print("コマンドが指定されていません\n")

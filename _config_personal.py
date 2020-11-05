@@ -30,6 +30,7 @@ keymap.setFont("ＭＳ ゴシック", 12)
 fc.ime = "old_Microsoft_IME"
 # fc.ime = "new_Microsoft_IME"
 # fc.ime = "Google_IME"
+# fc.ime = None
 
 ####################################################################################################
 ## 基本設定
@@ -244,6 +245,15 @@ fc.lancherList_listers = [
 ####################################################################################################
 # [section-extensions] -----------------------------------------------------------------------------
 
+# Emacs の shell-command-on-region の機能をサポートする
+# fc.Linux_tool = "WSL"
+# fc.Linux_tool = "MSYS2"
+# fc.Linux_tool = "Cygwin"
+# fc.Linux_tool = "BusyBox"
+# fc.MSYS2_path = r"C:\msys64"
+# fc.Cygwin_path = r"C:\cygwin64"
+# exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
+
 # C-Enter に F2（編集モード移行）を割り当てる
 # exec(readConfigExtension(r"edit_mode\config.py"), dict(globals(), **locals()))
 
@@ -252,6 +262,3 @@ fc.lancherList_listers = [
 
 # 英語キーボード設定をした OS 上で、日本語キーボードを利用する場合の切り替えを行う
 # exec(readConfigExtension(r"change_keyboard\config.py"), dict(globals(), **locals()))
-
-# Emacs の shell-command-on-region の機能をサポートする
-# exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
