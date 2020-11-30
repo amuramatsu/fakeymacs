@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20201105_01"
+fakeymacs_version = "20201128_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -727,7 +727,7 @@ def configure(keymap):
     def toggle_input_method():
         setImeStatus(keymap.getWindow().getImeStatus() ^ 1)
 
-    def setImeStatus(ime_status, popBalloon=True):
+    def setImeStatus(ime_status):
         if keymap.getWindow().getImeStatus() != ime_status:
             # IME を 切り替える
             # （ keymap.getWindow().setImeStatus(ime_status) を使わないのは、キーボードマクロの再生時に影響がでるため）
@@ -736,7 +736,7 @@ def configure(keymap):
             if fakeymacs.is_playing_kmacro:
                 delay(0.2)
 
-        if popBalloon and not fakeymacs.is_playing_kmacro:
+        if not fakeymacs.is_playing_kmacro:
             if ime_status:
                 message = "[あ]"
             else:
@@ -986,6 +986,11 @@ def configure(keymap):
     def switch_to_buffer():
         self_insert_command("C-Tab")()
 
+    def list_buffers():
+        if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
+            # VSCode Command : Show All Editors By Most Recently Used
+            vscodeExecuteCommand("Sh-Al-Ed-By-Mo-Re-Us")()
+
     def other_window():
         window_list = getWindowList()
         for wnd in window_list[1:]:
@@ -1035,7 +1040,7 @@ def configure(keymap):
     ##################################################
 
     def kmacro_start_macro():
-        disable_input_method()
+        keymap.getWindow().setImeStatus(0)
         keymap.command_RecordStart()
 
     def kmacro_end_macro():
@@ -1067,7 +1072,7 @@ def configure(keymap):
             # キーボードマクロの最初が IME ON の場合、この delay が必要
             delay(0.2)
             fakeymacs.is_playing_kmacro = True
-            disable_input_method()
+            keymap.getWindow().setImeStatus(0)
             keymap.command_RecordPlay()
             fakeymacs.is_playing_kmacro = False
 
@@ -1179,12 +1184,11 @@ def configure(keymap):
             # VSCode Command : Move Last Selection To Next Find Match
             self_insert_command("C-k", "C-d")()
 
-
     ## エディタ / ターミナル操作
     def create_terminal():
         if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
             # VSCode Command : Create New Integrated Terminal
-            vscodeExecuteCommand("Te:Cr-Ne-In-Te")
+            vscodeExecuteCommand2("Te:Cr-Ne-In-Te")()
             if fc.use_vscode_terminal_key_direct_input:
                 fakeymacs.vscode_focus = "terminal"
 
@@ -1193,15 +1197,15 @@ def configure(keymap):
             if fc.use_vscode_terminal_key_direct_input:
                 if fakeymacs.vscode_focus == "not_terminal":
                     # VSCode Command : Focus Terminal
-                    vscodeExecuteCommand("Te:Fo-Te")
+                    vscodeExecuteCommand2("Te:Fo-Te")()
                     fakeymacs.vscode_focus = "terminal"
                 else:
                     # VSCode Command : Close Panel
-                    vscodeExecuteCommand("Vi:Cl-Pa")
+                    vscodeExecuteCommand2("Vi:Cl-Pa")()
                     fakeymacs.vscode_focus = "not_terminal"
             else:
                 # VSCode Command : Toggle Integrated Terminal
-                vscodeExecuteCommand("Vi:To-In-Te")
+                vscodeExecuteCommand2("Vi:To-In-Te")()
 
     def switch_focus(number):
         def _func():
@@ -1215,19 +1219,19 @@ def configure(keymap):
     def other_group():
         if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
             # VSCode Command : Navigate Between Editor Groups
-            vscodeExecuteCommand("Vi:Na-Be-Ed-Gr")
+            vscodeExecuteCommand("Vi:Na-Be-Ed-Gr")()
             if fc.use_vscode_terminal_key_direct_input:
                 fakeymacs.vscode_focus = "not_terminal"
 
     def delete_group():
         if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
             # VSCode Command : Close All Editors in Group
-            vscodeExecuteCommand("Vi:Cl-Al-Ed-in-Gr")
+            vscodeExecuteCommand("Vi:Cl-Al-Ed-in-Gr")()
 
     def delete_other_groups():
         if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
             # VSCode Command : Close Editors in Other Groups
-            vscodeExecuteCommand("Vi:Cl-Ed-in-Ot-Gr")
+            vscodeExecuteCommand("Vi:Cl-Ed-in-Ot-Gr")()
 
     def split_editor_below():
         if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
@@ -1242,9 +1246,8 @@ def configure(keymap):
     ## その他
     def execute_extended_command():
         if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
-            disable_input_method()
             # VSCode Command : Show All Commands
-            self_insert_command("f1")()
+            self_insert_command3("f1")()
 
     def comment_dwim():
         if checkWindow("Code.exe", "Chrome_WidgetWin_1"): # VSCode
@@ -1408,6 +1411,18 @@ def configure(keymap):
     def define_key2(window_keymap, keys, command):
         define_key(window_keymap, keys, command, skip_check=False)
 
+    def keyFunc(window_keymap, keys):
+        try:
+            keys_list = kbd(keys)[-1]
+            if len(keys_list) == 1:
+                func = window_keymap[keys_list[0]]
+            else:
+                func = window_keymap[keys_list[0]][keys_list[1]]
+        except:
+            func = None
+
+        return func
+
     def self_insert_command(*keys):
         func = keymap.InputKeyCommand(*list(map(addSideOfModifierKey, keys)))
         def _func():
@@ -1422,6 +1437,13 @@ def configure(keymap):
             if fc.use_emacs_ime_mode:
                 if keymap.getWindow().getImeStatus():
                     enable_emacs_ime_mode()
+        return _func
+
+    def self_insert_command3(*keys):
+        func = self_insert_command(*keys)
+        def _func():
+            func()
+            keymap.getWindow().setImeStatus(0)
         return _func
 
     def digit(number):
@@ -1525,17 +1547,26 @@ def configure(keymap):
             func(repeat_counter)
         return _func
 
-    def vscodeExecuteCommand(command):
+    def princ(str):
         imeStatus = keymap.getWindow().getImeStatus()
         if imeStatus:
-            setImeStatus(0, False)
-
-        self_insert_command("f1")()
-        keymap.InputTextCommand(command)()
-        self_insert_command("Enter")()
-
+            keymap.getWindow().setImeStatus(0)
+        keymap.InputTextCommand(str)()
         if imeStatus:
-            setImeStatus(1, False)
+            keymap.getWindow().setImeStatus(1)
+
+    def vscodeExecuteCommand(command):
+        def _func():
+            self_insert_command("f1")()
+            princ(command)
+            self_insert_command("Enter")()
+        return _func
+
+    def vscodeExecuteCommand2(command):
+        def _func():
+            keymap.getWindow().setImeStatus(0)
+            vscodeExecuteCommand(command)()
+        return _func
 
     ##################################################
     ## キーバインド
@@ -1723,6 +1754,7 @@ def configure(keymap):
     define_key(keymap_emacs, "Ctl-x k",   reset_search(reset_undo(reset_counter(reset_mark(kill_buffer)))))
     define_key(keymap_emacs, "M-k",       reset_search(reset_undo(reset_counter(reset_mark(kill_buffer)))))
     define_key(keymap_emacs, "Ctl-x b",   reset_search(reset_undo(reset_counter(reset_mark(switch_to_buffer)))))
+    define_key(keymap_emacs, "Ctl-x C-b", reset_search(reset_undo(reset_counter(reset_mark(list_buffers)))))
 
     ## 「文字列検索 / 置換」のキー設定
     define_key(keymap_emacs, "C-r",   reset_undo(reset_counter(reset_mark(isearch_backward))))
@@ -1878,11 +1910,9 @@ def configure(keymap):
             disable_emacs_ime_mode()
             disable_input_method()
 
-        def ei_enable_input_method2(key, ei_keymap):
-            keyCondition = keyhac_keymap.KeyCondition.fromString(addSideOfModifierKey(key))
-            if keyCondition in ei_keymap:
-                func = ei_keymap[keyCondition]
-            else:
+        def ei_enable_input_method2(key, window_keymap):
+            func = keyFunc(window_keymap, key)
+            if func is None:
                 if key.startswith("O-"):
                     func = ei_record_func(self_insert_command("(28)")) # <変換> キーを発行
                 else:
@@ -1895,11 +1925,9 @@ def configure(keymap):
                     func()
             return _func
 
-        def ei_disable_input_method2(key, ei_keymap):
-            keyCondition = keyhac_keymap.KeyCondition.fromString(addSideOfModifierKey(key))
-            if keyCondition in ei_keymap:
-                func = ei_keymap[keyCondition]
-            else:
+        def ei_disable_input_method2(key, window_keymap):
+            func = keyFunc(window_keymap, key)
+            if func is None:
                 if key.startswith("O-"):
                     func = ei_record_func(self_insert_command("(29)")) # <無変換> キーを発行
                 else:
@@ -2017,19 +2045,19 @@ def configure(keymap):
         for replace_key, original_key in fc.emacs_ime_mode_key:
             define_key(keymap_ei, replace_key, ei_record_func(self_insert_command(original_key)))
 
-        # この時点の keymap_ie のキーマップをコピーする
-        ei_keymap = copy.copy(keymap_ei.keymap)
+        # この時点の keymap_ei を複製する
+        keymap_ei_dup = copy.deepcopy(keymap_ei)
 
         ## 「IME の切り替え」のキー設定
         for key in fc.toggle_input_method_key:
-            define_key(keymap_ei, key, ei_disable_input_method2(key, ei_keymap))
+            define_key(keymap_ei, key, ei_disable_input_method2(key, keymap_ei_dup))
 
         ## 「IME の切り替え」のキー設定
         for disable_key, enable_key in fc.set_input_method_key:
             if disable_key:
-                define_key(keymap_ei, disable_key, ei_disable_input_method2(disable_key, ei_keymap))
+                define_key(keymap_ei, disable_key, ei_disable_input_method2(disable_key, keymap_ei_dup))
             if enable_key:
-                define_key(keymap_ei, enable_key, ei_enable_input_method2(enable_key, ei_keymap))
+                define_key(keymap_ei, enable_key, ei_enable_input_method2(enable_key, keymap_ei_dup))
 
 
     ###########################################################################

@@ -8,7 +8,7 @@ try:
     # 設定されているか？
     fc.Linux_tool
 except:
-    # 次の設定のいずれかを有効にする
+    # Linux コマンドを起動するために利用する Linux ツールを指定する
     fc.Linux_tool = "WSL"
     # fc.Linux_tool = "MSYS2"
     # fc.Linux_tool = "Cygwin"
@@ -18,13 +18,23 @@ try:
     # 設定されているか？
     fc.MSYS2_path
 except:
+    # MSYS2 をインストールしているパスを指定する
     fc.MSYS2_path = r"C:\msys64"
 
 try:
     # 設定されているか？
     fc.Cygwin_path
 except:
+    # Cygwin をインストールしているパスを指定する
     fc.Cygwin_path = r"C:\cygwin64"
+
+try:
+    # 設定されているか？
+    fc.BusyBox_path
+except:
+    # BusyBox をインストールしているパスを指定する
+    fc.BusyBox_path = dataPath() + r"\fakeymacs_extensions\shell_command_on_region"
+    # fc.BusyBox_path = r"C:\busybox64"
 
 import subprocess
 
@@ -51,15 +61,18 @@ def shell_command_on_region():
 
             env = dict(os.environ)
 
+            # 以降で実行するコマンドは、bash に -l オプションを付け、その配下で実行するようにしています。
+            # このため、bash を起動する環境の .bash_profile に多くの設定を記入していると、コマンドの
+            # 実行が遅かったり、コマンドが正しくフィルタとして機能しなかったりする場合があります。
+            # このようなときに .bash_profile 内の設定をコントロール（スキップ）できるようにするため、
+            # FAKEYMACS 環境変数を設定しています。
+            env["FAKEYMACS"] = "1"
+
             if fc.Linux_tool == "WSL":
                 command = [r"C:\WINDOWS\SysNative\wsl.exe", "bash", "-l", "-c"]
                 command += [r"tr -d '\r' | " + re.sub(r"(\$)", r"\\\1", shell_command)]
-
-                # bash に -l オプションを付けることにより処理が遅くなる場合には、次の設定をお試しください
-                # command = [r"C:\WINDOWS\SysNative\wsl.exe", "bash", "-c"]
-                # command += [r"cd; tr -d '\r' | " + re.sub(r"(\$)", r"\\\1", shell_command)]
-
                 env["LANG"] = "ja_JP.UTF8"
+                env["WSLENV"] = "FAKEYMACS:LANG"
                 encoding = "utf-8"
 
             elif fc.Linux_tool == "MSYS2":
@@ -75,8 +88,7 @@ def shell_command_on_region():
                 encoding = "utf-8"
 
             elif fc.Linux_tool == "BusyBox":
-                command = [dataPath() + r"\fakeymacs_extensions\shell_command_on_region\busybox64.exe",
-                           "bash", "-l", "-c"]
+                command = [fc.BusyBox_path + r"\busybox64.exe", "bash", "-l", "-c"]
                 command += [shell_command]
                 encoding = "cp932"
 
