@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20201128_01"
+fakeymacs_version = "20201217_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -310,12 +310,12 @@ def configure(keymap):
     # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
     #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。）
     # （ここで指定したキーに新たに別のキー設定をしたいときには、define_key2 関数を利用してください）
-    fc.skip_settings_key    = {"keymap_global"    : [],
-                               "keymap_emacs"     : [],
-                               "keymap_ime"       : [],
-                               "keymap_ei"        : [],
-                               "keymap_tsw"       : [],
-                               "keymap_lw"        : [],
+    fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
+                               "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
+                               "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
+                               "keymap_ei"        : [], # Emacs 日本語入力モード用 Keymap
+                               "keymap_tsw"       : [], # タスク切り替え画面用 Keymap
+                               "keymap_lw"        : [], # リストウィンドウ用 Keymap
                               }
 
     # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
@@ -330,8 +330,7 @@ def configure(keymap):
 
     # clipboard 監視の対象外とするアプリケーションソフトを指定する
     fc.not_clipboard_target = []
-    ## Microsoft Excel 2019 以降の Excel では、次の設定は不要のようです
-    fc.not_clipboard_target += ["EXCEL.EXE"]             # Excel
+    fc.not_clipboard_target += ["EXCEL.EXE"] # Excel
 
     # 左右どちらの Ctrlキーを使うかを指定する（"L": 左、"R": 右）
     fc.side_of_ctrl_key = "L"
@@ -611,7 +610,7 @@ def configure(keymap):
                 # クリップボードの監視用のフックを有効にする
                 keymap.clipboard_history.enableHook(True)
 
-            if window.getProcessName() in fc.emacs_exclusion_key.keys():
+            if window.getProcessName() in fc.emacs_exclusion_key:
                 fakeymacs.exclution_key = list(map(str,
                                                    map(keyhac_keymap.KeyCondition.fromString,
                                                        map(addSideOfModifierKey,
@@ -1316,7 +1315,7 @@ def configure(keymap):
                 (className is None or fnmatch.fnmatch(window.getClassName(), className)))
 
     def vkeys():
-        vkeys = list(keyCondition.vk_str_table.keys())
+        vkeys = list(keyCondition.vk_str_table)
         for vkey in [VK_MENU, VK_LMENU, VK_RMENU, VK_CONTROL, VK_LCONTROL, VK_RCONTROL, VK_SHIFT, VK_LSHIFT, VK_RSHIFT, VK_LWIN, VK_RWIN]:
             vkeys.remove(vkey)
         return vkeys
@@ -1365,8 +1364,8 @@ def configure(keymap):
                 pass
 
             # 設定をスキップするキーの処理を行う
-            for keymap_name in fc.skip_settings_key.keys():
-                if (keymap_name in locals().keys() and
+            for keymap_name in fc.skip_settings_key:
+                if (keymap_name in locals() and
                     window_keymap == locals()[keymap_name]):
                     if keys in fc.skip_settings_key[keymap_name]:
                         print("skip settings key : [" + keymap_name + "] " + keys)
@@ -1380,7 +1379,7 @@ def configure(keymap):
                 pass
 
             if (key is not None and
-                "keymap_emacs" in locals().keys() and
+                "keymap_emacs" in locals() and
                 window_keymap == locals()["keymap_emacs"] and
                 type(command) is types.FunctionType):
 
@@ -1411,7 +1410,7 @@ def configure(keymap):
     def define_key2(window_keymap, keys, command):
         define_key(window_keymap, keys, command, skip_check=False)
 
-    def keyFunc(window_keymap, keys):
+    def getKeyCommand(window_keymap, keys):
         try:
             keys_list = kbd(keys)[-1]
             if len(keys_list) == 1:
@@ -1911,7 +1910,7 @@ def configure(keymap):
             disable_input_method()
 
         def ei_enable_input_method2(key, window_keymap):
-            func = keyFunc(window_keymap, key)
+            func = getKeyCommand(window_keymap, key)
             if func is None:
                 if key.startswith("O-"):
                     func = ei_record_func(self_insert_command("(28)")) # <変換> キーを発行
@@ -1926,7 +1925,7 @@ def configure(keymap):
             return _func
 
         def ei_disable_input_method2(key, window_keymap):
-            func = keyFunc(window_keymap, key)
+            func = getKeyCommand(window_keymap, key)
             if func is None:
                 if key.startswith("O-"):
                     func = ei_record_func(self_insert_command("(29)")) # <無変換> キーを発行
