@@ -118,22 +118,22 @@ fc.ctrlm_target = [
 for t in fc.ctrlm_target:
     if t not in fc.not_emacs_target:
         fc.not_emacs_target += [ t ]
-        
+
 # キーマップ毎にキー設定をスキップするキーを指定する
 # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
 #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
-fc.skip_settings_key    = {"keymap_global"    : [],
-                           "keymap_emacs"     : [],
-                           "keymap_ime"       : [],
+fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
+                           "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
+                           "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
                            "keymap_ei"        : [
                                "C-b", "C-f", "C-p", "C-n", "C-a", "C-e",
                                "Back", "C-h", "Delete", "C-d",
                                "Enter", "C-m", "Tab",
-                           ],
-                           "keymap_tsw"       : [],
-                           "keymap_lw"        : [],
+                           ],                       # Emacs 日本語入力モード用 Keymap
+                           "keymap_tsw"       : [], # タスク切り替え画面用 Keymap
+                           "keymap_lw"        : [], # リストウィンドウ用 Keymap
                           }
 
 # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
@@ -142,7 +142,7 @@ fc.skip_settings_key    = {"keymap_global"    : [],
 fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
                            "msedge.exe"       : ["C-l", "C-t"],
                            "firefox.exe"      : ["C-l", "C-t"],
-                           # "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
+                           "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
                            "OUTLOOK.EXE"      : ["C-k"], # complete of address
                           }
 
@@ -344,7 +344,8 @@ if fc.toggle_input_method_key:
 # ブラウザ向けのキーの設定を行う
 # exec(readConfigExtension(r"browser_key/config.py"), dict(globals(), **locals()))
 
-# Chrome 系ブラウザで Ctrl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
+# Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
+# fc.quick_tabs_shortcut_key = "A-q"
 # exec(readConfigExtension(r"chrome_quick_tabs/config.py"), dict(globals(), **locals()))
 
 # Emacs の shell-command-on-region の機能をサポートする
@@ -360,7 +361,7 @@ if fc.toggle_input_method_key:
 # Emacs の場合、IME 切り替え用のキーを C-\ に置き換える
 # exec(readConfigExtension(r"real_emacs\config.py"), dict(globals(), **locals()))
 
-# 英語キーボード設定をした OS 上で、日本語キーボードを利用する場合の切り替えを行う
+# 英語キーボード設定をした OS 上で日本語キーボードを利用する場合の設定を行う
 # fc.change_keyboard_startup = "US"
 # fc.change_keyboard_startup = "JP"
 # exec(readConfigExtension(r"change_keyboard\config.py"), dict(globals(), **locals()))
