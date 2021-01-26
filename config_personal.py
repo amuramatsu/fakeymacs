@@ -222,6 +222,17 @@ if is_japanese_keyboard:
 # [section-base-2] ---------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------
+# emacs ime keymap
+if fc.use_emacs_ime_mode:
+    ## 「IME の切り替え」のキー設定
+    for key in fc.toggle_input_method_key:
+        define_key(keymap_ei, key, ei_disable_input_method)
+    ## 「IME の切り替え」のキー設定
+    for disable_key, _ in fc.set_input_method_key:
+        if disable_key:
+            define_key(keymap_ei, disable_key, ei_disable_input_method)
+
+#---------------------------------------------------------------------------------------------------
 # CTRL-m keymap
 
 # input method と ctrl-h/j/mの切り替え"のみをしたい"アプリケーションソフトを指定する（True を返す）
