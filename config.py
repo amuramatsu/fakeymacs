@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20201217_01"
+fakeymacs_version = "20210120_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -602,7 +602,9 @@ def configure(keymap):
     fakeymacs.last_window = None
 
     def is_emacs_target(window):
-        if window != fakeymacs.last_window:
+        last_window = fakeymacs.last_window
+
+        if window != last_window:
             if window.getProcessName() in fc.not_clipboard_target:
                 # クリップボードの監視用のフックを無効にする
                 keymap.clipboard_history.enableHook(False)
@@ -634,6 +636,8 @@ def configure(keymap):
             fakeymacs.keybind = "not_emacs"
             return False
         else:
+            if window != last_window:
+                popImeBalloon()
             fakeymacs.keybind = "emacs"
             return True
 
@@ -735,14 +739,23 @@ def configure(keymap):
             if fakeymacs.is_playing_kmacro:
                 delay(0.2)
 
+        popImeBalloon(ime_status)
+
+    def popImeBalloon(ime_status=None):
+        if ime_status is None:
+            ime_status = keymap.getWindow().getImeStatus()
+
         if not fakeymacs.is_playing_kmacro:
             if ime_status:
                 message = "[あ]"
             else:
                 message = "[A]"
 
-            # IME の状態をバルーンヘルプで表示する
-            keymap.popBalloon("ime_status", message, 500)
+            try:
+                # IME の状態をバルーンヘルプで表示する
+                keymap.popBalloon("ime_status", message, 500)
+            except:
+                pass
 
     def reconversion(reconv_key, cancel_key):
         def _func():

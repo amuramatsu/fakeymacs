@@ -153,7 +153,9 @@ fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
 # （True（Metaキーとして使う）に設定されている場合、ESC の二回押下で ESC が入力されます）
 fc.use_esc_as_meta = True
 
-#---------------------------------------------------------------------------------------------------
+# Emacs日本語入力モードを使うかどうかを指定する（True: 使う、False: 使わない）
+fc.use_emacs_ime_mode = True
+
 # IME をトグルで切り替えるキーを指定する（複数指定可）
 fc.toggle_input_method_key = [
     "A-S-Space",
@@ -162,6 +164,7 @@ fc.toggle_input_method_key = [
     "W-(127)",
 ]
 
+#---------------------------------------------------------------------------------------------------
 # IME を切り替えるキーの組み合わせ（disable、enable の順）を指定する（複数指定可）
 # （toggle_input_method_key のキー設定より優先します）
 fc.set_input_method_key = []
@@ -349,10 +352,12 @@ if fc.toggle_input_method_key:
 # exec(readConfigExtension(r"chrome_quick_tabs/config.py"), dict(globals(), **locals()))
 
 # Emacs の shell-command-on-region の機能をサポートする
-# fc.Linux_tool = "WSL"
-# fc.Linux_tool = "MSYS2"
-# fc.Linux_tool = "Cygwin"
-# fc.Linux_tool = "BusyBox"
+# fc.linux_tool = "WSL"
+# fc.linux_tool = "MSYS2"
+# fc.linux_tool = "Cygwin"
+# fc.linux_tool = "BusyBox"
+# fc.bash_options = []
+# fc.bash_options = ["-l"]
 # exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
 
 # 指定したアプリケーションソフトに F2（編集モード移行）を割り当てるキーを設定する
@@ -369,3 +374,8 @@ if fc.toggle_input_method_key:
 # クリップボードに格納したファイルもしくはフォルダのパスを emacsclient で開く
 # fc.emacsclient_name = r"<emacsclient プログラムをインストールしている Windows のパス>\wslclient-n.exe"
 # exec(readConfigExtension(r"emacsclient/config.py"), dict(globals(), **locals()))
+
+# 指定したキーを押下したときに IME の状態を表示する機能を追加する
+# fc.pop_ime_balloon_key = ["C-l"]
+# fc.pop_ime_balloon_key += ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
+# exec(readConfigExtension(r"pop_ime_balloon/config.py"), dict(globals(), **locals()))
