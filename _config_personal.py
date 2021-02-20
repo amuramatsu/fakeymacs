@@ -47,6 +47,14 @@ fc.not_emacs_target    += [
 fc.ime_target          += [
                           ]
 
+# VSCode 用のキーバインドを利用するアプリケーションソフトを指定する
+# （ブラウザを指定した場合には、github1s.com にアクセスして開く VSCode で利用可能となります）
+fc.vscode_target        = ["Code.exe"]
+fc.vscode_target       += ["chrome.exe",
+                           "msedge.exe",
+                           "firefox.exe"
+                          ]
+
 # キーマップ毎にキー設定をスキップするキーを指定する
 # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
 #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。）
@@ -107,7 +115,7 @@ fc.set_input_method_key += [["(29)", "(28)"]]
 
 # VSCode の Terminal内 で ４つのキー（Ctrl+k、Ctrl+r、Ctrl+s、Ctrl+y）のダイレクト入力機能を使うか
 # どうかを指定する（True: 使う、False: 使わない）
-# fc.use_vscode_terminal_key_direct_input = True
+# fc.use_direct_input_in_vscode_terminal = True
 
 # アプリケーションキーとして利用するキーを指定する
 # （修飾キーに Alt は使えないようです）
@@ -209,6 +217,7 @@ fc.lancherList_listers = [
 # exec(readConfigExtension(r"browser_key/config.py"), dict(globals(), **locals()))
 
 # Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
+# （github1s を利用する場合、本機能を有効にせずに Quick Tabs を利用すればキー被りが発生しません）
 # fc.quick_tabs_shortcut_key = "A-q"
 # exec(readConfigExtension(r"chrome_quick_tabs/config.py"), dict(globals(), **locals()))
 
@@ -236,7 +245,7 @@ fc.lancherList_listers = [
 # fc.emacsclient_name = r"<emacsclient プログラムをインストールしている Windows のパス>\wslclient-n.exe"
 # exec(readConfigExtension(r"emacsclient/config.py"), dict(globals(), **locals()))
 
-# 指定したキーを押下したときに IME の状態を表示する機能を追加する
-# fc.pop_ime_balloon_key = ["C-l"]
-# fc.pop_ime_balloon_key += ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
+# 指定したキーを押下したときに IME の状態を表示する
+# fc.pop_ime_balloon_key = ["C-Semicolon"]
+# fc.pop_ime_balloon_key = ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
 # exec(readConfigExtension(r"pop_ime_balloon/config.py"), dict(globals(), **locals()))
