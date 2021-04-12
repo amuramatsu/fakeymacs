@@ -111,14 +111,6 @@ for t in fc.ime_target:
     if t not in fc.not_emacs_target:
         fc.not_emacs_target += [ t ]
 
-# VSCode 用のキーバインドを利用するアプリケーションソフトを指定する
-# （ブラウザを指定した場合には、github1s.com にアクセスして開く VSCode で利用可能となります）
-fc.vscode_target        = ["Code.exe"]
-fc.vscode_target       += ["chrome.exe",
-                           "msedge.exe",
-                           "firefox.exe"
-                          ]
-
 # Ctrl-m 等のみを書き換える特殊マップを使うアプリを指定する。
 fc.ctrlm_target = [
     "firefox.exe",         # Firefox
@@ -227,6 +219,10 @@ if is_japanese_keyboard:
 # fc.application_key = "O-RCtrl"
 # fc.application_key = "W-m"
 
+# 数引数の指定に Ctrl+数字キーを使うかを指定する（True: 使う、False: 使わない）
+# （False に指定しても、C-u 数字キーで数引数を指定することができます）
+# fc.use_ctrl_digit_key_for_digit_argument = True
+
 # [section-base-2] ---------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------
@@ -334,7 +330,6 @@ if fc.toggle_input_method_key:
         define_key(keymap_ctrlm, key, toggle_input_method)
 
 #---------------------------------------------------------------------------------------------------
-
 ####################################################################################################
 ## クリップボードリストの設定
 ####################################################################################################
@@ -353,6 +348,16 @@ if fc.toggle_input_method_key:
 ## 拡張機能の設定
 ####################################################################################################
 # [section-extensions] -----------------------------------------------------------------------------
+
+# VSCode 用のキーの設定を行う
+fc.vscode_target  = ["Code.exe"]
+fc.vscode_target += ["chrome.exe",
+                     "msedge.exe",
+                     "firefox.exe"
+                    ]
+fc.use_ctrl_atmark_for_mark = False
+fc.use_direct_input_in_vscode_terminal = False
+exec(readConfigExtension(r"vscode_key/config.py"), dict(globals(), **locals()))
 
 # VSCode で Extension のインストールが必要な機能の設定を行う
 # fc.vscode_dired = True
