@@ -150,7 +150,7 @@ _config_personal.py というファイルを config_personal.py というファ�
 として機能します。本ファイルの設定には [ ] で括られたセクション名が定義されており、その単位で config.py
 の中に設定が取り込まれ、exec 関数により実行されます。
 
-config.py でコンフィグレーションパラメータ等の設定を変更したい内容は、config_personal.py に記載して
+config.py のコンフィグレーションパラメータ等の設定を変更したい内容は、config_personal.py に記載して
 管理することで、config.py のバージョンアップに容易に対応できるようになります。
 
 何のセクションがどこで読み込まれるかについては、config.py ファイル内の exec 関数をコールしている
@@ -169,26 +169,34 @@ VSCode については、一般的な Emacs キーバインドの他に次のキ
 
 デフォルトで有効にしている拡張機能 vscode_key で実現しています。
 
-|---------------------+-------------------------------+----------------------------------------|
-| Key-binding         | Fakeymacs Function            | VSCode Command                         |
-|---------------------+-------------------------------+----------------------------------------|
-| Ctl+x 0             | delete_group                  | Close All Editors in Group             |
-| Ctl+x 1             | delete_other_groups           | Close Editors in Other Groups          |
-| Ctl+x 2             | split_editor_below            | Split Editor Orthogonal                |
-| Ctl+x 3             | split_editor_right            | Split Editor                           |
-| Ctl+x o             | other_group                   | Navigate Between Editor Groups         |
-| Ctrl+Alt+<数字キー> | switch_focus(<数字キーの値>)  | Focus Side Bar or n-th Editor Group    |
-| Ctrl+Alt+p          | mark_up                       | cursorColumnSelectUp                   |
-| Ctrl+Alt+n          | mark_down                     | cursorColumnSelectDown                 |
-| Ctrl+Alt+b          | mark + backward_char          | cursorLeftSelect                       |
-| Ctrl+Alt+f          | mark + forward_char           | cursorRightSelect                      |
-| Ctrl+Alt+a          | mark + move_beginning_of_line | cursorHomeSelect                       |
-| Ctrl+Alt+e          | mark + move_end_of_line       | cursorEndSelect                        |
-| Ctrl+Alt+d          | mark_next_like_this           | Add Selection To Next Find Match       |
-| Ctrl+Alt+s          | skip_to_next_like_this        | Move Last Selection To Next Find Match |
-| Meta+x              | execute_extended_command      | Show All Commands                      |
-| Meta+;              | comment_dwim                  | Toggle Line Comment                    |
-|---------------------+-------------------------------+----------------------------------------|
+|---------------------+-------------------------------+--------------------------------------------------------|
+| Key-binding         | Fakeymacs Function            | VSCode Command                                         |
+|---------------------+-------------------------------+--------------------------------------------------------|
+| M-g p               | previous_error                | Go to Previous Problem in Files (Error, Warning, Info) |
+| M-g M-p             | previous_error                | Go to Previous Problem in Files (Error, Warning, Info) |
+| M-g n               | next_error                    | Go to Next Problem in Files (Error, Warning, Info)     |
+| M-g M-n             | next_error                    | Go to Next Problem in Files (Error, Warning, Info)     |
+| Ctl-x `             | next_error                    | Go to Next Problem in Files (Error, Warning, Info)     |
+| Ctl+x 0             | delete_group                  | Close All Editors in Group                             |
+| Ctl+x 1             | delete_other_groups           | Close Editors in Other Groups                          |
+| Ctl+x 2             | split_editor_below            | Split Editor Orthogonal                                |
+| Ctl+x 3             | split_editor_right            | Split Editor                                           |
+| Ctl+x o             | other_group                   | Navigate Between Editor Groups                         |
+| Ctrl+<数字キー>     | switch_focus(<数字キーの値>)  | Focus Side Bar or n-th Editor Group                    |
+| Ctrl+Alt+<数字キー> | switch_focus(<数字キーの値>)  | Focus Side Bar or n-th Editor Group                    |
+| Ctrl+Alt+p          | mark_up                       | cursorColumnSelectUp                                   |
+| Ctrl+Alt+n          | mark_down                     | cursorColumnSelectDown                                 |
+| Ctrl+Alt+b          | mark + backward_char          | cursorLeftSelect                                       |
+| Ctrl+Alt+f          | mark + forward_char           | cursorRightSelect                                      |
+| Ctrl+Alt+a          | mark + move_beginning_of_line | cursorHomeSelect                                       |
+| Ctrl+Alt+e          | mark + move_end_of_line       | cursorEndSelect                                        |
+| Ctrl+Alt+d          | mark_next_like_this           | Add Selection To Next Find Match                       |
+| CTrl+Alt+Shift+d    | mark_all_like_this            | Select All Occurrences of Find Match                   |
+| Ctrl+Alt+r          | skip_to_previous_like_this    | Move Last Selection To Previous Find Match             |
+| Ctrl+Alt+s          | skip_to_next_like_this        | Move Last Selection To Next Find Match                 |
+| Meta+x              | execute_extended_command      | Show All Commands                                      |
+| Meta+;              | comment_dwim                  | Toggle Line Comment                                    |
+|---------------------+-------------------------------+--------------------------------------------------------|
 
 VSCode に vcode-dired Extension、Center Editor Window Extension、Search in Current File を
 インストールし、Fakeymacs の 拡張機能 vscode-extensions を有効にすることにより、
@@ -204,6 +212,9 @@ VSCode に vcode-dired Extension、Center Editor Window Extension、Search in Cu
 
 ※ Meta で Esc を利用したい場合には、use_esc_as_meta 変数を True にしてください。True にした
 場合に Esc を入力するには、Esc を二回押下してください。
+
+※ Ctrl+<数字キー> は、use_ctrl_digit_key_for_digit_argument 変数が False（デフォルト値）
+の場合に有効なキー設定となります。
 
 ※ これらの機能を実現するにあたり、vscodeExecuteCommand 関数を作成しています。この関数を使う
 ことにより、ショートカットキーが割り当てられていない VSCode のコマンドでも、Fakeymacs から
@@ -266,3 +277,24 @@ Terminal から抜ける場合は次のキーを利用するようにしてく�
 
 ※ この機能をサポートするために use_ctrl_atmark_for_mark 変数を導入し、日本語キーボードで C-@
 をマーク用のキーとして使うかどうかを指定できるようにしました。初期値は False（使わない）です。
+
+** 留意事項
+
+Microsoft Excel や Word などの Office系アプリを使ってコピー＆ペーストをした際、「Ctrl」と表示
+される「貼り付けオプション」ボタンが表示される場合があります。
+これが Emacsキーバインドで利用している Ctrl キーの押下を検知して、想定外の動きをしてしまうようです。
+今のところ本設定での対策は難しいと思っておりますので、以下のページで紹介している「貼り付けオプション」
+ボタンを消す対応で回避してください。
+
+- http://ciao.aoten.jp/ciao/2015/03/word-54e8.html
+
+Keyhac のクリップボードリスト画面で migemo 検索を可能とするためには、辞書ファイルを登録する必要
+があります。次のページに分かりやすく説明がされていますので、参考としてください。
+（dictフォルダの中をすべてコピーするのではなく、dict/utf-8 の中のファイルをコピーするところが
+ポイントです。また、migemo 検索するには、検索文字列の一文字目を大文字で指定する必要があります。）
+
+- http://blog.livedoor.jp/ryman_trainee/archives/1042315792.html
+
+Logicool のマウス で SetPoint アプリによりキーストロークの割当を行った場合、Keyhac のフックを
+OFF にしてから割当をしないと正常に動作しませんでした。他のキーストロークを設定するソフトの場合
+にも同様の問題が発生する可能性があると思いますので、ご留意ください。

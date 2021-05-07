@@ -62,6 +62,19 @@ def vscodeExecuteCommand2(command):
         vscodeExecuteCommand(command)()
     return _func
 
+## カーソル移動
+def previous_error():
+    # VSCode Command : Go to Previous Problem in Files (Error, Warning, Info)
+    self_insert_command("S-F8")()
+    # vscodeExecuteCommand("GtPPiF")()
+    # vscodeExecuteCommand("editor.action.marker.prevInFiles")()
+
+def next_error():
+    # VSCode Command : Go to Next Problem in Files (Error, Warning, Info)
+    self_insert_command("F8")()
+    # vscodeExecuteCommand("GtNPiF")()
+    # vscodeExecuteCommand("editor.action.marker.nextInFiles")()
+
 ## カット / コピー
 def kill_line2(repeat=1):
     if (fc.use_direct_input_in_vscode_terminal and
@@ -79,16 +92,19 @@ def yank2():
 
 ## バッファ / ウィンドウ操作
 def kill_buffer():
-    # VSCode Command : Close Editor
+    # github1s で動作するように、C-F4 の発行とはしていない（C-F4 がブラウザでキャッチされるため）
+    # VSCode Command : View: Close Editor
     vscodeExecuteCommand("workbench.action.closeActiveEditor")()
 
 def switch_to_buffer():
-    # VSCode Command : Quick Open Privious Recently Used Editor in Group
-    vscodeExecuteCommand("workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup")()
+    # VSCode Command : View: Quick Open Privious Recently Used Editor in Group
+    vscodeExecuteCommand("VQO-P-RUEi")()
+    # vscodeExecuteCommand("workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup")()
 
 def list_buffers():
-    # VSCode Command : Show All Editors By Most Recently Used
-    vscodeExecuteCommand("workbench.action.showAllEditorsByMostRecentlyUsed")()
+    # VSCode Command : View: Show All Editors By Most Recently Used
+    vscodeExecuteCommand("VSAEBM")()
+    # vscodeExecuteCommand("workbench.action.showAllEditorsByMostRecentlyUsed")()
 
 ## 文字列検索
 def isearch2(direction):
@@ -106,71 +122,99 @@ def isearch_forward():
 
 ## エディタ操作
 def delete_group():
-    # VSCode Command : Close All Editors in Group
-    vscodeExecuteCommand("workbench.action.closeEditorsInGroup")()
+    # VSCode Command : View: Close All Editors in Group
+    vscodeExecuteCommand("VCAEi")()
+    # vscodeExecuteCommand("workbench.action.closeEditorsInGroup")()
 
 def delete_other_groups():
-    # VSCode Command : Close Editors in Other Groups
-    vscodeExecuteCommand("workbench.action.closeEditorsInOtherGroups")()
+    # VSCode Command : View: Close Editors in Other Groups
+    vscodeExecuteCommand("VCEiO")()
+    # vscodeExecuteCommand("workbench.action.closeEditorsInOtherGroups")()
 
 def split_editor_below():
-    # VSCode Command : Split Editor Orthogonal
+    # VSCode Command : View: Split Editor Orthogonal
     self_insert_command("C-k", "C-Yen")()
+    # vscodeExecuteCommand("ViSEO")()
+    # vscodeExecuteCommand("workbench.action.splitEditorOrthogonal")()
 
 def split_editor_right():
-    # VSCode Command : Split Editor
+    # VSCode Command : View: Split Editor
     self_insert_command("C-Yen")()
+    # vscodeExecuteCommand("workbench.action.splitEditor")()
 
 def other_group():
-    # VSCode Command : Navigate Between Editor Groups
-    vscodeExecuteCommand("workbench.action.navigateEditorGroups")()
+    # VSCode Command : View: Navigate Between Editor Groups
+    vscodeExecuteCommand("VNB-EG")()
+    # vscodeExecuteCommand("workbench.action.navigateEditorGroups")()
+
     if fc.use_direct_input_in_vscode_terminal:
         fakeymacs.vscode_focus = "not_terminal"
 
 def switch_focus(number):
     def _func():
-        # VSCode Command : Focus n-th Editor Group
+        # VSCode Command : View: Focus n-th Editor Group
         self_insert_command("C-{}".format(number))()
+
         if fc.use_direct_input_in_vscode_terminal:
             fakeymacs.vscode_focus = "not_terminal"
     return _func
 
 ## マルチカーソル
 def mark_up():
-    # VSCode Command : cursorColumnSelectUp
+    # VSCode Command ID : cursorColumnSelectUp
     self_insert_command("C-S-A-Up")()
+    # vscodeExecuteCommand("cursorColumnSelectUp")()
 
 def mark_down():
-    # VSCode Command : cursorColumnSelectDown
+    # VSCode Command ID : cursorColumnSelectDown
     self_insert_command("C-S-A-Down")()
+    # vscodeExecuteCommand("cursorColumnSelectDown")()
 
 def mark_next_like_this():
     # VSCode Command : Add Selection To Next Find Match
     self_insert_command("C-d")()
+    # vscodeExecuteCommand("ASTN")()
+    # vscodeExecuteCommand("cursorColumnSelectDown")()
+
+def mark_all_like_this():
+    # VSCode Command : Select All Occurrences of Find Match
+    self_insert_command("C-S-l")()
+    # vscodeExecuteCommand("SAOo")()
+    # vscodeExecuteCommand("editor.action.selectHighlights")()
 
 def skip_to_next_like_this():
     # VSCode Command : Move Last Selection To Next Find Match
     self_insert_command("C-k", "C-d")()
+    # vscodeExecuteCommand("MLSTN")()
+    # vscodeExecuteCommand("editor.action.moveSelectionToNextFindMatch")()
+
+def skip_to_previous_like_this():
+    # VSCode Command : Move Last Selection To Previous Find Match
+    vscodeExecuteCommand("MLSTP")()
+    # vscodeExecuteCommand("editor.action.moveSelectionToPreviousFindMatch")()
 
 ## ターミナル操作
 def create_terminal():
-    # VSCode Command : Create New Integrated Terminal
+    # VSCode Command : Terminal: Create New Integrated Terminal
     vscodeExecuteCommand2("workbench.action.terminal.new")()
+
     if fc.use_direct_input_in_vscode_terminal:
         fakeymacs.vscode_focus = "terminal"
 
 def toggle_terminal():
     if fc.use_direct_input_in_vscode_terminal:
         if fakeymacs.vscode_focus == "not_terminal":
-            # VSCode Command : Focus on Terminal View
+            # VSCode Command : Terminal: Focus on Terminal View
             vscodeExecuteCommand2("terminal.focus")()
+
             fakeymacs.vscode_focus = "terminal"
         else:
-            # VSCode Command : Close Panel
+            # VSCode Command : View: Close Panel
             vscodeExecuteCommand2("workbench.action.closePanel")()
+
             fakeymacs.vscode_focus = "not_terminal"
     else:
-        # VSCode Command : Toggle Integrated Terminal
+        # VSCode Command : View: Toggle Terminal
         vscodeExecuteCommand2("workbench.action.terminal.toggleTerminal")()
 
 ## その他
@@ -181,6 +225,13 @@ def execute_extended_command():
 def comment_dwim():
     # VSCode Command : Toggle Line Comment
     self_insert_command("C-Slash")()
+
+## 「カーソル移動」のキー設定
+define_key3(keymap_emacs, "M-g p",           reset_search(reset_undo(reset_counter(reset_mark(previous_error)))))
+define_key3(keymap_emacs, "M-g M-p",         reset_search(reset_undo(reset_counter(reset_mark(previous_error)))))
+define_key3(keymap_emacs, "M-g n",           reset_search(reset_undo(reset_counter(reset_mark(next_error)))))
+define_key3(keymap_emacs, "M-g M-n",         reset_search(reset_undo(reset_counter(reset_mark(next_error)))))
+define_key3(keymap_emacs, "Ctl-x BackQuote", reset_search(reset_undo(reset_counter(reset_mark(next_error)))))
 
 ## 「カット / コピー」のキー設定
 define_key3(keymap_emacs, "C-k", reset_search(reset_undo(reset_counter(reset_mark(repeat3(kill_line2))))))
@@ -208,14 +259,16 @@ for n in range(10):
         define_key(keymap_vscode, "C-{}".format(n), reset_search(reset_undo(reset_counter(reset_mark(switch_focus(n))))))
 
 ## 「マルチカーソル」のキー設定
-define_key(keymap_vscode, "C-A-p", reset_search(reset_undo(reset_counter(mark_up))))
-define_key(keymap_vscode, "C-A-n", reset_search(reset_undo(reset_counter(mark_down))))
-define_key(keymap_vscode, "C-A-b", reset_search(reset_undo(reset_counter(mark2(repeat(backward_char), False)))))
-define_key(keymap_vscode, "C-A-f", reset_search(reset_undo(reset_counter(mark2(repeat(forward_char), True)))))
-define_key(keymap_vscode, "C-A-a", reset_search(reset_undo(reset_counter(mark2(move_beginning_of_line, False)))))
-define_key(keymap_vscode, "C-A-e", reset_search(reset_undo(reset_counter(mark2(move_end_of_line, True)))))
-define_key(keymap_vscode, "C-A-d", reset_search(reset_undo(reset_counter(mark_next_like_this))))
-define_key(keymap_vscode, "C-A-s", reset_search(reset_undo(reset_counter(skip_to_next_like_this))))
+define_key(keymap_vscode, "C-A-p",   reset_search(reset_undo(reset_counter(reset_mark(mark_up)))))
+define_key(keymap_vscode, "C-A-n",   reset_search(reset_undo(reset_counter(reset_mark(mark_down)))))
+define_key(keymap_vscode, "C-A-b",   reset_search(reset_undo(reset_counter(mark2(repeat(backward_char), False)))))
+define_key(keymap_vscode, "C-A-f",   reset_search(reset_undo(reset_counter(mark2(repeat(forward_char), True)))))
+define_key(keymap_vscode, "C-A-a",   reset_search(reset_undo(reset_counter(mark2(move_beginning_of_line, False)))))
+define_key(keymap_vscode, "C-A-e",   reset_search(reset_undo(reset_counter(mark2(move_end_of_line, True)))))
+define_key(keymap_vscode, "C-A-d",   reset_search(reset_undo(reset_counter(reset_mark(mark_next_like_this)))))
+define_key(keymap_vscode, "C-A-S-d", reset_search(reset_undo(reset_counter(reset_mark(mark_all_like_this)))))
+define_key(keymap_vscode, "C-A-r",   reset_search(reset_undo(reset_counter(reset_mark(skip_to_previous_like_this)))))
+define_key(keymap_vscode, "C-A-s",   reset_search(reset_undo(reset_counter(reset_mark(skip_to_next_like_this)))))
 
 ## 「ターミナル操作」のキー設定
 define_key(keymap_vscode, "C-S-(243)", reset_search(reset_undo(reset_counter(reset_mark(create_terminal)))))

@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20210411_01"
+fakeymacs_version = "20210507_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -18,11 +18,11 @@ fakeymacs_version = "20210411_01"
 #
 # ＜共通の仕様＞
 # ・emacs_target_class 変数、not_emacs_target 変数、ime_target 変数で、Emacsキーバインドや
-#   IME の切り替えキーバインドの対象とするアプリケーションソフトを指定できる。
+#   IME の切り替えキーバインドの対象とするアプリケーションソフトやウィンドウを指定できる。
 # ・skip_settings_key 変数で、キーマップ毎にキー設定をスキップするキーを指定できる。
 # ・emacs_exclusion_key 変数で、Emacs キーバインドから除外するキーを指定できる。
-# ・not_clipboard_target 変数で、clipboard 監視の対象外とするアプリケーションソフトを指定
-#   できる。
+# ・not_clipboard_target 変数、not_clipboard_target_class 変数で、clipboard 監視の対象外と
+#   するアプリケーションソフトやウィンドウを指定できる。
 # ・左右どちらの Ctrlキーを使うかを side_of_ctrl_key 変数で指定できる。
 # ・左右どちらの Altキーを使うかを side_of_alt_key 変数で指定できる。
 # ・左右どちらの Winキーを使うかを side_of_win_key 変数で指定できる。
@@ -325,7 +325,11 @@ def configure(keymap):
 
     # clipboard 監視の対象外とするアプリケーションソフトを指定する
     fc.not_clipboard_target = []
-    fc.not_clipboard_target += ["EXCEL.EXE"] # Excel
+    fc.not_clipboard_target += ["EXCEL.EXE"] # Microsoft Excel
+
+    # clipboard 監視の対象外とするウィンドウのクラスネームを指定する（ワイルドカードの指定可）
+    fc.not_clipboard_target_class = []
+    fc.not_clipboard_target_class += ["HwndWrapper*"] # WPF アプリ
 
     # 左右どちらの Ctrlキーを使うかを指定する（"L": 左、"R": 右）
     fc.side_of_ctrl_key = "L"
@@ -585,23 +589,27 @@ def configure(keymap):
     fakeymacs.not_emacs_keybind = []
     fakeymacs.ime_cancel = False
     fakeymacs.last_window = None
+    fakeymacs.clipboard_hook = True
 
     def is_emacs_target(window):
-        last_window = fakeymacs.last_window
+        last_window  = fakeymacs.last_window
+        process_name = window.getProcessName()
+        class_name   = window.getClassName()
 
         if window != last_window:
-            if window.getProcessName() in fc.not_clipboard_target:
+            if (process_name in fc.not_clipboard_target or
+                any([checkWindow(None, c, window) for c in fc.not_clipboard_target_class])):
                 # クリップボードの監視用のフックを無効にする
                 keymap.clipboard_history.enableHook(False)
+                fakeymacs.clipboard_hook = False
             else:
                 # クリップボードの監視用のフックを有効にする
                 keymap.clipboard_history.enableHook(True)
+                fakeymacs.clipboard_hook = True
 
-            if window.getProcessName() in fc.emacs_exclusion_key:
-                fakeymacs.exclution_key = list(map(str,
-                                                   map(keyhac_keymap.KeyCondition.fromString,
-                                                       map(addSideOfModifierKey,
-                                                           fc.emacs_exclusion_key[window.getProcessName()]))))
+            if process_name in fc.emacs_exclusion_key:
+                fakeymacs.exclution_key = [str(keyhac_keymap.KeyCondition.fromString(addSideOfModifierKey(key)))
+                                           for key in fc.emacs_exclusion_key[process_name]]
             else:
                 fakeymacs.exclution_key = []
 
@@ -615,9 +623,9 @@ def configure(keymap):
         if is_list_window(window):
             return False
 
-        if (window.getClassName() not in fc.emacs_target_class and
-            (window.getProcessName() in fakeymacs.not_emacs_keybind or
-             window.getProcessName() in fc.not_emacs_target)):
+        if (class_name not in fc.emacs_target_class and
+            (process_name in fakeymacs.not_emacs_keybind or
+             process_name in fc.not_emacs_target)):
             fakeymacs.keybind = "not_emacs"
             return False
         else:
@@ -688,16 +696,16 @@ def configure(keymap):
     ##################################################
 
     def toggle_emacs_keybind():
-        className   = keymap.getWindow().getClassName()
-        processName = keymap.getWindow().getProcessName()
+        class_name   = keymap.getWindow().getClassName()
+        process_name = keymap.getWindow().getProcessName()
 
-        if (className not in fc.emacs_target_class and
-            processName not in fc.not_emacs_target):
-            if processName in fakeymacs.not_emacs_keybind:
-                fakeymacs.not_emacs_keybind.remove(processName)
+        if (class_name not in fc.emacs_target_class and
+            process_name not in fc.not_emacs_target):
+            if process_name in fakeymacs.not_emacs_keybind:
+                fakeymacs.not_emacs_keybind.remove(process_name)
                 keymap.popBalloon("keybind", "[Enable Emacs keybind]", 1000)
             else:
-                fakeymacs.not_emacs_keybind.append(processName)
+                fakeymacs.not_emacs_keybind.append(process_name)
                 keymap.popBalloon("keybind", "[Disable Emacs keybind]", 1000)
 
             keymap.updateKeymap()
@@ -815,6 +823,13 @@ def configure(keymap):
 
     def end_of_buffer():
         self_insert_command("C-End")()
+
+    def goto_line():
+        if (checkWindow("sakura.exe", "EditorClient") or # Sakura Editor
+            checkWindow("sakura.exe", "SakuraView*")):   # Sakura Editor
+            self_insert_command3("C-j")()
+        else:
+            self_insert_command3("C-g")()
 
     def scroll_up():
         self_insert_command("PageUp")()
@@ -1147,17 +1162,18 @@ def configure(keymap):
 
     def copyRegion():
         self_insert_command("C-c")()
-        pushToClipboardList()
+        # C-k (kill_line) したときに k 文字が混在することがあるための対策
+        keymap.delayedCall(pushToClipboardList, 100)
 
     def cutRegion():
         self_insert_command("C-x")()
-        pushToClipboardList()
+        # C-k (kill_line) したときに k 文字が混在することがあるための対策
+        keymap.delayedCall(pushToClipboardList, 100)
 
     def pushToClipboardList():
         # clipboard 監視の対象外とするアプリケーションソフトで copy / cut した場合でも
         # クリップボードの内容をクリップボードリストに登録する
-        if keymap.getWindow().getProcessName() in fc.not_clipboard_target:
-            delay(0.1)
+        if not fakeymacs.clipboard_hook:
             clipboard_text = getClipboardText()
             if clipboard_text:
                 keymap.clipboard_history._push(clipboard_text)
@@ -1193,11 +1209,11 @@ def configure(keymap):
                 else:
                     self_insert_command("Left")()
 
-    def checkWindow(processName, className, window=None):
+    def checkWindow(process_name, class_name, window=None):
         if window is None:
             window = keymap.getWindow()
-        return ((processName is None or fnmatch.fnmatch(window.getProcessName(), processName)) and
-                (className is None or fnmatch.fnmatch(window.getClassName(), className)))
+        return ((process_name is None or fnmatch.fnmatch(window.getProcessName(), process_name)) and
+                (class_name is None or fnmatch.fnmatch(window.getClassName(), class_name)))
 
     def vkeys():
         vkeys = list(keyCondition.vk_str_table)
@@ -1212,28 +1228,46 @@ def configure(keymap):
         return key
 
     def kbd(keys):
+        key_lists = []
+
         if keys:
-            keys_lists = [keys.split()]
+            key_list0 = []
+            key_list1 = []
+            key_list2 = []
+            mata_flg  = False
 
-            if keys_lists[0][0] == "Ctl-x":
-                if fc.ctl_x_prefix_key:
-                    keys_lists[0][0] = fc.ctl_x_prefix_key
+            for key in keys.split():
+                if key == "Ctl-x":
+                    key = fc.ctl_x_prefix_key
+
+                if "M-" in key:
+                    key_list1.append("C-OpenBracket")
+                    key_list2.append("Esc")
+                    append_key = key.replace("M-", "")
+                    if append_key:
+                        key_list0.append(key.replace("M-", "A-"))
+                        key_list1.append(append_key)
+                        key_list2.append(append_key)
+                    else:
+                        key_list0 = []
+                    mata_flg = True
                 else:
-                    keys_lists = []
+                    key_list0.append(key)
+                    key_list1.append(key)
+                    key_list2.append(key)
 
-            elif keys_lists[0][0].startswith("M-"):
-                key = re.sub("^M-", "", keys_lists[0][0])
-                keys_lists[0][0] = "A-" + key
-                keys_lists.append(["C-OpenBracket", key])
+            if key_list0:
+                key_lists.append(key_list0)
+
+            if mata_flg:
+                key_lists.append(key_list1)
                 if fc.use_esc_as_meta:
-                    keys_lists.append(["Esc", key])
+                    key_lists.append(key_list2)
 
-            for keys_list in keys_lists:
-                keys_list[0] = addSideOfModifierKey(keys_list[0])
-        else:
-            keys_lists = []
+            for key_list in key_lists:
+                key_list[0] = addSideOfModifierKey(key_list[0])
 
-        return keys_lists
+        return key_lists
 
     def define_key(window_keymap, keys, command, skip_check=True):
         if skip_check:
@@ -1278,19 +1312,22 @@ def configure(keymap):
             else:
                 return command
 
-        for keys_list in kbd(keys):
-            if len(keys_list) == 1:
-                window_keymap[keys_list[0]] = keyCommand(keys_list[0])
+        for key_list in kbd(keys):
+            if len(key_list) == 1:
+                window_keymap[key_list[0]] = keyCommand(key_list[0])
 
                 # Alt キーを単押しした際に、カーソルがメニューへ移動しないようにする
                 # https://www.haijin-boys.com/discussions/4583
-                if re.match(keys_list[0], r"O-LAlt$", re.IGNORECASE):
+                if re.match(key_list[0], r"O-LAlt$", re.IGNORECASE):
                     window_keymap["D-LAlt"] = "D-LAlt", "(7)"
 
-                if re.match(keys_list[0], r"O-RAlt$", re.IGNORECASE):
+                if re.match(key_list[0], r"O-RAlt$", re.IGNORECASE):
                     window_keymap["D-RAlt"] = "D-RAlt", "(7)"
             else:
-                window_keymap[keys_list[0]][keys_list[1]] = keyCommand(None)
+                w_keymap = window_keymap
+                for key in key_list[:-1]:
+                    w_keymap = w_keymap[key]
+                w_keymap[key_list[-1]] = keyCommand(None)
 
     def define_key2(window_keymap, keys, command):
         define_key(window_keymap, keys, command, skip_check=False)
@@ -1313,11 +1350,10 @@ def configure(keymap):
 
     def getKeyCommand(window_keymap, keys):
         try:
-            keys_list = kbd(keys)[-1]
-            if len(keys_list) == 1:
-                func = window_keymap[keys_list[0]]
-            else:
-                func = window_keymap[keys_list[0]][keys_list[1]]
+            key_list = kbd(keys)[-1]
+            for key in key_list:
+                window_keymap = window_keymap[key]
+            func = window_keymap
         except:
             func = None
 
@@ -1379,9 +1415,11 @@ def configure(keymap):
 
     def mark2(func, forward_direction):
         def _func():
-            if fakeymacs.is_marked:
-                resetRegion()
-                fakeymacs.forward_direction = None
+            # Emacs と仕様を合わせる場合は、以下をアンコメント化する必要あり
+            # （コメント化した状態の方が自然の動作と思い、コメント化している）
+            # if fakeymacs.is_marked:
+            #     resetRegion()
+            #     fakeymacs.forward_direction = None
             fakeymacs.is_marked = True
             mark(func, forward_direction)()
             fakeymacs.is_marked = False
@@ -1475,11 +1513,11 @@ def configure(keymap):
     # http://www3.airnet.ne.jp/saka/hardware/keyboard/109scode.html
 
     ## マルチストロークキーの設定
-    define_key(keymap_emacs, "Ctl-x",         keymap.defineMultiStrokeKeymap(fc.ctl_x_prefix_key))
-    define_key(keymap_emacs, "C-q",           keymap.defineMultiStrokeKeymap("C-q"))
-    define_key(keymap_emacs, "C-OpenBracket", keymap.defineMultiStrokeKeymap("C-OpenBracket"))
-    if fc.use_esc_as_meta:
-        define_key(keymap_emacs, "Esc", keymap.defineMultiStrokeKeymap("Esc"))
+    define_key(keymap_emacs, "Ctl-x",  keymap.defineMultiStrokeKeymap(fc.ctl_x_prefix_key))
+    define_key(keymap_emacs, "C-q",    keymap.defineMultiStrokeKeymap("C-q"))
+    define_key(keymap_emacs, "M-",     keymap.defineMultiStrokeKeymap("M-"))
+    define_key(keymap_emacs, "M-g",    keymap.defineMultiStrokeKeymap("M-g"))
+    define_key(keymap_emacs, "M-g M-", keymap.defineMultiStrokeKeymap("M-g M-"))
 
     ## 数字キーの設定
     for n in range(10):
@@ -1563,6 +1601,8 @@ def configure(keymap):
     define_key(keymap_emacs, "C-e",        reset_search(reset_undo(reset_counter(mark(move_end_of_line, True)))))
     define_key(keymap_emacs, "M-S-Comma",  reset_search(reset_undo(reset_counter(mark(beginning_of_buffer, False)))))
     define_key(keymap_emacs, "M-S-Period", reset_search(reset_undo(reset_counter(mark(end_of_buffer, True)))))
+    define_key(keymap_emacs, "M-g g",      reset_search(reset_undo(reset_counter(reset_mark(goto_line)))))
+    define_key(keymap_emacs, "M-g M-g",    reset_search(reset_undo(reset_counter(reset_mark(goto_line)))))
     define_key(keymap_emacs, "C-l",        reset_search(reset_undo(reset_counter(recenter))))
 
     define_key(keymap_emacs, "C-S-b", reset_search(reset_undo(reset_counter(mark2(repeat(backward_char), False)))))
@@ -1976,22 +2016,22 @@ def configure(keymap):
         def makeWindowList(wnd, arg):
             if wnd.isVisible() and not wnd.getOwner():
 
-                className = wnd.getClassName()
+                class_name = wnd.getClassName()
                 title = wnd.getText()
 
-                if className == "Emacs" or title != "":
-                    if not re.match(fc.window_operation_exclusion_class, className):
-                        processName = wnd.getProcessName()
-                        if not re.match(fc.window_operation_exclusion_process, processName):
+                if class_name == "Emacs" or title != "":
+                    if not re.match(fc.window_operation_exclusion_class, class_name):
+                        process_name = wnd.getProcessName()
+                        if not re.match(fc.window_operation_exclusion_process, process_name):
                             # 表示されていないストアアプリ（「設定」等）が window_list に登録されるのを抑制する
-                            if className == "Windows.UI.Core.CoreWindow":
+                            if class_name == "Windows.UI.Core.CoreWindow":
                                 if title in window_dict:
                                     if window_dict[title] in window_list:
                                         window_list.remove(window_dict[title])
                                 else:
                                     window_dict[title] = wnd
 
-                            elif className == "ApplicationFrameWindow":
+                            elif class_name == "ApplicationFrameWindow":
                                 if title not in window_dict:
                                     window_dict[title] = wnd
                                     window_list.append(wnd)
@@ -2360,9 +2400,9 @@ def configure(keymap):
             window_list = getWindowList()
             window_items = []
             if window_list:
-                processName_length = max(map(len, map(Window.getProcessName, window_list)))
+                process_name_length = max(map(len, map(Window.getProcessName, window_list)))
 
-                formatter = "{0:" + str(processName_length) + "} | {1}"
+                formatter = "{0:" + str(process_name_length) + "} | {1}"
                 for wnd in window_list:
                     window_items.append([formatter.format(wnd.getProcessName(), wnd.getText()), popWindow(wnd)])
 
