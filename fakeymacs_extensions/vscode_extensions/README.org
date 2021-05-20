@@ -21,20 +21,20 @@ VSCode で Extension をインストールすることで Emacs のキーバイ�
 
 *** キーバインド
 
-|-----------+--------------------------------+-------------|
-| Keybind   | Function                       | Description |
-|-----------+--------------------------------+-------------|
-| Ctl-x d   | dired(keymap_emacs, "Ctl-x d") |             |
-| C-l       | recenter(keymap_emacs, "C-l")  |             |
-| Ctl-x C-o | occur                          |             |
-|-----------+--------------------------------+-------------|
+|-----------+----------+------------------------+-------------|
+| Keybind   | Function | VSCode Command         | Description |
+|-----------+----------+------------------------+-------------|
+| Ctl-x d   | dired    | Open dired buffer      |             |
+| C-l       | recenter | Center Editor Window   |             |
+| Ctl-x C-o | occur    | Search in Current File |             |
+|-----------+----------+------------------------+-------------|
 
 *** 留意事項
 
-vscode-dired Extension をインストールして利用する場合、Ctrl+x f に設定されているキーバインドは、
+● vscode-dired Extension をインストールして利用する場合、Ctrl+x f に設定されているキーバインドは、
 Ctrl+x（Cut）の機能とバッティングするので、削除してください。
 （Open Keyboard Shortcuts コマンドで削除可能です。）
 
-Search in Current File Extension をインストールして利用する場合、アクティビティバーの SEARCH
+● Search in Current File Extension をインストールして利用する場合、アクティビティバーの SEARCH
 アイコンをパネルのバーにドラッグで持っていくと、検索結果がパネルに表示されるようになり、
 使いやすくなります。

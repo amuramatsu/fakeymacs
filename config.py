@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20210507_01"
+fakeymacs_version = "20210520_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -165,7 +165,7 @@ def configure(keymap):
 
     # OS に設定しているキーボードタイプが日本語キーボードかどうかを設定する（自動設定）
     # （True: 日本語キーボード、False: 英語キーボード）
-    # （ http://tokovalue.jp/function/GetKeyboardType.htm ）
+    # （http://tokovalue.jp/function/GetKeyboardType.htm）
     if ctypes.windll.user32.GetKeyboardType(0) == 7:
         is_japanese_keyboard = True
     else:
@@ -193,12 +193,13 @@ def configure(keymap):
 
         return config_section
 
-    def readConfigExtension(config_file):
+    def readConfigExtension(config_file, msg=True):
         try:
             with open(dataPath() + r"\fakeymacs_extensions\\" + config_file, "r", encoding="utf-8-sig") as f:
                 config_extension = f.read()
         except:
-            print("拡張機能ファイル {} の読み込みに失敗しました".format(config_file))
+            if msg:
+                print("拡張機能ファイル {} の読み込みに失敗しました".format(config_file))
             config_extension = ""
 
         return config_extension
@@ -375,6 +376,10 @@ def configure(keymap):
 
     ## 日本語キーボードを利用している場合、<無変換> キーで英数入力、<変換> キーで日本語入力となる
     fc.set_input_method_key += [["(29)", "(28)"]]
+
+    ## 日本語キーボードを利用している場合、<Ａ> キーで英数入力、<あ> キーで日本語入力となる
+    ## （https://docs.microsoft.com/ja-jp/windows-hardware/design/component-guidelines/keyboard-japan-ime）
+    # fc.set_input_method_key += [["(26)", "(22)"]]
 
     ## LAlt の単押しで英数入力、RAlt の単押しで日本語入力となる
     ## （JetBrains 製の IDE でこの設定を利用するためには、ツールボタンをオンにする必要があるようです。
@@ -1317,7 +1322,7 @@ def configure(keymap):
                 window_keymap[key_list[0]] = keyCommand(key_list[0])
 
                 # Alt キーを単押しした際に、カーソルがメニューへ移動しないようにする
-                # https://www.haijin-boys.com/discussions/4583
+                # （https://www.haijin-boys.com/discussions/4583）
                 if re.match(key_list[0], r"O-LAlt$", re.IGNORECASE):
                     window_keymap["D-LAlt"] = "D-LAlt", "(7)"
 
@@ -1415,11 +1420,6 @@ def configure(keymap):
 
     def mark2(func, forward_direction):
         def _func():
-            # Emacs と仕様を合わせる場合は、以下をアンコメント化する必要あり
-            # （コメント化した状態の方が自然の動作と思い、コメント化している）
-            # if fakeymacs.is_marked:
-            #     resetRegion()
-            #     fakeymacs.forward_direction = None
             fakeymacs.is_marked = True
             mark(func, forward_direction)()
             fakeymacs.is_marked = False
@@ -1508,16 +1508,15 @@ def configure(keymap):
 
     # https://github.com/crftwr/keyhac/blob/master/keyhac_keymap.py
     # https://github.com/crftwr/pyauto/blob/master/pyauto_const.py
-    # http://www.yoshidastyle.net/2007/10/windowswin32api.html
-    # http://www.azaelia.net/factory/vk.html
+    # https://bsakatu.net/doc/virtual-key-of-windows/
     # http://www3.airnet.ne.jp/saka/hardware/keyboard/109scode.html
 
     ## マルチストロークキーの設定
     define_key(keymap_emacs, "Ctl-x",  keymap.defineMultiStrokeKeymap(fc.ctl_x_prefix_key))
     define_key(keymap_emacs, "C-q",    keymap.defineMultiStrokeKeymap("C-q"))
-    define_key(keymap_emacs, "M-",     keymap.defineMultiStrokeKeymap("M-"))
+    define_key(keymap_emacs, "M-",     keymap.defineMultiStrokeKeymap("Esc"))
     define_key(keymap_emacs, "M-g",    keymap.defineMultiStrokeKeymap("M-g"))
-    define_key(keymap_emacs, "M-g M-", keymap.defineMultiStrokeKeymap("M-g M-"))
+    define_key(keymap_emacs, "M-g M-", keymap.defineMultiStrokeKeymap("M-g Esc"))
 
     ## 数字キーの設定
     for n in range(10):
@@ -1563,7 +1562,7 @@ def configure(keymap):
                 for mod3 in ["", "C-"]:
                     for mod4 in ["", "S-"]:
                         mkey = mod1 + mod2 + mod3 + mod4 + key
-                        define_key(keymap_emacs, "C-q " + mkey, reset_search(reset_undo(reset_counter(reset_mark(self_insert_command(mkey))))))
+                        define_key(keymap_emacs, "C-q " + mkey, self_insert_command(mkey))
 
     ## Escキーの設定
     define_key(keymap_emacs, "C-OpenBracket C-OpenBracket", reset_undo(reset_counter(self_insert_command("Esc"))))
