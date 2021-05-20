@@ -172,6 +172,9 @@ fc.set_input_method_key = []
 ## 日本語キーボードを利用している場合、<無変換> キーで英数入力、<変換> キーで日本語入力となる
 #fc.set_input_method_key += [["(29)", "(28)"]]
 
+## 日本語キーボードを利用している場合、<Ａ> キーで英数入力、<あ> キーで日本語入力となる
+# fc.set_input_method_key += [["(26)", "(22)"]]
+
 ## LAlt の単押しで英数入力、RAlt の単押しで日本語入力となる
 ## （JetBrains 製の IDE でこの設定を利用するためには、ツールボタンをオンにする必要があるようです。
 ##   設定は、View -> Appearance -> Tool Window Bars を有効にしてください。）
@@ -355,6 +358,8 @@ fc.vscode_target += ["chrome.exe",
                      "msedge.exe",
                      "firefox.exe"
                     ]
+fc.vscode_prefix_key  = [["C-k", "C-A-k"]]
+# fc.vscode_prefix_key += [["C-;", "C-A-;"]]
 fc.use_ctrl_atmark_for_mark = False
 fc.use_direct_input_in_vscode_terminal = False
 exec(readConfigExtension(r"vscode_key/config.py"), dict(globals(), **locals()))
