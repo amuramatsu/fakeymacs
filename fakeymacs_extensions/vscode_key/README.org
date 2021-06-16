@@ -15,6 +15,7 @@ VSCode 用のキーの設定を行う拡張機能です。
 | vscode_prefix_key                   | 置き換えするプレフィックスキーの組み合わせ（VSCode のキー、Fakeymacs のキー）を指定する（複数指定可） |
 | use_ctrl_atmark_for_mark            | 日本語キーボードを利用する際、VSCode で  C-@ をマーク用のキーとして使うかどうかを指定する             |
 | use_direct_input_in_vscode_terminal | VSCode の Terminal内 で ４つのキー（C-k、C-r、C-s、C-y）のダイレクト入力機能を使うかどうかを指定する  |
+| esc_mode_in_keyboard_quit           | keyboard_quit 関数コール時の Esc キーの発行方法を指定する                                             |
 |-------------------------------------+-------------------------------------------------------------------------------------------------------|
 
 ※ vscode_target 変数の初期値には、ブラウザのアプリケーションソフトも複数指定しています。
@@ -35,15 +36,26 @@ True に設定した場合でも Toggle Terminal 用のキーとして C-<半角
 仕様を理解した方のみ使う機能としています。use_direct_input_in_vscode_terminal 変数を True に
 した際の仕様については、以降の説明を参照してください。
 
+※ esc_mode_in_keyboard_quit 変数の設定値には、次のいずれかの値を指定できます。
+- 1：Esc キーを常に発行する
+- 2：C-g を２回連続して押下した場合に Esc キーを発行する
+設定値 2 の利用は、VSCode で Jupyter Notebook を使う場合などを想定しています。
+設定値 1 の場合でも、C-A-g キーにより Esc キーを発行しない keyboard_quit を利用できます。
+
+※ esc_mode_in_keyboard_quit 変数の設定は、vscode_target 変数で指定する全てのアプリケーション
+ソフトに影響します。vscode_target 変数にブラウザアプリを指定している場合には、そこにも影響
+しますので、ご留意ください。
+
 *** キーバインド
 
 **** ● VSCode 用プレフィックスキーの置き換え設定
 
-|----------------------------------+----------------------------------+--------------------|
-| VSCode's prefix key              | Fakeymacs's prefix key           | Description        |
-|----------------------------------+----------------------------------+--------------------|
-| vscode_prefix_key[n][0] の設定値 | vscode_prefix_key[n][1] の設定値 | 初期値：C-k, C-A-k |
-|----------------------------------+----------------------------------+--------------------|
+|----------------------------------+----------------------------------+-------------|
+| VSCode's prefix key              | Fakeymacs's prefix key           | Description |
+|----------------------------------+----------------------------------+-------------|
+| C-k                              | C-A-k                            |             |
+| vscode_prefix_key[n][0] の設定値 | vscode_prefix_key[n][1] の設定値 |             |
+|----------------------------------+----------------------------------+-------------|
 
 ※ Fakeymacs のプレフィックスキーを利用することにより、プレフィックスキーの後に入力するキーが
 全角文字で入力されることが無くなります。
@@ -70,7 +82,7 @@ True に設定した場合でも Toggle Terminal 用のキーとして C-<半角
 | Ctl-x C-b | list_buffers     | View: Show All Editors By Most Recently Used            |                                     |
 |-----------+------------------+---------------------------------------------------------+-------------------------------------|
 
-****  「エディタ操作」のキー設定
+**** ● 「エディタ操作」のキー設定
 
 |----------------+------------------------------+-------------------------------------------+-------------|
 | Keybind        | Function                     | VSCode Command                            | Description |
@@ -84,33 +96,37 @@ True に設定した場合でも Toggle Terminal 用のキーとして C-<半角
 | C-A-<数字キー> | switch_focus(<数字キーの値>) | View: Focus Side Bar or n-th Editor Group |             |
 |----------------+------------------------------+-------------------------------------------+-------------|
 
-※ C-<数字キー> は、use_ctrl_digit_key_for_digit_argument が変数 False（初期値）の場合に機能します。
-True の場合（数引数の指定用として使われる）にこの機能を利用できるようにするため、C-A-<数字キー>
-の定義もしています。
+※ C-<数字キー> は、use_ctrl_digit_key_for_digit_argument 変数が False（初期値）の場合に機能します。
+True の場合（C-<数字キー> は数引数の指定用として使われる）には、代わりに C-A-<数字キー> が機能する
+ようにしています。
 
-****  「矩形選択 / マルチカーソル」のキー設定
+**** ● 「矩形選択 / マルチカーソル」のキー設定
 
-|---------+----------------------------+----------------------------------------------+-------------|
-| Keybind | Function                   | VSCode Command or Command ID                 | Description |
-|---------+----------------------------+----------------------------------------------+-------------|
-| C-A-p   | mark_previous_line         | cursorColumnSelectUp                         |             |
-| C-A-n   | mark_next_line             | cursorColumnSelectDown                       |             |
-| C-A-b   | mark_backward_char         | cursorColumnSelectLeft or cursorLeftSelect   |             |
-| C-A-f   | mark_forward_char          | cursorColumnSelectRight or cursorRightSelect |             |
-| C-A-S-b | mark_backward_word         | cursorWordLeftSelect                         |             |
-| C-A-S-f | mark_forward_word          | cursorWordRightSelect                        |             |
-| C-A-a   | mark_beginning_of_line     | cursorHomeSelect                             |             |
-| C-A-e   | mark_end_of_line           | cursorEndSelect                              |             |
-| C-A-d   | mark_next_like_this        | Add Selection To Next Find Match             |             |
-| C-A-S-d | mark_all_like_this         | Select All Occurrences of Find Match         |             |
-| C-A-r   | skip_to_previous_like_this | Move Last Selection To Previous Find Match   |             |
-| C-A-s   | skip_to_next_like_this     | Move Last Selection To Next Find Match       |             |
-| C-A-u   | cursor_undo                | Cursor Undo or Cursor Redo                   |             |
-| C-A-g   | cursor_undo_switching      | Cursor Undo と Cursor Redo の切替え          |             |
-|---------+----------------------------+----------------------------------------------+-------------|
+|---------+----------------------------+----------------------------------------------+------------------------------------|
+| Keybind | Function                   | VSCode Command or Command ID                 | Description                        |
+|---------+----------------------------+----------------------------------------------+------------------------------------|
+| C-A-p   | mark_previous_line         | cursorColumnSelectUp                         |                                    |
+| C-A-n   | mark_next_line             | cursorColumnSelectDown                       |                                    |
+| C-A-b   | mark_backward_char         | cursorColumnSelectLeft or cursorLeftSelect   |                                    |
+| C-A-f   | mark_forward_char          | cursorColumnSelectRight or cursorRightSelect |                                    |
+| C-A-S-b | mark_backward_word         | cursorWordLeftSelect                         |                                    |
+| C-A-S-f | mark_forward_word          | cursorWordRightSelect                        |                                    |
+| C-A-a   | mark_beginning_of_line     | cursorHomeSelect                             |                                    |
+| C-A-e   | mark_end_of_line           | cursorEndSelect                              |                                    |
+| C-A-d   | mark_next_like_this        | Add Selection To Next Find Match             |                                    |
+| C-A-S-d | mark_all_like_this         | Select All Occurrences of Find Match         |                                    |
+| C-A-s   | skip_to_next_like_this     | Move Last Selection To Next Find Match       |                                    |
+| C-A-S-s | skip_to_previous_like_this | Move Last Selection To Previous Find Match   | 多くは C-A-u で代用可              |
+| C-A-x   | expand_region              | Expand Selection                             |                                    |
+| C-A-S-x | shrink_region              | Shrink Selection                             | 多くは C-A-u で代用可              |
+| C-A-u   | cursor_undo                | Cursor Undo                                  |                                    |
+| C-A-r   | cursor_redo                | Cursor Redo                                  |                                    |
+| C-A-g   | keyboard_quit2             | -                                            | Esc キーを発行しない keyboard_quit |
+|---------+----------------------------+----------------------------------------------+------------------------------------|
 
-※ マルチカーソルを維持したまま選択したリージョンを解除するには、リージョンのコピー（M-w）、
-カーソルの移動（C-[pnbfae] 等）、マークの解除（C-Space）などを利用してください。
+※ マルチカーソルを維持したまま選択したリージョンを解除するには、Esc キーを発行しない
+keyboard_quit（C-A-g）を利用してください。（esc_mode_in_keyboard_quit 変数が 2 の場合は、
+連続入力しない C-g を利用することもできます。）
 
 ※ 「矩形選択 / マルチカーソル」の機能については、次のページを参考としてください。
 
@@ -118,16 +134,33 @@ True の場合（数引数の指定用として使われる）にこの機能を
 - https://code.visualstudio.com/docs/editor/codebasics#_column-box-selection
 - https://code.visualstudio.com/docs/editor/codebasics#_multiple-selections-multicursor
 
-****  「ターミナル操作」のキー設定
+※ 次の VSCode の Extension をインストールすると、この「矩形選択 / マルチカーソル」の機能が
+より有用なものとなります。
+
+- https://marketplace.visualstudio.com/items?itemName=dbankier.vscode-quick-select
+- https://marketplace.visualstudio.com/items?itemName=tomoki1207.vscode-input-sequence
+- https://marketplace.visualstudio.com/items?itemName=Asuka.insertnumbers
+
+キーバインドの設定は次の拡張機能の中で行っています。
+
+- https://github.com/smzht/fakeymacs/tree/master/fakeymacs_extensions/vscode_extensions
+
+****  ●「ターミナル操作」のキー設定
 
 |-----------------+-----------------+------------------------------------------+---------------------|
 | Keybind         | Function        | VSCode Command                           | Description         |
 |-----------------+-----------------+------------------------------------------+---------------------|
-| C-S-` (C-~)     | create_terminal | View: Toggle Terminal -like              | US Keyboard の場合  |
-| C-S-@ (C-`)     | create_terminal | View: Toggle Terminal -like              | JIS Keyboard の場合 |
-| C-S-<半角/全角> | create_terminal | View: Toggle Terminal -like              | JIS Keyboard の場合 |
+| C-~ (C-S-`)     | create_terminal | View: Toggle Terminal -like              | US Keyboard の場合  |
 | C-`             | toggle_terminal | Terminal: Create New Integrated Terminal | US Keyboard の場合  |
+|-----------------+-----------------+------------------------------------------+---------------------|
+
+
+|-----------------+-----------------+------------------------------------------+---------------------|
+| Keybind         | Function        | VSCode Command                           | Description         |
+|-----------------+-----------------+------------------------------------------+---------------------|
+| C-` (C-S-@)     | create_terminal | View: Toggle Terminal -like              | JIS Keyboard の場合 |
 | C-@             | toggle_terminal | Terminal: Create New Integrated Terminal | JIS Keyboard の場合 |
+| C-S-<半角/全角> | create_terminal | View: Toggle Terminal -like              | JIS Keyboard の場合 |
 | C-<半角/全角>   | toggle_terminal | Terminal: Create New Integrated Terminal | JIS Keyboard の場合 |
 |-----------------+-----------------+------------------------------------------+---------------------|
 
@@ -150,23 +183,23 @@ use_direct_input_in_vscode_terminal 変数が False（初期値）の場合で�
 次のキーを利用するようにしてください。先に説明した４つのキーが VSCode のショートカットキーとして
 認識されるように戻ります。
 
-|----------------+------------------------------+-------------------------------------+---------------------|
-| Keybind        | Function                     | VSCode Command                      | Description         |
-|----------------+------------------------------+-------------------------------------+---------------------|
-| C-`            | toggle_terminal              | Create New Integrated Terminal      | US Keyboard の場合  |
-| C-@            | toggle_terminal              | Create New Integrated Terminal      | JIS Keyboard の場合 |
-| C-<半角/全角>  | toggle_terminal              | Create New Integrated Terminal      | JIS Keyboard の場合 |
-|----------------+------------------------------+-------------------------------------+---------------------|
-| Ctl-x o        | other_group                  | Navigate Between Editor Groups      |                     |
-| C-<数字キー>   | switch_focus(<数字キーの値>) | Focus Side Bar or n-th Editor Group |                     |
-| C-A-<数字キー> | switch_focus(<数字キーの値>) | Focus Side Bar or n-th Editor Group |                     |
-|----------------+------------------------------+-------------------------------------+---------------------|
+|----------------+------------------------------+------------------------------------------+---------------------|
+| Keybind        | Function                     | VSCode Command                           | Description         |
+|----------------+------------------------------+------------------------------------------+---------------------|
+| C-`            | toggle_terminal              | Terminal: Create New Integrated Terminal | US Keyboard の場合  |
+| C-@            | toggle_terminal              | Terminal: Create New Integrated Terminal | JIS Keyboard の場合 |
+| C-<半角/全角>  | toggle_terminal              | Terminal: Create New Integrated Terminal | JIS Keyboard の場合 |
+|----------------+------------------------------+------------------------------------------+---------------------|
+| Ctl-x o        | other_group                  | Navigate Between Editor Groups           |                     |
+| C-<数字キー>   | switch_focus(<数字キーの値>) | Focus Side Bar or n-th Editor Group      |                     |
+| C-A-<数字キー> | switch_focus(<数字キーの値>) | Focus Side Bar or n-th Editor Group      |                     |
+|----------------+------------------------------+------------------------------------------+---------------------|
 
 ※ マウスのクリックでカーソル位置の変更を行うと、この状態の認識に齟齬が発生することがあります。
 その場合は、上記のいずれかのキーを押下することにより、Fakeymacs に現在の状態を再認識させるように
 してください。
 
-****  「その他」のキー設定
+**** ● 「その他」のキー設定
 
 |---------+--------------------------+---------------------+---------------------|
 | Keybind | Function                 | VSCode Command      | Description         |

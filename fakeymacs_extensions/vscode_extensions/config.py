@@ -1,7 +1,7 @@
 ﻿# -*- mode: python; coding: utf-8-with-signature-dos -*-
 
 ####################################################################################################
-## VSCode で Extension のインストールが必要な機能の設定を行う
+## VSCode Extension 用のキーの設定を行う
 ####################################################################################################
 
 try:
@@ -22,19 +22,29 @@ try:
     # 設定されているか？
     fc.vscode_occur
 except:
-    # Search in Current File Extension  を利用するかどうかを指定する
+    # Search in Current File Extension を利用するかどうかを指定する
     fc.vscode_occur = False
 
-def define_key3(window_keymap, keys, command):
-    define_key(window_keymap, keys,
-               makeKeyCommand(window_keymap, keys, command, lambda: checkWindow("Code.exe", None)))
+try:
+    # 設定されているか？
+    fc.vscode_quick_select
+except:
+    # Quick and Simple Text Selection Extension を利用するかどうかを指定する
+    fc.vscode_quick_select = False
 
-def vscodeExecuteCommand(command):
-    def _func():
-        self_insert_command("f1")()
-        princ(command)
-        self_insert_command("Enter")()
-    return _func
+try:
+    # 設定されているか？
+    fc.vscode_input_sequence
+except:
+    # vscode-input-sequence を利用するかどうかを指定する
+    fc.vscode_input_sequence = False
+
+try:
+    # 設定されているか？
+    fc.vscode_insert_numbers
+except:
+    # Insert Numbers を利用するかどうかを指定する
+    fc.vscode_insert_numbers = False
 
 if fc.vscode_dired:
     def dired():
@@ -48,10 +58,9 @@ if fc.vscode_recenter:
     def recenter():
         # VSCode Command : Center Editor Window
         self_insert_command("C-l")()
-        # vscodeExecuteCommand("C-EW")()
         # vscodeExecuteCommand("center-editor-window.center")()
 
-    define_key3(keymap_emacs, "C-l", reset_search(reset_undo(reset_counter(recenter))))
+    define_key(keymap_vscode, "C-l", reset_search(reset_undo(reset_counter(recenter))))
 
 if fc.vscode_occur:
     def occur():
@@ -60,3 +69,48 @@ if fc.vscode_occur:
         # vscodeExecuteCommand("search-in-current-file.searchInCurrentFile")()
 
     define_key3(keymap_emacs, "Ctl-x C-o", reset_search(reset_undo(reset_counter(reset_mark(occur)))))
+
+if fc.vscode_quick_select:
+    if is_japanese_keyboard:
+        quick_select_keys = {'"' : "S-2",
+                             "'" : "S-7",
+                             ";" : "Semicolon",
+                             ":" : "Colon",
+                             "`" : "S-Atmark",
+                             "(" : "S-8",
+                             ")" : "S-9",
+                             "[" : "OpenBracket",
+                             "]" : "CloseBracket",
+                             "{" : "S-OpenBracket",
+                             "}" : "S-CloseBracket",
+                             "<" : "S-Comma",
+                             ">" : "S-Period"
+                            }
+    else:
+        quick_select_keys = {'"' : "S-Quote",
+                             "'" : "Quote",
+                             ";" : "Semicolon",
+                             ":" : "S-Semicolon",
+                             "`" : "BackQuote",
+                             "(" : "S-9",
+                             ")" : "S-0",
+                             "[" : "OpenBracket",
+                             "]" : "CloseBracket",
+                             "{" : "S-OpenBracket",
+                             "}" : "S-CloseBracket",
+                             "<" : "S-Comma",
+                             ">" : "S-Period"
+                            }
+
+    for key in quick_select_keys.values():
+        mkey = "C-A-k {}".format(key)
+        define_key(keymap_vscode, mkey, reset_rect(region(getKeyCommand(keymap_vscode, mkey))))
+
+if fc.vscode_input_sequence:
+    if not fc.use_ctrl_digit_key_for_digit_argument:
+        define_key(keymap_vscode, "C-A-0", reset_rect(region(self_insert_command3("C-A-0"))))
+
+    define_key(keymap_vscode, "C-A-k 0", reset_rect(region(self_insert_command3("C-A-0"))))
+
+if fc.vscode_insert_numbers:
+    define_key(keymap_vscode, "C-A-k n", reset_rect(region(self_insert_command3("C-A-n"))))
