@@ -49,7 +49,8 @@ fc.ime_target          += [
 
 # キーマップ毎にキー設定をスキップするキーを指定する
 # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
-#   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。）
+#   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。"M-g*" のようにワイルドカードも
+#   利用することができます。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
 fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
@@ -79,6 +80,13 @@ fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
 # Emacs日本語入力モードを使うかどうかを指定する（True: 使う、False: 使わない）
 fc.use_emacs_ime_mode = True
 
+# Emacs日本語入力モードが有効なときに表示するバルーンメッセージを指定する
+# fc.emacs_ime_mode_balloon_message = None
+fc.emacs_ime_mode_balloon_message = "▲"
+
+# IME の状態を表示するバルーンメッセージを表示するかどうかを指定する（True: 表示する、False: 表示しない）
+fc.use_ime_status_balloon = True
+
 # IME をトグルで切り替えるキーを指定する（複数指定可）
 fc.toggle_input_method_key = []
 fc.toggle_input_method_key += ["C-Yen"]
@@ -95,7 +103,7 @@ fc.set_input_method_key += [["(29)", "(28)"]]
 
 ## 日本語キーボードを利用している場合、<Ａ> キーで英数入力、<あ> キーで日本語入力となる
 ## （https://docs.microsoft.com/ja-jp/windows-hardware/design/component-guidelines/keyboard-japan-ime）
-# fc.set_input_method_key += [["(26)", "(22)"]]
+fc.set_input_method_key += [["(26)", "(22)"]]
 
 ## LAlt の単押しで英数入力、RAlt の単押しで日本語入力となる
 ## （JetBrains 製の IDE でこの設定を利用するためには、ツールボタンをオンにする必要があるようです。

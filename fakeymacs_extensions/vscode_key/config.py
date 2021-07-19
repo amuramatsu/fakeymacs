@@ -59,6 +59,7 @@ except:
 
 fakeymacs.vscode_focus = "not_terminal"
 fakeymacs.rectangle_mode = False
+fakeymacs.post_processing = None
 
 def is_vscode_target(window):
     if (window.getProcessName() in fc.vscode_target and
@@ -116,6 +117,30 @@ def region(func):
         func()
         fakeymacs.forward_direction = True
     return _func
+
+def post(func):
+    def _func():
+        func()
+        if fakeymacs.post_processing:
+            fakeymacs.post_processing()
+            fakeymacs.post_processing = None
+    return _func
+
+## ファイル操作
+def find_directory():
+    # VSCode Command : File: Open Folder...
+    self_insert_command("C-k", "C-o")()
+    # vscodeExecuteCommand("workbench.action.files.openFolder")()
+
+def recentf():
+    # VSCode Command : File: Open Recent...
+    self_insert_command("C-r")()
+    # vscodeExecuteCommand("workbench.action.openRecent")()
+
+def locate():
+    # VSCode Command : Go to File...
+    self_insert_command("C-p")()
+    # vscodeExecuteCommand("workbench.action.quickOpen")()
 
 ## カーソル移動
 def previous_error():
@@ -193,6 +218,11 @@ def split_editor_right():
     # VSCode Command : View: Split Editor
     self_insert_command("C-Yen")()
     # vscodeExecuteCommand("workbench.action.splitEditor")()
+
+def rotate_layout():
+    # VSCode Command : Toggle Vertical/Horizontal Editor Layout
+    self_insert_command("A-S-0")()
+    # vscodeExecuteCommand("workbench.action.toggleEditorGroupLayout")()
 
 def other_group():
     # VSCode Command : View: Navigate Between Editor Groups
@@ -327,10 +357,12 @@ def toggle_terminal():
 def keyboard_quit3():
     if fc.esc_mode_in_keyboard_quit == 1:
         keyboard_quit(esc=True)
+        fakeymacs.post_processing = None
     else:
         if fakeymacs.last_keys in [[keymap_emacs, "C-g"],
                                    [keymap_vscode, "C-A-g"]]:
             keyboard_quit(esc=True)
+            fakeymacs.post_processing = None
         else:
             keyboard_quit(esc=False)
 
@@ -363,6 +395,11 @@ for pkey1, pkey2 in fc.vscode_prefix_key:
                     mkey = mod1 + mod2 + mod3 + key
                     define_key(keymap_vscode, "{} {}".format(pkey2, mkey), self_insert_command4(pkey1, mkey))
 
+## 「ファイル操作」のキー設定
+define_key3(keymap_emacs, "Ctl-x C-d", reset_search(reset_undo(reset_counter(reset_mark(find_directory)))))
+define_key3(keymap_emacs, "Ctl-x C-r", reset_search(reset_undo(reset_counter(reset_mark(recentf)))))
+define_key3(keymap_emacs, "Ctl-x C-l", reset_search(reset_undo(reset_counter(reset_mark(locate)))))
+
 ## 「カーソル移動」のキー設定
 define_key3(keymap_emacs, "M-g p",   reset_search(reset_undo(reset_counter(reset_mark(previous_error)))))
 define_key3(keymap_emacs, "M-g M-p", reset_search(reset_undo(reset_counter(reset_mark(previous_error)))))
@@ -373,6 +410,9 @@ if is_japanese_keyboard:
     define_key3(keymap_emacs, "Ctl-x S-Atmark",  reset_search(reset_undo(reset_counter(reset_mark(next_error)))))
 else:
     define_key3(keymap_emacs, "Ctl-x BackQuote", reset_search(reset_undo(reset_counter(reset_mark(next_error)))))
+
+define_key(keymap_vscode, "A-p", self_insert_command("C-Up"))
+define_key(keymap_vscode, "A-n", self_insert_command("C-Down"))
 
 ## 「カット / コピー」のキー設定
 define_key3(keymap_emacs, "C-k", reset_search(reset_undo(reset_counter(reset_mark(repeat3(kill_line2))))))
@@ -392,6 +432,7 @@ define_key3(keymap_emacs, "Ctl-x 0", reset_search(reset_undo(reset_counter(reset
 define_key3(keymap_emacs, "Ctl-x 1", reset_search(reset_undo(reset_counter(reset_mark(delete_other_groups)))))
 define_key3(keymap_emacs, "Ctl-x 2", split_editor_below)
 define_key3(keymap_emacs, "Ctl-x 3", split_editor_right)
+define_key3(keymap_emacs, "Ctl-x 4", rotate_layout)
 define_key3(keymap_emacs, "Ctl-x o", reset_search(reset_undo(reset_counter(reset_mark(other_group)))))
 
 if fc.use_ctrl_digit_key_for_digit_argument:
@@ -436,6 +477,8 @@ else:
     define_key(keymap_vscode, "C-BackQuote",   reset_search(reset_undo(reset_counter(reset_mark(toggle_terminal)))))
 
 ## 「その他」のキー設定
+define_key3(keymap_emacs, "Enter",       post(reset_undo(reset_counter(reset_mark(repeat(newline))))))
+define_key3(keymap_emacs, "C-m",         post(reset_undo(reset_counter(reset_mark(repeat(newline))))))
 define_key3(keymap_emacs, "C-g",         reset_search(reset_counter(reset_mark(keyboard_quit3))))
 define_key3(keymap_emacs, "M-x",         reset_search(reset_undo(reset_counter(reset_mark(execute_extended_command)))))
 define_key3(keymap_emacs, "M-Semicolon", reset_search(reset_undo(reset_counter(reset_mark(comment_dwim)))))

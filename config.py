@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20210603_01"
+fakeymacs_version = "20210625_02"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -63,6 +63,10 @@ fakeymacs_version = "20210603_01"
 #     （間違って日本語入力をしてしまった時のキー操作を想定しての対策）
 # ・Emacs日本語入力モードの使用を有効にした際、emacs_ime_mode_balloon_message 変数の
 #   設定でバルーンメッセージとして表示する文字列を指定できる。
+# ・use_ime_status_balloon 変数の設定により、IME の状態を表示するバルーンメッセージを
+#   表示するかどうかを指定できる。
+# ・ime_status_balloon_message 変数の設定により、IME の状態を表示するバルーンメッセージ
+#   の組み合わせ（英数入力、日本語入力）を指定できる。
 #
 # ＜Emacsキーバインド設定を有効にしたアプリケーションソフトでの動き＞
 # ・use_ctrl_i_as_tab 変数の設定により、C-iキーを Tabキーとして使うかどうかを指定できる。
@@ -304,7 +308,8 @@ def configure(keymap):
 
     # キーマップ毎にキー設定をスキップするキーを指定する
     # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
-    #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。）
+    #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。"M-g*" のようにワイルドカードも
+    #   利用することができます。）
     # （ここで指定したキーに新たに別のキー設定をしたいときには、define_key2 関数を利用してください）
     fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
                                "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
@@ -363,6 +368,12 @@ def configure(keymap):
     # fc.emacs_ime_mode_balloon_message = None
     fc.emacs_ime_mode_balloon_message = "▲"
 
+    # IME の状態を表示するバルーンメッセージを表示するかどうかを指定する（True: 表示する、False: 表示しない）
+    fc.use_ime_status_balloon = True
+
+    # IME の状態を表示するバルーンメッセージの組み合わせ（英数入力、日本語入力）を指定する
+    fc.ime_status_balloon_message = ["[A]", "[あ]"]
+
     # IME をトグルで切り替えるキーを指定する（複数指定可）
     fc.toggle_input_method_key = []
     fc.toggle_input_method_key += ["C-Yen"]
@@ -379,7 +390,7 @@ def configure(keymap):
 
     ## 日本語キーボードを利用している場合、<Ａ> キーで英数入力、<あ> キーで日本語入力となる
     ## （https://docs.microsoft.com/ja-jp/windows-hardware/design/component-guidelines/keyboard-japan-ime）
-    # fc.set_input_method_key += [["(26)", "(22)"]]
+    fc.set_input_method_key += [["(26)", "(22)"]]
 
     ## LAlt の単押しで英数入力、RAlt の単押しで日本語入力となる
     ## （JetBrains 製の IDE でこの設定を利用するためには、ツールボタンをオンにする必要があるようです。
@@ -391,6 +402,9 @@ def configure(keymap):
 
     ## C-j で英数入力、C-o で日本語入力となる（toggle_input_method_key の設定より優先）
     # fc.set_input_method_key += [["C-j", "C-o"]]
+
+    ## C-j で英数入力、C-i で日本語入力となる（C-i が Tab として利用できなくなる）
+    # fc.set_input_method_key += [["C-j", "C-i"]]
     #---------------------------------------------------------------------------------------------------
 
     #---------------------------------------------------------------------------------------------------
@@ -741,21 +755,26 @@ def configure(keymap):
 
         popImeBalloon(ime_status)
 
-    def popImeBalloon(ime_status=None):
-        if ime_status is None:
-            ime_status = keymap.getWindow().getImeStatus()
-
+    def popImeBalloon(ime_status=None, force=False):
         if not fakeymacs.is_playing_kmacro:
-            if ime_status:
-                message = "[あ]"
-            else:
-                message = "[A]"
+            if force or fc.use_ime_status_balloon:
+                # LINE アプリなど、Qt5152QWindowIcon にマッチするクラスをもつアプリは入力文字に
+                # バルーンヘルプが被るので、バルーンヘルプの表示対象から外す
+                # （ただし、force が True の場合は除く）
+                if force or not checkWindow(None, "Qt5152QWindowIcon"):
+                    if ime_status is None:
+                        ime_status = keymap.getWindow().getImeStatus()
 
-            try:
-                # IME の状態をバルーンヘルプで表示する
-                keymap.popBalloon("ime_status", message, 500)
-            except:
-                pass
+                    if ime_status:
+                        message = fc.ime_status_balloon_message[1]
+                    else:
+                        message = fc.ime_status_balloon_message[0]
+
+                    try:
+                        # IME の状態をバルーンヘルプで表示する
+                        keymap.popBalloon("ime_status", message, 500)
+                    except:
+                        pass
 
     def reconversion(reconv_key, cancel_key):
         def _func():
@@ -1119,10 +1138,11 @@ def configure(keymap):
 
         keymap.command_RecordStop()
 
-        if fakeymacs.is_undo_mode:
-            fakeymacs.is_undo_mode = False
-        else:
-            fakeymacs.is_undo_mode = True
+        if fakeymacs.forward_direction is None:
+            if fakeymacs.is_undo_mode:
+                fakeymacs.is_undo_mode = False
+            else:
+                fakeymacs.is_undo_mode = True
 
     def kill_emacs():
         # Excel のファイルを開いた直後一回目、kill_emacs が正常に動作しない。その対策。
@@ -1292,6 +1312,9 @@ def configure(keymap):
         return key_lists
 
     def define_key(window_keymap, keys, command, skip_check=True):
+        if keys is None:
+            return
+
         if skip_check:
             # local スコープで参照できるようにする
             try:
@@ -1308,9 +1331,10 @@ def configure(keymap):
             for keymap_name in fc.skip_settings_key:
                 if (keymap_name in locals() and
                     window_keymap == locals()[keymap_name]):
-                    if keys in fc.skip_settings_key[keymap_name]:
-                        print("skip settings key : [" + keymap_name + "] " + keys)
-                        return
+                    for skey in fc.skip_settings_key[keymap_name]:
+                        if fnmatch.fnmatch(keys, skey):
+                            print("skip settings key : [" + keymap_name + "] " + keys)
+                            return
 
         def keyCommand(key):
             # local スコープで参照できるようにする
@@ -1538,7 +1562,7 @@ def configure(keymap):
     # https://bsakatu.net/doc/virtual-key-of-windows/
     # http://www3.airnet.ne.jp/saka/hardware/keyboard/109scode.html
 
-    ## 全てキーパターンの設定（キーの入力記録を残すための設定）
+    ## 全てのキーパターンの設定（キーの入力記録を残すための設定）
     for vkey in vkeys():
         key = vkToStr(vkey)
         for mod1 in ["", "W-"]:
@@ -1546,7 +1570,7 @@ def configure(keymap):
                 for mod3 in ["", "C-"]:
                     for mod4 in ["", "S-"]:
                         mkey = mod1 + mod2 + mod3 + mod4 + key
-                        define_key(keymap_emacs, mkey, self_insert_command(mkey))
+                        define_key2(keymap_emacs, mkey, self_insert_command(mkey))
 
     ## マルチストロークキーの設定
     define_key(keymap_emacs, "Ctl-x",  keymap.defineMultiStrokeKeymap(fc.ctl_x_prefix_key))
@@ -1762,12 +1786,10 @@ def configure(keymap):
         define_key(keymap_ime,   key, toggle_input_method)
 
     for disable_key, enable_key in fc.set_input_method_key:
-        if disable_key:
-            define_key(keymap_emacs, disable_key, disable_input_method)
-            define_key(keymap_ime,   disable_key, disable_input_method)
-        if enable_key:
-            define_key(keymap_emacs, enable_key, enable_input_method)
-            define_key(keymap_ime,   enable_key, enable_input_method)
+        define_key(keymap_emacs, disable_key, disable_input_method)
+        define_key(keymap_ime,   disable_key, disable_input_method)
+        define_key(keymap_emacs, enable_key,  enable_input_method)
+        define_key(keymap_ime,   enable_key,  enable_input_method)
 
     ## 「再変換」、「確定取り消し」のキー設定
     if fc.reconversion_key:
@@ -1890,8 +1912,9 @@ def configure(keymap):
         def ei_popBalloon(ime_mode_status):
             if not fakeymacs.is_playing_kmacro:
                 if fc.emacs_ime_mode_balloon_message:
-                    # LINE は入力文字にバルーンヘルプが被るので、対象外とする
-                    if not checkWindow("LINE*.EXE", "Qt5QWindowIcon"): # LINE
+                    # Qt5*QWindowIcon にマッチするクラスをもつアプリは入力文字にバルーンヘルプが
+                    # 被るので、バルーンヘルプの表示対象から外す
+                    if not checkWindow(None, "Qt5*QWindowIcon"):
                         if ime_mode_status:
                             keymap.popBalloon("emacs_ime_mode", fc.emacs_ime_mode_balloon_message)
                         else:
@@ -1907,14 +1930,14 @@ def configure(keymap):
         ## キーバインド（Emacs日本語入力モード用）
         ##################################################
 
-        ## 全てキーパターンの設定（キーの入力記録を残すための設定）
+        ## 全てのキーパターンの設定（キーの入力記録を残すための設定）
         for vkey in vkeys():
             key = vkToStr(vkey)
             for mod1 in ["", "A-"]:
                 for mod2 in ["", "C-"]:
                     for mod3 in ["", "S-"]:
                         mkey = mod1 + mod2 + mod3 + key
-                        define_key(keymap_ei, mkey, self_insert_command(mkey))
+                        define_key2(keymap_ei, mkey, self_insert_command(mkey))
 
         ## 「IME の切り替え」のキー設定
         define_key(keymap_ei, "(243)",  ei_disable_input_method)
@@ -1962,10 +1985,8 @@ def configure(keymap):
 
         ## 「IME の切り替え」のキー設定
         for disable_key, enable_key in fc.set_input_method_key:
-            if disable_key:
-                define_key(keymap_ei, disable_key, ei_disable_input_method2(keymap_ei_dup, disable_key))
-            if enable_key:
-                define_key(keymap_ei, enable_key, ei_enable_input_method2(keymap_ei_dup, enable_key))
+            define_key(keymap_ei, disable_key, ei_disable_input_method2(keymap_ei_dup, disable_key))
+            define_key(keymap_ei, enable_key,  ei_enable_input_method2(keymap_ei_dup, enable_key))
 
 
     ###########################################################################

@@ -3,9 +3,14 @@
 # 本ファイルは、config_personal.py というファイル名にすることで vscode_key Extension の
 # 機能拡張ファイルとして機能します。以下はサンプルコードです。
 
-def toggle_editor_layout():
-    # VSCode Command : Toggle Vertical/Horizontal Editor Layout
-    self_insert_command("A-S-0")()
-    # vscodeExecuteCommand("workbench.action.toggleEditorGroupLayout")()
+# --------------------------------------------------------------------------------------------------
 
-define_key3(keymap_emacs, "Ctl-x 4", toggle_editor_layout)
+def toggle_panel():
+    # VSCode Command : View: Tggole Panel
+    self_insert_command("C-j")()
+    # vscodeExecuteCommand("workbench.action.togglePanel")()
+
+# 本設定を行わなくとも、C-q C-j を利用することで対応は可能
+define_key3(keymap_emacs, "Ctl-x C-j", toggle_panel)
+
+# --------------------------------------------------------------------------------------------------
