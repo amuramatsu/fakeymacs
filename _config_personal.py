@@ -116,7 +116,7 @@ fc.set_input_method_key += [["(26)", "(22)"]]
 ## C-j で英数入力、C-o で日本語入力となる（toggle_input_method_key の設定より優先）
 # fc.set_input_method_key += [["C-j", "C-o"]]
 
-## C-j で英数入力、C-i で日本語入力となる（C-i が Tab として利用できなくなる）
+## C-j で英数入力、C-i で日本語入力となる（C-i が Tab として利用できなくなるが、トグルキー C-o との併用可）
 # fc.set_input_method_key += [["C-j", "C-i"]]
 #---------------------------------------------------------------------------------------------------
 
@@ -304,5 +304,11 @@ if 0:
     fc.pop_ime_balloon_key = ["C-Semicolon"]
     # fc.pop_ime_balloon_key = ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
     exec(readConfigExtension(r"pop_ime_balloon\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# 60% US キーボードのキー不足（Delete キー、Backquote キー不足）の対策を行う
+if 0:
+    exec(readConfigExtension(r"compact_keyboard\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------

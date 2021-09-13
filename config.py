@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20210727_02"
+fakeymacs_version = "20210913_02"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -253,7 +253,7 @@ def configure(keymap):
                                "SLES-12.exe",            # WSL
                                "openSUSE-42.exe",        # WSL
                                "openSUSE-Leap-15-1.exe", # WSL
-                               "mstsc.exe",              # Remote Desktop
+                               "mstsc.exe",              # Remote Desktop / WSLg
                                "WindowsTerminal.exe",    # Windows Terminal
                                "mintty.exe",             # mintty
                                "Cmder.exe",              # Cmder
@@ -403,7 +403,7 @@ def configure(keymap):
     ## C-j で英数入力、C-o で日本語入力となる（toggle_input_method_key の設定より優先）
     # fc.set_input_method_key += [["C-j", "C-o"]]
 
-    ## C-j で英数入力、C-i で日本語入力となる（C-i が Tab として利用できなくなる）
+    ## C-j で英数入力、C-i で日本語入力となる（C-i が Tab として利用できなくなるが、トグルキー C-o との併用可）
     # fc.set_input_method_key += [["C-j", "C-i"]]
     #---------------------------------------------------------------------------------------------------
 
@@ -559,7 +559,8 @@ def configure(keymap):
     # fc.desktop_switching_key += [["W-Left", "W-Right"]]
 
     # アクティブウィンドウを仮想デスクトップ間で移動するキーの組み合わせ（前、後 の順）を指定する（複数指定可）
-    # （本機能を利用する場合は、Microsoft Store から SylphyHorn をインストールしてください）
+    # （本機能を利用する場合は、Microsoft Store から SylphyHorn をインストールしてください。
+    #   Windows 10 では動作を確認しておりますが、Windows 11 では正常に動作しないようです。）
     # （デフォルトキーは、["W-C-A-Left", "W-C-A-Right"] です。この設定は変更しないでください）
     # （仮想デスクトップ切り替え時の通知を ON にすると処理が重くなります。代わりに、トレイアイコンに
     #   デスクトップ番号を表示する機能を ON にすると良いようです。）
@@ -610,6 +611,7 @@ def configure(keymap):
     fakeymacs.last_window = None
     fakeymacs.clipboard_hook = True
     fakeymacs.last_keys = [None, None]
+    fakeymacs.correct_ime_status = False
 
     def is_emacs_target(window):
         last_window  = fakeymacs.last_window
@@ -632,6 +634,12 @@ def configure(keymap):
                                            for key in fc.emacs_exclusion_key[process_name]]
             else:
                 fakeymacs.exclution_key = []
+
+            if fc.ime == "Google_IME":
+                if window.getProcessName() in ["chrome.exe", "msedge.exe"]:
+                    fakeymacs.correct_ime_status = True
+                else:
+                    fakeymacs.correct_ime_status = False
 
             reset_undo(reset_counter(reset_mark(lambda: None)))()
             fakeymacs.ime_cancel = False
@@ -744,6 +752,8 @@ def configure(keymap):
         setImeStatus(keymap.getWindow().getImeStatus() ^ 1)
 
     def setImeStatus(ime_status):
+        correctImeStatus()
+
         if keymap.getWindow().getImeStatus() != ime_status:
             # IME を切り替える
             # （keymap.getWindow().setImeStatus(ime_status) を使わないのは、キーボードマクロの再生時に
@@ -754,6 +764,16 @@ def configure(keymap):
                 delay(0.2)
 
         popImeBalloon(ime_status)
+
+    def correctImeStatus():
+        # Chrome 92 の Chromium 系ブラウザでアドレスバーにカーソルを移動した際、強制的に
+        # ascii入力モードに移行する不具合？が発生する。さらに Google日本語入力を利用している
+        # 場合、keymap.getWindow().getImeStatus() が True を返すため、Emacs日本語入力モード
+        # の挙動がおかしくなる。本関数は、これを改善する。
+        if fakeymacs.correct_ime_status:
+            if keymap.getWindow().getImeStatus():
+                keymap.getWindow().setImeStatus(0) # この行は必要
+                keymap.getWindow().setImeStatus(1)
 
     def popImeBalloon(ime_status=None, force=False):
         if not fakeymacs.is_playing_kmacro:
@@ -1016,10 +1036,13 @@ def configure(keymap):
 
     def other_window():
         window_list = getWindowList()
-        for wnd in window_list[1:]:
-            if not wnd.isMinimized():
-                wnd.getLastActivePopup().setForeground()
-                break
+        try:
+            for wnd in window_list[1:]:
+                if not wnd.isMinimized():
+                    wnd.getLastActivePopup().setForeground()
+                    break
+        except:
+            pass
 
     ##################################################
     ## 文字列検索 / 置換
@@ -1388,6 +1411,20 @@ def configure(keymap):
     def define_key2(window_keymap, keys, command):
         define_key(window_keymap, keys, command, skip_check=False)
 
+    def define_key3(window_keymap, keys, command, check_func):
+        define_key(window_keymap, keys, makeKeyCommand(window_keymap, keys, command, check_func))
+
+    def getKeyCommand(window_keymap, keys):
+        try:
+            key_list = kbd(keys)[-1]
+            for key in key_list:
+                window_keymap = window_keymap[key]
+            func = window_keymap
+        except:
+            func = None
+
+        return func
+
     def makeKeyCommand(window_keymap, keys, command, check_func):
         func = getKeyCommand(window_keymap, keys)
         if func is None:
@@ -1404,17 +1441,6 @@ def configure(keymap):
                 func()
         return _func
 
-    def getKeyCommand(window_keymap, keys):
-        try:
-            key_list = kbd(keys)[-1]
-            for key in key_list:
-                window_keymap = window_keymap[key]
-            func = window_keymap
-        except:
-            func = None
-
-        return func
-
     def self_insert_command(*keys):
         func = keymap.InputKeyCommand(*list(map(addSideOfModifierKey, keys)))
         def _func():
@@ -1425,6 +1451,7 @@ def configure(keymap):
     def self_insert_command2(*keys):
         func = self_insert_command(*keys)
         def _func():
+            correctImeStatus()
             func()
             if fc.use_emacs_ime_mode:
                 if keymap.getWindow().getImeStatus():
@@ -1453,13 +1480,16 @@ def configure(keymap):
         return _func
 
     def mark(func, forward_direction):
+        # M-< や M-> 押下時に D-Shift が解除されないようにする対策
+        func_d_shift = self_insert_command("D-LShift", "D-RShift")
+        func_u_shift = self_insert_command("U-LShift", "U-RShift")
         def _func():
             if fakeymacs.is_marked:
-                # D-Shift だと、M-< や M-> 押下時に、D-Shift が解除されてしまう。その対策。
-                self_insert_command("D-LShift", "D-RShift")()
-                delay()
+                func_d_shift()
+                # Windows 11 で遅延が顕著に発生するようになったので一旦コメント化（必要かもしれないが..）
+                # delay()
                 func()
-                self_insert_command("U-LShift", "U-RShift")()
+                func_u_shift()
 
                 # fakeymacs.forward_direction が未設定の場合、設定する
                 if fakeymacs.forward_direction is None:
@@ -1470,9 +1500,10 @@ def configure(keymap):
         return _func
 
     def mark2(func, forward_direction):
+        func_mark = mark(func, forward_direction)
         def _func():
             fakeymacs.is_marked = True
-            mark(func, forward_direction)()
+            func_mark()
             fakeymacs.is_marked = False
         return _func
 
@@ -2168,11 +2199,15 @@ def configure(keymap):
 
 
     ###########################################################################
-    ## タスク切り替え画面の設定
+    ## タスク切り替え画面／タスクビューの設定
     ###########################################################################
 
     def is_task_switching_window(window):
-        if window.getClassName() in ("MultitaskingViewFrame", "TaskSwitcherWnd"):
+        if (window.getProcessName() == "explorer.exe" and
+            window.getClassName() in ["MultitaskingViewFrame",
+                                      "TaskSwitcherWnd",
+                                      "Windows.UI.Core.CoreWindow",
+                                      "Windows.UI.Input.InputSite.WindowClass"]):
             return True
         else:
             return False
@@ -2180,14 +2215,20 @@ def configure(keymap):
     keymap_tsw = keymap.defineWindowKeymap(check_func=is_task_switching_window)
 
     ##################################################
-    ## キーバインド（タスク切り替え画面用）
+    ## キーバインド（タスク切り替え画面／タスクビュー用）
     ##################################################
 
-    define_key(keymap_tsw, "A-b", previous_window)
-    define_key(keymap_tsw, "A-f", next_window)
-    define_key(keymap_tsw, "A-p", previous_window)
-    define_key(keymap_tsw, "A-n", next_window)
+    define_key(keymap_tsw, "A-b", self_insert_command("A-Left"))
+    define_key(keymap_tsw, "A-f", self_insert_command("A-Right"))
+    define_key(keymap_tsw, "A-p", self_insert_command("A-Up"))
+    define_key(keymap_tsw, "A-n", self_insert_command("A-Down"))
     define_key(keymap_tsw, "A-g", self_insert_command("A-Esc"))
+
+    define_key(keymap_tsw, "C-b", backward_char)
+    define_key(keymap_tsw, "C-f", forward_char)
+    define_key(keymap_tsw, "C-p", previous_line)
+    define_key(keymap_tsw, "C-n", next_line)
+    define_key(keymap_tsw, "C-g", self_insert_command("Esc"))
 
 
     ###########################################################################
