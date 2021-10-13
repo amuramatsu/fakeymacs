@@ -360,7 +360,7 @@ if 0:
     fc.vscode_target += ["chrome.exe",
                          "msedge.exe",
                          "firefox.exe"
-                        ]
+                         ]
     # fc.vscode_prefix_key = [["C-;", "C-A-;"]]
     fc.use_ctrl_atmark_for_mark = False
     fc.use_direct_input_in_vscode_terminal = False
@@ -449,5 +449,11 @@ if 0:
 # 60% US キーボードのキー不足（Delete キー、Backquote キー不足）の対策を行う
 if 0:
     exec(readConfigExtension(r"compact_keyboard\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# 半角と全角の入力を間違えた際、入力モードの切り替えと入力文字の変換を行う
+if 0:
+    exec(readConfigExtension(r"zenkaku_hankaku\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
