@@ -54,7 +54,7 @@ if fc.vscode_dired:
         vscodeExecuteCommand("Odb")()
         # vscodeExecuteCommand("extension.dired.open")()
 
-    define_key_v(keymap_emacs, "Ctl-x d",  reset_search(reset_undo(reset_counter(reset_mark(dired)))))
+    define_key(keymap_vscode, "Ctl-x d",  reset_search(reset_undo(reset_counter(reset_mark(dired)))))
 
 # --------------------------------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ if fc.vscode_occur:
         vscodeExecuteCommand("SiCF")()
         # vscodeExecuteCommand("search-in-current-file.searchInCurrentFile")()
 
-    define_key_v(keymap_emacs, "Ctl-x C-o", reset_search(reset_undo(reset_counter(reset_mark(occur)))))
+    define_key(keymap_vscode, "Ctl-x C-o", reset_search(reset_undo(reset_counter(reset_mark(occur)))))
 
 # --------------------------------------------------------------------------------------------------
 
@@ -93,7 +93,7 @@ if fc.vscode_quick_select:
                              "}" : "S-CloseBracket",
                              "<" : "S-Comma",
                              ">" : "S-Period"
-                            }
+                             }
     else:
         quick_select_keys = {'"' : "S-Quote",
                              "'" : "Quote",
@@ -108,7 +108,7 @@ if fc.vscode_quick_select:
                              "}" : "S-CloseBracket",
                              "<" : "S-Comma",
                              ">" : "S-Period"
-                            }
+                             }
 
     for key in quick_select_keys.values():
         mkey = "C-A-k {}".format(key)
@@ -118,7 +118,7 @@ if fc.vscode_quick_select:
 
 if fc.vscode_input_sequence:
     def input_sequence():
-        fakeymacs.post_processing = lambda: region(lambda: None)()
+        fakeymacs_vscode.post_processing = lambda: region(lambda: None)()
         self_insert_command3("C-A-0")()
 
     if not fc.use_ctrl_digit_key_for_digit_argument:
@@ -130,7 +130,7 @@ if fc.vscode_input_sequence:
 
 if fc.vscode_insert_numbers:
     def insert_numbers():
-        fakeymacs.post_processing = lambda: region(lambda: None)()
+        fakeymacs_vscode.post_processing = lambda: region(lambda: None)()
         self_insert_command3("C-A-n")()
 
     define_key(keymap_vscode, "C-A-k n", reset_rect(insert_numbers))

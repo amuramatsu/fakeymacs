@@ -39,13 +39,11 @@ fc.ime = "old_Microsoft_IME"
 
 # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
 # （Keyhac のメニューから「内部ログ」を ON にすると processname や classname を確認することができます）
-fc.not_emacs_target    += [
-                          ]
+fc.not_emacs_target    += []
 
 # IME の切り替え“のみをしたい”アプリケーションソフトを指定する
 # （指定できるアプリケーションソフトは、not_emacs_target で（除外）指定したものからのみとなります）
-fc.ime_target          += [
-                          ]
+fc.ime_target          += []
 
 # キーマップ毎にキー設定をスキップするキーを指定する
 # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
@@ -59,7 +57,7 @@ fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
                            "keymap_ei"        : [], # Emacs 日本語入力モード用 Keymap
                            "keymap_tsw"       : [], # タスク切り替え画面用 Keymap
                            "keymap_lw"        : [], # リストウィンドウ用 Keymap
-                          }
+                           }
 
 # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
 # （リストに指定するキーは、Keyhac で指定可能なマルチストロークではないキーとしてください。
@@ -68,7 +66,7 @@ fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
                            "msedge.exe"       : ["C-l", "C-t"],
                            "firefox.exe"      : ["C-l", "C-t"],
                            "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
-                          }
+                           }
 
 # 左右どちらの Ctrlキーを使うかを指定する（"L": 左、"R": 右）
 # fc.side_of_ctrl_key = "R"
@@ -221,7 +219,7 @@ if 1:
     fc.vscode_target += ["chrome.exe",
                          "msedge.exe",
                          "firefox.exe"
-                        ]
+                         ]
     # fc.vscode_prefix_key = [["C-;", "C-A-;"]]
     fc.use_ctrl_atmark_for_mark = False
     fc.use_direct_input_in_vscode_terminal = False
@@ -310,5 +308,11 @@ if 0:
 # 60% US キーボードのキー不足（Delete キー、Backquote キー不足）の対策を行う
 if 0:
     exec(readConfigExtension(r"compact_keyboard\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# 半角と全角の入力を間違えた際、入力モードの切り替えと入力文字の変換を行う
+if 0:
+    exec(readConfigExtension(r"zenkaku_hankaku\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------

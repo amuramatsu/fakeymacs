@@ -16,10 +16,12 @@ except:
                         "XWin_Cygwin_1.16.3.exe", # MobaXterm/X
                         "Xming.exe",              # Xming
                         "vcxsrv.exe",             # VcXsrv
+                        "GWSL_vcxsrv.exe",        # GWSL
+                        "GWSL_vcxsrv_lowdpi.exe", # GWSL
                         "X410.exe",               # X410
                         "Xpra-Launcher.exe",      # Xpra
                         "mstsc.exe",              # WSLg
-                       ]
+                        ]
 
 def is_real_emacs(window):
     if (window.getClassName() == "Emacs" or

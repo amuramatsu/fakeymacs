@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20210913_02"
+fakeymacs_version = "20211007_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -226,6 +226,19 @@ def configure(keymap):
     # fc.ime = "Google_IME"
     # fc.ime = None
 
+    # Chromium 系ブラウザで発生する問題の対策を行うかどうかを指定する（True: 対策する、False: 対策しない）
+    # （Chromium 系ブラウザのバージョン 92 では、アドレスバーにカーソルを移動した際、強制的に ASCII入力
+    #   モードに移行する不具合が発生します。（バージョン 93 で対策済みですが、過去にも度々発生しています）
+    #   （https://did2memo.net/2021/07/22/chrome-japanese-ime-off-issue-chrome-92/）
+    #   さらに Google日本語入力を利用している場合、keymap.getWindow().getImeStatus() が True を返すため、
+    #   Emacs日本語入力モードの挙動がおかしくなります。この対策を行うかどうかを指定します。）
+    fc.correct_ime_status = False
+
+    # 上記の対策を行う Chromium 系ブラウザのプログラム名称を指定する
+    fc.chromium_browser_list = ["chrome.exe",
+                                "msedge.exe",
+                                ]
+
     # 個人設定ファイルのセクション [section-options] を読み込んで実行する
     exec(readConfigPersonal("[section-options]"), dict(globals(), **locals()))
 
@@ -243,7 +256,8 @@ def configure(keymap):
 
     # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
     # （Keyhac のメニューから「内部ログ」を ON にすると processname や classname を確認することができます）
-    fc.not_emacs_target     = ["bash.exe",               # WSL
+    fc.not_emacs_target     = ["wsl.exe",                # WSL
+                               "bash.exe",               # WSL
                                "ubuntu.exe",             # WSL
                                "ubuntu1604.exe",         # WSL
                                "ubuntu1804.exe",         # WSL
@@ -272,6 +286,8 @@ def configure(keymap):
                                "XWin_Cygwin_1.16.3.exe", # MobaXterm/X
                                "Xming.exe",              # Xming
                                "vcxsrv.exe",             # VcXsrv
+                               "GWSL_vcxsrv.exe",        # GWSL
+                               "GWSL_vcxsrv_lowdpi.exe", # GWSL
                                "X410.exe",               # X410
                                "Xpra-Launcher.exe",      # Xpra
                                "putty.exe",              # PuTTY
@@ -280,11 +296,12 @@ def configure(keymap):
                                "TurboVNC.exe",           # TurboVNC
                                "vncviewer.exe",          # UltraVNC
                                "vncviewer64.exe",        # UltraVNC
-                              ]
+                               ]
 
     # IME の切り替え“のみをしたい”アプリケーションソフトを指定する
     # （指定できるアプリケーションソフトは、not_emacs_target で（除外）指定したものからのみとなります）
-    fc.ime_target           = ["bash.exe",               # WSL
+    fc.ime_target           = ["wsl.exe",                # WSL
+                               "bash.exe",               # WSL
                                "ubuntu.exe",             # WSL
                                "ubuntu1604.exe",         # WSL
                                "ubuntu1804.exe",         # WSL
@@ -304,7 +321,7 @@ def configure(keymap):
                                "putty.exe",              # PuTTY
                                "ttermpro.exe",           # TeraTerm
                                "MobaXterm.exe",          # MobaXterm
-                              ]
+                               ]
 
     # キーマップ毎にキー設定をスキップするキーを指定する
     # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
@@ -317,7 +334,7 @@ def configure(keymap):
                                "keymap_ei"        : [], # Emacs 日本語入力モード用 Keymap
                                "keymap_tsw"       : [], # タスク切り替え画面用 Keymap
                                "keymap_lw"        : [], # リストウィンドウ用 Keymap
-                              }
+                               }
 
     # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
     # （リストに指定するキーは、Keyhac で指定可能なマルチストロークではないキーとしてください。
@@ -327,7 +344,7 @@ def configure(keymap):
                                "msedge.exe"       : ["C-l", "C-t"],
                                "firefox.exe"      : ["C-l", "C-t"],
                                "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
-                              }
+                               }
 
     # clipboard 監視の対象外とするアプリケーションソフトを指定する
     fc.not_clipboard_target = []
@@ -620,7 +637,7 @@ def configure(keymap):
 
         if window != last_window:
             if (process_name in fc.not_clipboard_target or
-                any([checkWindow(None, c, window) for c in fc.not_clipboard_target_class])):
+                any([checkWindow(None, c, None, window) for c in fc.not_clipboard_target_class])):
                 # クリップボードの監視用のフックを無効にする
                 keymap.clipboard_history.enableHook(False)
                 fakeymacs.clipboard_hook = False
@@ -635,11 +652,12 @@ def configure(keymap):
             else:
                 fakeymacs.exclution_key = []
 
-            if fc.ime == "Google_IME":
-                if window.getProcessName() in ["chrome.exe", "msedge.exe"]:
-                    fakeymacs.correct_ime_status = True
-                else:
-                    fakeymacs.correct_ime_status = False
+            if fc.correct_ime_status:
+                if fc.ime == "Google_IME":
+                    if window.getProcessName() in fc.chromium_browser_list:
+                        fakeymacs.correct_ime_status = True
+                    else:
+                        fakeymacs.correct_ime_status = False
 
             reset_undo(reset_counter(reset_mark(lambda: None)))()
             fakeymacs.ime_cancel = False
@@ -766,10 +784,7 @@ def configure(keymap):
         popImeBalloon(ime_status)
 
     def correctImeStatus():
-        # Chrome 92 の Chromium 系ブラウザでアドレスバーにカーソルを移動した際、強制的に
-        # ascii入力モードに移行する不具合？が発生する。さらに Google日本語入力を利用している
-        # 場合、keymap.getWindow().getImeStatus() が True を返すため、Emacs日本語入力モード
-        # の挙動がおかしくなる。本関数は、これを改善する。
+        # Chromium 系ブラウザで発生する問題の対策を行う
         if fakeymacs.correct_ime_status:
             if keymap.getWindow().getImeStatus():
                 keymap.getWindow().setImeStatus(0) # この行は必要
@@ -1053,7 +1068,7 @@ def configure(keymap):
             self_insert_command({"backward":"C-r", "forward":"C-s"}[direction])()
         else:
             if fakeymacs.is_searching:
-                if checkWindow("EXCEL.EXE", None): # Microsoft Excel
+                if checkWindow("EXCEL.EXE"): # Microsoft Excel
                     if checkWindow(None, "EDTBX"): # 検索ウィンドウ
                         self_insert_command({"backward":"A-S-f", "forward":"A-f"}[direction])()
                     else:
@@ -1254,7 +1269,7 @@ def configure(keymap):
                     self_insert_command("Right", "Left")()
 
             # Microsoft Excel 2019 より前のバージョンでは必要な設定の可能性あり
-            # elif checkWindow("EXCEL.EXE", None): # Microsoft Excel
+            # elif checkWindow("EXCEL.EXE"): # Microsoft Excel
             #     # 選択されているリージョンのハイライトを解除するためにカーソルを移動する
             #     if fakeymacs.forward_direction:
             #         self_insert_command("Left", "Right")()
@@ -1268,11 +1283,12 @@ def configure(keymap):
                 else:
                     self_insert_command("Left")()
 
-    def checkWindow(process_name, class_name, window=None):
+    def checkWindow(process_name=None, class_name=None, text=None, window=None):
         if window is None:
             window = keymap.getWindow()
         return ((process_name is None or fnmatch.fnmatch(window.getProcessName(), process_name)) and
-                (class_name is None or fnmatch.fnmatch(window.getClassName(), class_name)))
+                (class_name is None or fnmatch.fnmatch(window.getClassName(), class_name)) and
+                (text is None or fnmatch.fnmatch(window.getText(), text)))
 
     def vkeys():
         vkeys = list(keyCondition.vk_str_table)
@@ -1299,35 +1315,35 @@ def configure(keymap):
             key_list0 = []
             key_list1 = []
             key_list2 = []
-            mata_flg  = False
 
             for key in keys.split():
                 if key == "Ctl-x":
                     key = fc.ctl_x_prefix_key
 
-                if "M-" in key:
+                if key == "M-":
+                    key_list0 = []
+                    if fc.use_esc_as_meta:
+                        key_list2 = copy.copy(key_list1)
+                        key_list2.append("Esc")
                     key_list1.append("C-OpenBracket")
-                    key_list2.append("Esc")
-                    append_key = key.replace("M-", "")
-                    if append_key:
-                        key_list0.append(key.replace("M-", "A-"))
-                        key_list1.append(append_key)
-                        key_list2.append(append_key)
-                    else:
-                        key_list0 = []
-                    mata_flg = True
+                    break
+
+                if "M-" in key:
+                    key_list0.append(key.replace("M-", "A-"))
+                    key_list1.append("C-OpenBracket")
+                    key_list1.append(key.replace("M-", ""))
                 else:
                     key_list0.append(key)
                     key_list1.append(key)
-                    key_list2.append(key)
 
             if key_list0:
                 key_lists.append(key_list0)
 
-            if mata_flg:
+            if key_list0 != key_list1:
                 key_lists.append(key_list1)
-                if fc.use_esc_as_meta:
-                    key_lists.append(key_list2)
+
+            if key_list2:
+                key_lists.append(key_list2)
 
             for key_list in key_lists:
                 key_list[0] = addSideOfModifierKey(key_list[0])
@@ -1366,7 +1382,7 @@ def configure(keymap):
             except:
                 pass
 
-            if type(command) is types.FunctionType:
+            if callable(command):
                 if (key is not None and
                     "keymap_emacs" in locals() and
                     window_keymap == locals()["keymap_emacs"]):
@@ -1397,10 +1413,10 @@ def configure(keymap):
 
                 # Alt キーを単押しした際に、カーソルがメニューへ移動しないようにする
                 # （https://www.haijin-boys.com/discussions/4583）
-                if re.match(key_list[0], r"O-LAlt$", re.IGNORECASE):
+                if key_list[0] == "O-LAlt":
                     window_keymap["D-LAlt"] = "D-LAlt", "(7)"
 
-                if re.match(key_list[0], r"O-RAlt$", re.IGNORECASE):
+                elif key_list[0] == "O-RAlt":
                     window_keymap["D-RAlt"] = "D-RAlt", "(7)"
             else:
                 w_keymap = window_keymap
@@ -1413,6 +1429,13 @@ def configure(keymap):
 
     def define_key3(window_keymap, keys, command, check_func):
         define_key(window_keymap, keys, makeKeyCommand(window_keymap, keys, command, check_func))
+
+    def mergeMultiStrokeKeymap(window_keymap1, window_keymap2, keys):
+        key_list = kbd(keys)[0]
+        for key in key_list:
+            window_keymap1 = window_keymap1[key]
+            window_keymap2 = window_keymap2[key]
+        window_keymap1.keymap = {**window_keymap2.keymap, **window_keymap1.keymap}
 
     def getKeyCommand(window_keymap, keys):
         try:
