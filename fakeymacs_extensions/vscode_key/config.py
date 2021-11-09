@@ -9,12 +9,18 @@ try:
     fc.vscode_target
 except:
     # VSCode 用のキーバインドを利用するアプリケーションソフトを指定する
-    # （ブラウザを指定した場合には、github1s.com にアクセスして開く VSCode で利用可能となります）
+    # （ブラウザを指定した場合には、vscode.dev にアクセスして開く VSCode で利用可能となります）
     fc.vscode_target  = ["Code.exe"]
     fc.vscode_target += ["chrome.exe",
                          "msedge.exe",
                          "firefox.exe"
                          ]
+
+# fc.vscode_target に設定しているアプリケーションソフトが fc.not_emacs_target に設定してある場合、
+# それを除外する
+for target in fc.vscode_target:
+    if target in fc.not_emacs_target:
+        fc.vscode_target.remove(target)
 
 try:
     # 設定されているか？
@@ -178,7 +184,7 @@ def yank_v():
 
 ## バッファ / ウィンドウ操作
 def kill_buffer():
-    # github1s で動作するように、C-F4 の発行とはしていない（C-F4 がブラウザでキャッチされるため）
+    # vscode.dev で動作するように、C-F4 の発行とはしていない（C-F4 がブラウザでキャッチされるため）
     # VSCode Command : View: Close Editor
     vscodeExecuteCommand("workbench.action.closeActiveEditor")()
 

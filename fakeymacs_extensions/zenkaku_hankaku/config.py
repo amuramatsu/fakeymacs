@@ -30,9 +30,12 @@ if fc.use_emacs_ime_mode:
             keymap.clipboard_history.enableHook(False)
 
         if fakeymacs.forward_direction is None:
-            # ブラウザのアドレスバーなどで入力補完されたものが選択状態で表示される場合、削除する
-            self_insert_command("C-x")()
-            delay()
+            # リージョンが選択されていない場合、サクラエディタの C-x の挙動は特殊なので除外する
+            if (not (checkWindow("sakura.exe", "EditorClient") or # Sakura Editor
+                     checkWindow("sakura.exe", "SakuraView*"))):  # Sakura Editor
+                # ブラウザのアドレスバーなどで入力補完されたものが選択状態で表示される場合、削除する
+                self_insert_command("C-x")()
+                delay()
 
             # カーソル位置の前の word を選択する
             mark2(backward_word, False)()
@@ -45,7 +48,7 @@ if fc.use_emacs_ime_mode:
             # クリップボードの監視用のフックを有効にする
             keymap.clipboard_history.enableHook(True)
 
-        delay()
+        delay(0.05)
         clipboard_text = getClipboardText()
 
         # 半角英数字か？（特殊文字は key への変換が難しいので対象外とする）
