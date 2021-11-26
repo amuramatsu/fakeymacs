@@ -216,9 +216,11 @@ fc.lancherList_listers = [
 # VSCode 用のキーの設定を行う
 if 1:
     fc.vscode_target  = ["Code.exe"]
+    # vscode.dev 等、ブラウザで動作する VSCode で本機能を無効とするには、次の４行をコメントアウト
+    # してください
     fc.vscode_target += ["chrome.exe",
                          "msedge.exe",
-                         "firefox.exe"
+                         "firefox.exe",
                          ]
     # fc.vscode_prefix_key = [["C-;", "C-A-;"]]
     fc.use_ctrl_atmark_for_mark = False
@@ -244,14 +246,15 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
-# ブラウザ向けのキーの設定を行う
+# ブラウザをポップアップしてから C-l、C-t を入力するキーを設定する
 if 0:
     exec(readConfigExtension(r"browser_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
 # Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
-# （vscode.dev を利用する場合、本機能を有効にせずに Quick Tabs を利用すればキー被りが発生しません）
+# （vscode_key Extension で vscode_target に Chrome 系ブラウザを指定している場合、そちらの
+#   キー設定が優先されます）
 if 0:
     fc.quick_tabs_shortcut_key = "A-q"
     exec(readConfigExtension(r"chrome_quick_tabs\config.py"), dict(globals(), **locals()))
@@ -260,10 +263,10 @@ if 0:
 
 # Emacs の shell-command-on-region の機能をサポートする
 if 0:
-    fc.linux_tool = "WSL"
-    # fc.linux_tool = "MSYS2"
-    # fc.linux_tool = "Cygwin"
-    # fc.linux_tool = "BusyBox"
+    fc.unix_tool = "WSL"
+    # fc.unix_tool = "MSYS2"
+    # fc.unix_tool = "Cygwin"
+    # fc.unix_tool = "BusyBox"
     # fc.bash_options = []
     fc.bash_options = ["-l"]
     exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))

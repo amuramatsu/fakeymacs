@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20211108_01"
+fakeymacs_version = "20211117_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -1207,18 +1207,12 @@ def configure(keymap):
             fakeymacs.is_digit_argument = True
 
     def shell_command():
-        def popCommandWindow(wnd, command):
-            if wnd.isVisible() and not wnd.getOwner() and wnd.getProcessName() == command:
-                popWindow(wnd)()
-                fakeymacs.is_executing_command = True
-                return False
-            return True
+        for window in getWindowList():
+            if window.getProcessName() in os.path.basename(fc.command_name):
+                popWindow(window)()
+                return
 
-        fakeymacs.is_executing_command = False
-        Window.enum(popCommandWindow, os.path.basename(fc.command_name))
-
-        if not fakeymacs.is_executing_command:
-            keymap.ShellExecuteCommand(None, fc.command_name, "", "")()
+        keymap.ShellExecuteCommand(None, fc.command_name, "", "")()
 
     ##################################################
     ## 共通関数
@@ -2043,8 +2037,10 @@ def configure(keymap):
 
         ## 「IME の切り替え」のキー設定
         for disable_key, enable_key in fc.set_input_method_key:
-            define_key(keymap_ei, disable_key, ei_disable_input_method2(keymap_ei_dup, disable_key))
-            define_key(keymap_ei, enable_key,  ei_enable_input_method2(keymap_ei_dup, enable_key))
+            if disable_key:
+                define_key(keymap_ei, disable_key, ei_disable_input_method2(keymap_ei_dup, disable_key))
+            if enable_key:
+                define_key(keymap_ei, enable_key,  ei_enable_input_method2(keymap_ei_dup, enable_key))
 
 
     ###########################################################################
@@ -2105,7 +2101,10 @@ def configure(keymap):
             try:
                 if wnd.isMinimized():
                     wnd.restore()
-                delay() # ウィンドウフォーカスが適切に移動しない場合があることの対策
+
+                # ウィンドウフォーカスが適切に移動しない場合があることの対策
+                self_insert_command("Shift")() # 何かのキーを押下すると良いようだ
+
                 wnd.getLastActivePopup().setForeground()
             except:
                 print("選択したウィンドウは存在しませんでした")
