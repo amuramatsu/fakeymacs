@@ -135,7 +135,7 @@ fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
                            ],                       # Emacs 日本語入力モード用 Keymap
                            "keymap_tsw"       : [], # タスク切り替え画面用 Keymap
                            "keymap_lw"        : [], # リストウィンドウ用 Keymap
-                          }
+                           }
 
 # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
 # （リストに指定するキーは、Keyhac で指定可能なマルチストロークではないキーとしてください。
@@ -145,7 +145,7 @@ fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
                            "firefox.exe"      : ["C-l", "C-t"],
                            "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
                            "OUTLOOK.EXE"      : ["C-k"], # complete of address
-                          }
+                           }
 
 # 左右どちらの Ctrlキーを使うかを指定する（"L": 左、"R": 右）
 # fc.side_of_ctrl_key = "R"
@@ -357,9 +357,11 @@ if fc.toggle_input_method_key:
 # VSCode 用のキーの設定を行う
 if 0:
     fc.vscode_target  = ["Code.exe"]
+    # vscode.dev 等、ブラウザで動作する VSCode で本機能を無効とするには、次の４行をコメントアウト
+    # してください
     fc.vscode_target += ["chrome.exe",
                          "msedge.exe",
-                         "firefox.exe"
+                         "firefox.exe",
                          ]
     # fc.vscode_prefix_key = [["C-;", "C-A-;"]]
     fc.use_ctrl_atmark_for_mark = False
@@ -385,14 +387,15 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
-# ブラウザ向けのキーの設定を行う
+# ブラウザをポップアップしてから C-l、C-t を入力するキーを設定する
 if 0:
     exec(readConfigExtension(r"browser_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
 # Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
-# （vscode.dev を利用する場合、本機能を有効にせずに Quick Tabs を利用すればキー被りが発生しません）
+# （vscode_key Extension で vscode_target に Chrome 系ブラウザを指定している場合、そちらの
+#   キー設定が優先されます）
 if 0:
     fc.quick_tabs_shortcut_key = "A-q"
     exec(readConfigExtension(r"chrome_quick_tabs\config.py"), dict(globals(), **locals()))
@@ -401,10 +404,10 @@ if 0:
 
 # Emacs の shell-command-on-region の機能をサポートする
 if 0:
-    fc.linux_tool = "WSL"
-    # fc.linux_tool = "MSYS2"
-    # fc.linux_tool = "Cygwin"
-    # fc.linux_tool = "BusyBox"
+    fc.unix_tool = "WSL"
+    # fc.unix_tool = "MSYS2"
+    # fc.unix_tool = "Cygwin"
+    # fc.unix_tool = "BusyBox"
     # fc.bash_options = []
     fc.bash_options = ["-l"]
     exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
