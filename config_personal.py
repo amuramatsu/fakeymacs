@@ -194,6 +194,9 @@ fc.set_input_method_key = []
 ## C-j で英数入力、C-o で日本語入力となる（toggle_input_method_key の設定より優先）
 # fc.set_input_method_key += [["C-j", "C-o"]]
 
+## C-j で英数入力、C-i で日本語入力となる（C-i が Tab として利用できなくなるが、トグルキー C-o との併用可）
+# fc.set_input_method_key += [["C-j", "C-i"]]
+
 # Emacs日本語入力モードを利用する際に、IME のショートカットを置き換えるキーの組み合わせ
 # （置き換え先、置き換え元）を指定する
 # （Microsoft IME で「ことえり」のキーバインドを利用するための設定例です。Google日本語入力で
@@ -229,6 +232,10 @@ if is_japanese_keyboard:
 # 数引数の指定に Ctrl+数字キーを使うかを指定する（True: 使う、False: 使わない）
 # （False に指定しても、C-u 数字キーで数引数を指定することができます）
 # fc.use_ctrl_digit_key_for_digit_argument = True
+
+# ウィンドウのリストアが最小化した順番の逆順とならない場合の対策を行うかを指定する
+# （True: 対策有、False: 対策無）
+fc.reverse_window_to_restore = False
 
 # [section-base-2] ---------------------------------------------------------------------------------
 
@@ -381,6 +388,7 @@ if 0:
     fc.vscode_quick_select = True
     fc.vscode_input_sequence = True
     fc.vscode_insert_numbers = True
+    fc.vscode_keyboard_macro = False
 
     exec(readConfigExtension(r"vscode_key\config.py"), dict(globals(), **locals()))
     # vscode_extensions\config.py は、vscode_key\config.py 内部から呼ばれている
