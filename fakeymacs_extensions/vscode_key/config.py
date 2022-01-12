@@ -74,7 +74,8 @@ fakeymacs_vscode.post_processing = None
 
 def is_vscode_target(window):
     if (window.getProcessName() in fc.vscode_target and
-        window.getClassName() == "Chrome_WidgetWin_1"):
+        window.getClassName() == "Chrome_WidgetWin_1" and
+        fakeymacs.keybind == "emacs"):
         return True
     else:
         return False
@@ -303,27 +304,27 @@ def mark_end_of_line():
 def mark_next_like_this():
     # VSCode Command : Add Selection To Next Find Match
     region(self_insert_command("C-d"))()
-    # vscodeExecuteCommand("editor.action.addSelectionToNextFindMatch")()
+    # region(vscodeExecuteCommand("editor.action.addSelectionToNextFindMatch"))()
 
 def mark_all_like_this():
     # VSCode Command : Select All Occurrences of Find Match
     region(self_insert_command("C-S-l"))()
-    # vscodeExecuteCommand("editor.action.selectHighlights")()
+    # region(vscodeExecuteCommand("editor.action.selectHighlights"))()
 
 def skip_to_previous_like_this():
     # VSCode Command : Move Last Selection To Previous Find Match
     region(vscodeExecuteCommand("MLSTP"))()
-    # vscodeExecuteCommand("editor.action.moveSelectionToPreviousFindMatch")()
+    # region(vscodeExecuteCommand("editor.action.moveSelectionToPreviousFindMatch"))()
 
 def skip_to_next_like_this():
     # VSCode Command : Move Last Selection To Next Find Match
     region(self_insert_command("C-k", "C-d"))()
-    # vscodeExecuteCommand("editor.action.moveSelectionToNextFindMatch")()
+    # region(vscodeExecuteCommand("editor.action.moveSelectionToNextFindMatch"))()
 
 def expand_region():
     # VSCode Command : Expand Selection
     region(self_insert_command("A-S-Right"))()
-    # vscodeExecuteCommand("editor.action.smartSelect.expand")()
+    # region(vscodeExecuteCommand("editor.action.smartSelect.expand"))()
 
 def shrink_region():
     # VSCode Command : Shrink Selection

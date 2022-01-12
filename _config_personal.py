@@ -127,6 +127,10 @@ fc.set_input_method_key += [["(26)", "(22)"]]
 # （False に指定しても、C-u 数字キーで数引数を指定することができます）
 # fc.use_ctrl_digit_key_for_digit_argument = True
 
+# ウィンドウのリストアが最小化した順番の逆順とならない場合の対策を行うかを指定する
+# （True: 対策有、False: 対策無）
+fc.reverse_window_to_restore = False
+
 # [section-base-2] ---------------------------------------------------------------------------------
 
 ####################################################################################################
@@ -234,6 +238,7 @@ if 1:
     fc.vscode_quick_select = True
     fc.vscode_input_sequence = True
     fc.vscode_insert_numbers = True
+    fc.vscode_keyboard_macro = False
 
     exec(readConfigExtension(r"vscode_key\config.py"), dict(globals(), **locals()))
     # vscode_extensions\config.py は、vscode_key\config.py 内部から呼ばれている

@@ -15,7 +15,9 @@ if fc.use_emacs_ime_mode:
 
     def hankaku_henkan():
         # 半角英数字に変換し、確定する
-        self_insert_command("F10", "Enter")()
+        self_insert_command("F10")()
+        delay() # Microsoft Word のテキストボックスでの変換時に必要
+        self_insert_command("Enter")()
 
         # IME を OFF にする
         ei_disable_input_method()
@@ -60,7 +62,7 @@ if fc.use_emacs_ime_mode:
 
             # クリックボードに格納されている英数字を一文字ずつ key として入力する
             for key in clipboard_text:
-                keymap.InputKeyCommand(key)()
+                self_insert_command(key)()
 
             # Emacs日本語入力モードを ON にする
             enable_emacs_ime_mode()
