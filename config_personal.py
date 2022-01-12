@@ -63,6 +63,12 @@ fc.not_emacs_target    += [
     "vmware-view.exe",     # VMware Horizon 
     "wfica32.exe",         # Citrix Receiver
     "VirtualBox.exe",      # VirtualBox
+    "np2w.exe",            # NekoProject II/w
+    "np21w.exe",           # NekoProject 21/w
+    "SL9821.exe",          # SL9821
+    "BasiliskII.exe",      # BasiliskII
+    "SheepShaver.exe",     # SheepShaver
+    "Game.exe",            # Some games...
                           ]
 
 # IME の切り替え“のみをしたい”アプリケーションソフトを指定する
