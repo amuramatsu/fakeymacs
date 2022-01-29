@@ -66,9 +66,13 @@ fc.not_emacs_target    += [
     "np2w.exe",            # NekoProject II/w
     "np21w.exe",           # NekoProject 21/w
     "SL9821.exe",          # SL9821
+    "xm6i.exe",            # XM6i
+    "XM8.exe",             # XM8
     "BasiliskII.exe",      # BasiliskII
     "SheepShaver.exe",     # SheepShaver
     "Game.exe",            # Some games...
+    "retroarch.exe",       # RetroArch
+    "Fusion.exe",          # Kega Fusion
                           ]
 
 # IME の切り替え“のみをしたい”アプリケーションソフトを指定する
