@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20220105_01"
+fakeymacs_version = "20220201_04"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -429,24 +429,19 @@ def configure(keymap):
     ## （Google日本語入力を利用する場合、Ctrl キーと組み合わせたキーを設定してください。「確定取り消し」
     ##   が正常に動作しないアプリケーションソフト（Microsoft Excel、Sakura Editor など）があります。
     ##   ただし、C-Back キーは設定しないでください。）
+    ## （リージョンを選択した状態で Space キーを押下すると「再変換」が機能します）
     fc.reconversion_key = []
-    fc.reconversion_key += ["C-t"]
+    fc.reconversion_key += ["C-Comma"] # Comma は < のキーでもあり、変換を戻すイメージを持てるので採用
     # fc.reconversion_key += ["(28)"]   # <変換> キーを利用する場合でも、本機能を全て使うためには設定が必要
     # fc.reconversion_key += ["O-RAlt"] # ワンショットモディファイアの指定も可能
 
     ## IME に設定してある「再変換」、「確定取り消し」を行うキーを指定する
 
     ## Windows 10 1909 以前の Microsoft IME の場合
-    ## （Windows 10 1909 以前の Microsoft IME の場合、C-t を押下して確定の取り消しの状態に入った後、
-    ##   Ctrl キーを押したままで C-n による選択メニューの移動を行おうとすると正常に動作しません。
-    ##   一度 Ctrl キーを離す、メニューの移動に Space キーを利用する、ime_cancel_key に "W-Slash" を
-    ##   設定して「再変換」の機能として利用するなど、いくつかの回避方法があります。お試しください。）
     if fc.ime == "old_Microsoft_IME":
         fc.ime_reconv_key = "W-Slash" # 「再変換」キー
         fc.ime_cancel_key = "C-Back"  # 「確定の取り消し」キー
         fc.ime_reconv_region = False  # 「再変換」の時にリージョンの選択が必要かどうかを指定する
-        fc.ime_reconv_space  = False  # リージョンを選択した状態で Space キーを押下した際、「再変換」が働くか
-                                      # どうかを指定する
 
     ## Windows 10 2004 以降の 新しい Microsoft IME の場合
     ## （新しい Microsoft IME には確定取り消し（C-Backspace）の設定が無いようなので、「再変換」のキー
@@ -455,16 +450,12 @@ def configure(keymap):
         fc.ime_reconv_key = "W-Slash" # 「再変換」キー
         fc.ime_cancel_key = "W-Slash" # 「確定の取り消し」キー
         fc.ime_reconv_region = False  # 「再変換」の時にリージョンの選択が必要かどうかを指定する
-        fc.ime_reconv_space  = True   # リージョンを選択した状態で Space キーを押下した際、「再変換」が働くか
-                                      # どうかを指定する
 
     ## Google日本語入力の場合
     elif fc.ime == "Google_IME":
         fc.ime_reconv_key = "W-Slash" # 「再変換」キー
         fc.ime_cancel_key = "C-Back"  # 「確定の取り消し」キー
         fc.ime_reconv_region = True   # 「再変換」の時にリージョンの選択が必要かどうかを指定する
-        fc.ime_reconv_space  = False  # リージョンを選択した状態で Space キーを押下した際、「再変換」が働くか
-                                      # どうかを指定する
 
     ## 上記以外の場合の場合（機能を無効にする）
     else:
@@ -472,7 +463,6 @@ def configure(keymap):
         fc.ime_reconv_key = None
         fc.ime_cancel_key = None
         fc.ime_reconv_region = False
-        fc.ime_reconv_space  = False
     #---------------------------------------------------------------------------------------------------
 
     #---------------------------------------------------------------------------------------------------
@@ -617,6 +607,15 @@ def configure(keymap):
     #   ください。）
     fc.is_newline_selectable_in_Excel = False
 
+    # Ctrl キー単押しで開く Ctrl ボタンを持つアプリケーションソフト（プロセス名称とクラス名称の
+    # 組み合わせ（ワイルドカード指定可））を指定する
+    # （Microsoft Word 等では画面に Ctrl ボタンが表示され、Ctrl キーの単押しによりサブウインドウが
+    #   開く機能があります。その挙動を抑制するアプリケーションソフトのリストを指定してください。）
+    fc.ctrl_button_app_list = [["WINWORD.EXE",  "_WwG"],
+                               ["EXCEL.EXE",    "EXCEL*"],
+                               ["POWERPNT.EXE", "mdiClass"],
+                               ]
+
     # 個人設定ファイルのセクション [section-base-1] を読み込んで実行する
     exec(readConfigPersonal("[section-base-1]"), dict(globals(), **locals()))
 
@@ -661,6 +660,12 @@ def configure(keymap):
                     else:
                         fakeymacs.correct_ime_status = False
 
+            fakeymacs.ctrl_button_app = False
+            for app in fc.ctrl_button_app_list:
+                if checkWindow(*app):
+                    fakeymacs.ctrl_button_app = True
+                    break
+
             reset_undo(reset_counter(reset_mark(lambda: None)))()
             fakeymacs.ime_cancel = False
             fakeymacs.last_window = window
@@ -697,8 +702,8 @@ def configure(keymap):
         keymap_emacs = keymap.defineWindowKeymap(check_func=is_emacs_target)
         keymap_ime   = keymap.defineWindowKeymap(check_func=is_ime_target)
 
-    # Microsoft Word 等で Ctrl に反応してサブウインドウが開き、そのサブウインドウに
-    # カーソルが移動するのを抑制するための対策
+    # Microsoft Word 等では画面に Ctrl ボタンが表示され、Ctrl キーの単押しによりサブウインドウが
+    # 開く機能がある。その挙動を抑制するための対策。
     if fc.side_of_ctrl_key == "L":
         keymap_emacs["D-LCtrl"] = "D-LCtrl", "(255)"
 
@@ -821,23 +826,21 @@ def configure(keymap):
                     except:
                         pass
 
-    def reconversion(reconv_key, cancel_key):
-        def _func():
-            if fakeymacs.ime_cancel:
-                self_insert_command(cancel_key)()
-                if fc.use_emacs_ime_mode:
-                    enable_emacs_ime_mode(100)
-            else:
-                if fc.ime_reconv_region:
-                    if fakeymacs.forward_direction is not None:
-                        self_insert_command(reconv_key)()
-                        if fc.use_emacs_ime_mode:
-                            enable_emacs_ime_mode()
-                else:
-                    self_insert_command(reconv_key)()
+    def reconversion():
+        if fakeymacs.ime_cancel:
+            self_insert_command(fc.ime_cancel_key)()
+            if fc.use_emacs_ime_mode:
+                enable_emacs_ime_mode(100)
+        else:
+            if fc.ime_reconv_region:
+                if fakeymacs.forward_direction is not None:
+                    self_insert_command(fc.ime_reconv_key)()
                     if fc.use_emacs_ime_mode:
                         enable_emacs_ime_mode()
-        return _func
+            else:
+                self_insert_command(fc.ime_reconv_key)()
+                if fc.use_emacs_ime_mode:
+                    enable_emacs_ime_mode()
 
     ##################################################
     ## ファイル操作
@@ -1050,6 +1053,45 @@ def configure(keymap):
         mark_whole_buffer()
 
     ##################################################
+    ## テキストの入れ替え
+    ##################################################
+
+    def transpose_chars():
+        # Microsoft Excel の場合、セルの編集中（ウインドウのタイトル文字列が空）でなければ終了する
+        if checkWindow("EXCEL.EXE", "EXCEL*", "?*"):
+            return
+
+        if fakeymacs.clipboard_hook:
+            # クリップボードの監視用のフックを無効にする
+            keymap.clipboard_history.enableHook(False)
+
+        resetRegion()
+
+        mark2(forward_char, True)()
+        setClipboardText("")
+        self_insert_command("C-c")()
+        delay(0.05)
+
+        clipboard_text = getClipboardText()
+
+        if len(clipboard_text) != 1:
+            if clipboard_text == "\r\n":
+                backward_char()
+
+            mark2(backward_char, False)()
+            setClipboardText("")
+            self_insert_command("C-c")()
+
+        self_insert_command("Delete")()
+        backward_char()
+        yank()
+        forward_char()
+
+        if fakeymacs.clipboard_hook:
+            # クリップボードの監視用のフックを有効にする
+            keymap.clipboard_history.enableHook(True)
+
+    ##################################################
     ## バッファ / ウィンドウ操作
     ##################################################
 
@@ -1154,12 +1196,10 @@ def configure(keymap):
         self_insert_command("Esc")()
 
     def space():
-        self_insert_command("Space")()
-        if fc.use_emacs_ime_mode:
-            if fc.ime_reconv_space:
-                if keymap.getWindow().getImeStatus():
-                    if fakeymacs.forward_direction is not None:
-                        enable_emacs_ime_mode()
+        if fakeymacs.forward_direction is None:
+            self_insert_command("Space")()
+        else:
+            reconversion()
 
     def newline():
         self_insert_command("Enter")()
@@ -1183,7 +1223,7 @@ def configure(keymap):
             # Esc を発行して問題ないアプリケーションソフトには Esc を発行する
             if not (checkWindow("cmd.exe", "ConsoleWindowClass") or        # Cmd
                     checkWindow("powershell.exe", "ConsoleWindowClass") or # PowerShell
-                    checkWindow("EXCEL.EXE", "EXCEL*") or                  # Microsoft Excel
+                    checkWindow("EXCEL.EXE", "EXCEL*", "") or              # Microsoft Excel のセル編集
                     checkWindow("Evernote.exe", "WebViewHost")):           # Evernote
                 escape()
 
@@ -1261,7 +1301,8 @@ def configure(keymap):
                 else:
                     self_insert_command("Left")()
 
-            elif checkWindow("cmd.exe", "ConsoleWindowClass"): # Cmd
+            elif (checkWindow("cmd.exe", "ConsoleWindowClass") or # Cmd
+                  checkWindow("EXCEL.EXE", "EXCEL*", "?*")):      # Microsoft Excel のセル編集でない場合
                 # 選択されているリージョンのハイライトを解除するためにカーソルを移動する
                 if fakeymacs.forward_direction:
                     self_insert_command("Right", "Left")()
@@ -1477,11 +1518,14 @@ def configure(keymap):
     def InputKeyCommand(*keys):
         def _func():
             keymap.InputKeyCommand(*keys)()
-            # Microsoft Word 等で Ctrl に反応してサブウインドウが開き、そのサブウインドウに
-            # カーソルが移動するのを抑制するための対策
-            if keyhac_keymap.checkModifier(keymap.modifier, MODKEY_CTRL):
-                if not re.search(r"C-", keys[-1]):
-                    pyauto.Input.send([pyauto.Key(strToVk("(255)"))])
+
+            # Microsoft Word 等では画面に Ctrl ボタンが表示され、Ctrl キーの単押しによりサブウインドウが
+            # 開く機能がある。その挙動を抑制するための対策。
+            if fakeymacs.ctrl_button_app:
+                if keyhac_keymap.checkModifier(keymap.modifier, MODKEY_CTRL):
+                    if not re.search(r"C-", keys[-1]):
+                        delay(0.01) # issue #19 の対策
+                        pyauto.Input.send([pyauto.Key(strToVk("(255)"))])
         return _func
 
     def self_insert_command(*keys):
@@ -1810,6 +1854,9 @@ def configure(keymap):
     define_key(keymap_emacs, "Ctl-x h",   reset_search(reset_undo(reset_counter(mark_whole_buffer))))
     define_key(keymap_emacs, "Ctl-x C-p", reset_search(reset_undo(reset_counter(mark_page))))
 
+    ## 「テキストの入れ替え」のキー設定
+    define_key(keymap_emacs, "C-t", reset_search(reset_undo(reset_counter(reset_mark(transpose_chars)))))
+
     ## 「バッファ / ウィンドウ操作」のキー設定
     define_key(keymap_emacs, "M-k",     reset_search(reset_undo(reset_counter(reset_mark(kill_buffer)))))
     define_key(keymap_emacs, "Ctl-x k", reset_search(reset_undo(reset_counter(reset_mark(kill_buffer)))))
@@ -1877,7 +1924,7 @@ def configure(keymap):
                 pass
 
         for key in fc.reconversion_key:
-            define_key(keymap_emacs, key, reset_undo(reset_counter(reset_mark(reconversion(fc.ime_reconv_key, fc.ime_cancel_key)))))
+            define_key(keymap_emacs, key, reset_undo(reset_counter(reset_mark(reconversion))))
 
 
     ###########################################################################
@@ -1902,8 +1949,8 @@ def configure(keymap):
 
         keymap_ei = keymap.defineWindowKeymap(check_func=is_emacs_ime_mode2)
 
-        # Microsoft Word 等で Ctrl に反応してサブウインドウが開き、そのサブウインドウに
-        # カーソルが移動するのを抑制するための対策
+        # Microsoft Word 等では画面に Ctrl ボタンが表示され、Ctrl キーの単押しによりサブウインドウが
+        # 開く機能がある。その挙動を抑制するための対策。
         if fc.side_of_ctrl_key == "L":
             keymap_ei["D-LCtrl"] = "D-LCtrl", "(255)"
 
