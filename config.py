@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20220201_04"
+fakeymacs_version = "20220301_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -130,12 +130,10 @@ fakeymacs_version = "20220201_04"
 #   Ctrlキーと同じキーとして扱っている。（C-v と A-v の置き換えのみ行っていない。）
 
 import time
-import sys
 import os.path
 import re
 import fnmatch
 import copy
-import types
 import datetime
 import ctypes
 import pyauto
@@ -514,8 +512,9 @@ def configure(keymap):
     # （Emacs キーバインドを利用するアプリケーションでかつフォーカスが当たっているアプリケーションソフト
     #   に対して切り替えが機能します。また、Emacs キーバインドを OFF にしても、IME の切り替えは ime_target
     #   に登録したアプリケーションソフトと同様に機能するようにしています。）
-    # （emacs_target_class 変数に指定したクラス（初期値：Edit）に該当するアプリケーションソフト（NotePad
-    #   など）は、Emacs キーバインドを切り替えの対象となりません（常に Emacs キーバインドとなります）。）
+    # （emacs_target_class 変数に指定したクラス（初期値：Edit）に該当するアプリケーションソフト（Windows
+    #   10版 Notepad など）は、Emacs キーバインドを切り替えの対象となりません（常に Emacs キーバインドと
+    #   なります）。）
     fc.toggle_emacs_keybind_key = "C-S-Space"
 
     # アプリケーションキーとして利用するキーを指定する
@@ -1013,7 +1012,7 @@ def configure(keymap):
 
     def undo():
         # redo（C-y）の機能を持っていないアプリケーションソフトは常に undo とする
-        if checkWindow("notepad.exe", "Edit"): # NotePad
+        if checkWindow("notepad.exe", "Edit"): # Windows 10版 Notepad
             self_insert_command("C-z")()
         else:
             if fakeymacs.is_undo_mode:
@@ -1196,7 +1195,8 @@ def configure(keymap):
         self_insert_command("Esc")()
 
     def space():
-        if fakeymacs.forward_direction is None:
+        if (fc.ime_reconv_key is None or
+            fakeymacs.forward_direction is None):
             self_insert_command("Space")()
         else:
             reconversion()
@@ -1335,8 +1335,8 @@ def configure(keymap):
         if window is None:
             window = keymap.getWindow()
         return ((process_name is None or fnmatch.fnmatch(window.getProcessName(), process_name)) and
-                (class_name is None or fnmatch.fnmatch(window.getClassName(), class_name)) and
-                (text is None or fnmatch.fnmatch(window.getText(), text)))
+                (class_name is None or fnmatch.fnmatchcase(window.getClassName(), class_name)) and
+                (text is None or fnmatch.fnmatchcase(window.getText(), text)))
 
     def vkeys():
         vkeys = list(keyCondition.vk_str_table)
@@ -1417,11 +1417,12 @@ def configure(keymap):
             # 設定をスキップするキーの処理を行う
             for keymap_name in fc.skip_settings_key:
                 if (keymap_name in locals() and
-                    window_keymap == locals()[keymap_name]):
+                    window_keymap is locals()[keymap_name]):
                     for skey in fc.skip_settings_key[keymap_name]:
                         if fnmatch.fnmatch(keys, skey):
                             print("skip settings key : [" + keymap_name + "] " + keys)
                             return
+                    break
 
         def keyCommand(key):
             # local スコープで参照できるようにする
@@ -1433,10 +1434,10 @@ def configure(keymap):
             if callable(command):
                 if (key is not None and
                     "keymap_emacs" in locals() and
-                    window_keymap == locals()["keymap_emacs"]):
+                    window_keymap is locals()["keymap_emacs"]):
 
                     ckey = str(keyhac_keymap.KeyCondition.fromString(key))
-                    def _command():
+                    def _command1():
                         fakeymacs.update_last_keys = True
                         if ckey in fakeymacs.exclution_key:
                             InputKeyCommand(key)()
@@ -1444,14 +1445,40 @@ def configure(keymap):
                             command()
                         if fakeymacs.update_last_keys:
                             fakeymacs.last_keys = [window_keymap, keys]
-                    return _command
                 else:
-                    def _command():
+                    def _command1():
                         fakeymacs.update_last_keys = True
                         command()
                         if fakeymacs.update_last_keys:
                             fakeymacs.last_keys = [window_keymap, keys]
-                    return _command
+
+                def _command3():
+                    if (fakeymacs.repeat_counter == 1 or
+                        fakeymacs.is_playing_kmacro):
+                        _command1()
+                    else:
+                        def _command2():
+                            # モディファイアを離す（keymap.command_RecordPlay 関数を参考）
+                            modifier = keymap.modifier
+                            input_seq = []
+                            for vk_mod in keymap.vk_mod_map.items():
+                                if keymap.modifier & vk_mod[1]:
+                                    input_seq.append(pyauto.KeyUp(vk_mod[0]))
+                            pyauto.Input.send(input_seq)
+                            keymap.modifier = 0
+
+                            _command1()
+
+                            # モディファイアを戻す（keymap.command_RecordPlay 関数を参考）
+                            input_seq = []
+                            for vk_mod in keymap.vk_mod_map.items():
+                                if modifier & vk_mod[1]:
+                                    input_seq.append(pyauto.KeyDown(vk_mod[0]))
+                            pyauto.Input.send(input_seq)
+                            keymap.modifier = modifier
+
+                        keymap.delayedCall(_command2, 0)
+                return _command3
             else:
                 return command
 
@@ -1473,7 +1500,7 @@ def configure(keymap):
                 w_keymap[key_list[-1]] = keyCommand(None)
 
     def define_key2(window_keymap, keys, command):
-        define_key(window_keymap, keys, command, skip_check=False)
+        define_key(window_keymap, keys, command, False)
 
     def define_key3(window_keymap, keys, command, check_func):
         define_key(window_keymap, keys, makeKeyCommand(window_keymap, keys, command, check_func))
@@ -1542,7 +1569,9 @@ def configure(keymap):
             func()
             if fc.use_emacs_ime_mode:
                 if keymap.getWindow().getImeStatus():
-                    enable_emacs_ime_mode()
+                    # 次の判定は、数引数を指定して日本語入力をした際に必要
+                    if fakeymacs.ei_last_window is None:
+                        enable_emacs_ime_mode()
         return _func
 
     def self_insert_command3(*keys):
@@ -1933,7 +1962,7 @@ def configure(keymap):
     if fc.use_emacs_ime_mode:
 
         def is_emacs_ime_mode(window):
-            if fakeymacs.ei_last_window == window:
+            if fakeymacs.ei_last_window is window:
                 return True
             else:
                 fakeymacs.ei_last_window = None
@@ -1993,7 +2022,7 @@ def configure(keymap):
                     func = self_insert_command(key)
 
             def _func():
-                if (fakeymacs.last_keys[0] == keymap_ei and
+                if (fakeymacs.last_keys[0] is keymap_ei and
                     fakeymacs.last_keys[1] in ["Back", "C-h"]):
                     ei_enable_input_method()
                     fakeymacs.update_last_keys = False
@@ -2010,7 +2039,7 @@ def configure(keymap):
                     func = self_insert_command(key)
 
             def _func():
-                if (fakeymacs.last_keys[0] == keymap_ei and
+                if (fakeymacs.last_keys[0] is keymap_ei and
                     fakeymacs.last_keys[1] in ["Back", "C-h"]):
                     ei_disable_input_method()
                     fakeymacs.update_last_keys = False
@@ -2544,10 +2573,10 @@ def configure(keymap):
         ["Notepad",     keymap.ShellExecuteCommand(None, r"notepad.exe", "", "")],
         ["Explorer",    keymap.ShellExecuteCommand(None, r"explorer.exe", "", "")],
         ["Cmd",         keymap.ShellExecuteCommand(None, r"cmd.exe", "", "")],
-        ["MSEdge",      keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", "", "")],
-        ["Chrome",      keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "", "")],
-        ["Firefox",     keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Mozilla Firefox\firefox.exe", "", "")],
-        ["Thunderbird", keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Mozilla Thunderbird\thunderbird.exe", "", "")],
+        ["MSEdge",      keymap.ShellExecuteCommand(None, r"msedge.exe", "", "")],
+        ["Chrome",      keymap.ShellExecuteCommand(None, r"chrome.exe", "", "")],
+        ["Firefox",     keymap.ShellExecuteCommand(None, r"firefox.exe", "", "")],
+        ["Thunderbird", keymap.ShellExecuteCommand(None, r"thunderbird.exe", "", "")],
     ]
     fc.application_items[0][0] = list_formatter.format(fc.application_items[0][0])
 

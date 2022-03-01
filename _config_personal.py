@@ -53,6 +53,7 @@ fc.ime_target          += []
 #   関数を利用して定義してください）
 fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
                            "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
+                           "keymap_vscode"    : [], # Emacs キーバインド VSCode 拡張用 Keymap
                            "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
                            "keymap_ei"        : [], # Emacs 日本語入力モード用 Keymap
                            "keymap_tsw"       : [], # タスク切り替え画面用 Keymap
@@ -175,10 +176,10 @@ fc.application_items = [
     ["Notepad",     keymap.ShellExecuteCommand(None, r"notepad.exe", "", "")],
     ["Explorer",    keymap.ShellExecuteCommand(None, r"explorer.exe", "", "")],
     ["Cmd",         keymap.ShellExecuteCommand(None, r"cmd.exe", "", "")],
-    ["MSEdge",      keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", "", "")],
-    ["Chrome",      keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", "", "")],
-    ["Firefox",     keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Mozilla Firefox\firefox.exe", "", "")],
-    ["Thunderbird", keymap.ShellExecuteCommand(None, r"C:\Program Files (x86)\Mozilla Thunderbird\thunderbird.exe", "", "")],
+    ["MSEdge",      keymap.ShellExecuteCommand(None, r"msedge.exe", "", "")],
+    ["Chrome",      keymap.ShellExecuteCommand(None, r"chrome.exe", "", "")],
+    ["Firefox",     keymap.ShellExecuteCommand(None, r"firefox.exe", "", "")],
+    ["Thunderbird", keymap.ShellExecuteCommand(None, r"thunderbird.exe", "", "")],
 ]
 fc.application_items[0][0] = list_formatter.format(fc.application_items[0][0])
 
