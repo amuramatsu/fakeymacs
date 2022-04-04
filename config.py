@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20220301_01"
+fakeymacs_version = "20220321_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -223,8 +223,8 @@ def configure(keymap):
 
     # Chromium 系ブラウザで発生する問題の対策を行うかどうかを指定する（True: 対策する、False: 対策しない）
     # （Chromium 系ブラウザのバージョン 92 では、アドレスバーにカーソルを移動した際、強制的に ASCII入力
-    #   モードに移行する不具合が発生します。（バージョン 93 で対策済みですが、過去にも度々発生しています）
-    #   （https://did2memo.net/2021/07/22/chrome-japanese-ime-off-issue-chrome-92/）
+    #   モードに移行する不具合が発生します。（バージョン 93 で対策済みですが、過去にも度々発生しています。）
+    #   ・https://did2memo.net/2021/07/22/chrome-japanese-ime-off-issue-chrome-92/
     #   さらに Google日本語入力を利用している場合、keymap.getWindow().getImeStatus() が True を返すため、
     #   Emacs日本語入力モードの挙動がおかしくなります。この対策を行うかどうかを指定します。）
     fc.correct_ime_status = False
@@ -537,26 +537,27 @@ def configure(keymap):
     fc.other_window_key = "A-o"
 
     # アクティブウィンドウを切り替えるキーの組み合わせ（前、後 の順）を指定する（複数指定可）
-    # （内部で A-Tab による切り替えを行っているため、設定するキーは Altキーとの組み合わせとしてください）
-    # （切り替え画面が起動した後は、A-b、A-f、A-p、A-n でウィンドウを切り替えられるように設定している他、
-    #   Alt + 矢印キーでもウィンドウを切り替えることができます。また、A-g もしくは A-Esc で切り替え画面の
-    #   終了（キャンセル）となり、Altキーを離すか A-Enter で切り替えるウィンドウの確定となります。）
-    # （デフォルトキーは、["A-S-Tab", "A-Tab"]）
+    # （A-Esc キーの動作とは異なり、仮想デスクトップを跨ぎ、最小化されていないウィンドウを順に切り替え
+    #   ます。初期設定は ["A-p", "A-n"] としていますが、Emacs の shell-mode のキーバインドなどと設定が
+    #   被る場合には、["A-S-p", "A-S-n"] などの異なる設定とするか、Emacs 側に次の設定を入れて、Emacs 側
+    #   のキーの設定を置き換えてご利用ください。
+    #     (define-key key-translation-map (kbd "M-S-p") (kbd "M-p"))
+    #     (define-key key-translation-map (kbd "M-S-n") (kbd "M-n"))
+    #  ）
     fc.window_switching_key = []
-    # fc.window_switching_key += [["A-p", "A-n"]]
+    fc.window_switching_key += [["A-p", "A-n"]]
+    # fc.window_switching_key += [["A-S-p", "A-S-n"]]
+    # fc.window_switching_key += [["A-Up", "A-Down"]]
 
     # アクティブウィンドウをディスプレイ間で移動するキーの組み合わせ（前、後 の順）を指定する（複数指定可）
     # （デフォルトキーは、["W-S-Left", "W-S-Right"]）
     fc.window_movement_key_for_displays = []
     fc.window_movement_key_for_displays += [[None, "W-o"]]
+    # fc.window_movement_key_for_displays += [[None, "A-S-o"]]
 
     # ウィンドウを最小化、リストアするキーの組み合わせ（リストア、最小化 の順）を指定する（複数指定可）
     fc.window_minimize_key = []
     fc.window_minimize_key += [["A-S-m", "A-m"]]
-
-    # ウィンドウのリストアが最小化した順番の逆順とならない場合の対策を行うかを指定する
-    # （True: 対策有、False: 対策無）
-    fc.reverse_window_to_restore = False
 
     # 仮想デスクトップを切り替えるキーの組み合わせ（前、後 の順）を指定する（複数指定可）
     # （仮想デスクトップを切り替えた際にフォーカスのあるウィンドウを適切に処理するため、設定するキーは
@@ -629,6 +630,7 @@ def configure(keymap):
     fakeymacs.clipboard_hook = True
     fakeymacs.last_keys = [None, None]
     fakeymacs.correct_ime_status = False
+    fakeymacs.window_list = []
 
     def is_emacs_target(window):
         last_window  = fakeymacs.last_window
@@ -732,6 +734,9 @@ def configure(keymap):
 
     # undo のモードの時 True になる（redo のモードの時 False になる）
     fakeymacs.is_undo_mode = True
+
+    # ウィンドウのリストアが最小化した順番の逆順となるように制御する
+    fakeymacs.reverse_window_to_restore = False
 
     # Ctl-xプレフィックスキーを構成するキーの仮想キーコードを設定する
     if fc.ctl_x_prefix_key:
@@ -1101,14 +1106,10 @@ def configure(keymap):
         self_insert_command("C-Tab")()
 
     def other_window():
-        window_list = getWindowList()
-        try:
-            for wnd in window_list[1:]:
-                if not wnd.isMinimized():
-                    wnd.getLastActivePopup().setForeground()
-                    break
-        except:
-            pass
+        window_list = getWindowList(False)
+
+        if len(window_list) >= 2:
+            popWindow(window_list[1])()
 
     ##################################################
     ## 文字列検索 / 置換
@@ -1259,9 +1260,10 @@ def configure(keymap):
             fakeymacs.is_digit_argument = True
 
     def shell_command():
-        for window in getWindowList():
-            if window.getProcessName() in os.path.basename(fc.command_name):
-                popWindow(window)()
+        command_name = os.path.basename(fc.command_name)
+        for wnd in getWindowList():
+            if wnd.getProcessName() == command_name:
+                popWindow(wnd)()
                 return
 
         keymap.ShellExecuteCommand(None, fc.command_name, "", "")()
@@ -1351,9 +1353,9 @@ def configure(keymap):
         return keyhac_keymap.KeyCondition.strToVk(name)
 
     def addSideOfModifierKey(key):
-        key = re.sub(r'(^|-)(C-)', r'\1' + fc.side_of_ctrl_key + r'\2', key)
-        key = re.sub(r'(^|-)(A-)', r'\1' + fc.side_of_alt_key  + r'\2', key)
-        key = re.sub(r'(^|-)(W-)', r'\1' + fc.side_of_win_key  + r'\2', key)
+        key = re.sub(r"(^|-)(C-)", r"\1" + fc.side_of_ctrl_key + r"\2", key)
+        key = re.sub(r"(^|-)(A-)", r"\1" + fc.side_of_alt_key  + r"\2", key)
+        key = re.sub(r"(^|-)(W-)", r"\1" + fc.side_of_win_key  + r"\2", key)
         return key
 
     def kbd(keys):
@@ -2211,52 +2213,81 @@ def configure(keymap):
                 if wnd.isMinimized():
                     wnd.restore()
 
-                # ウィンドウフォーカスが適切に移動しない場合があることの対策
-                self_insert_command("Shift")() # 何かのキーを押下すると良いようだ
-
                 wnd.getLastActivePopup().setForeground()
             except:
                 print("選択したウィンドウは存在しませんでした")
+
+            fakeymacs.window_list = []
         return _func
 
-    def getWindowList():
+    def getWindowList(minimized_window=None):
         def makeWindowList(wnd, arg):
-            if wnd.isVisible() and not wnd.getOwner():
+            nonlocal window_title
 
+            if wnd.isVisible() and not wnd.getOwner():
                 class_name = wnd.getClassName()
-                title = wnd.getText()
+                title = re.sub(r".* ‎- ", r"", wnd.getText())
 
                 if class_name == "Emacs" or title != "":
                     if not re.match(fc.window_operation_exclusion_class, class_name):
                         process_name = wnd.getProcessName()
+
                         if not re.match(fc.window_operation_exclusion_process, process_name):
-                            # 表示されていないストアアプリ（「設定」等）が window_list に登録されるのを抑制する
+
+                            # バックグラウンドで起動している UWPアプリが window_list に登録されるのを抑制する
+                            # （http://mrxray.on.coocan.jp/Delphi/plSamples/320_AppList.htm）
+                            # （http://mrxray.on.coocan.jp/Delphi/plSamples/324_CheckRun_UWPApp.htm）
+
                             if class_name == "Windows.UI.Core.CoreWindow":
-                                if title in window_dict:
-                                    if window_dict[title] in window_list:
-                                        window_list.remove(window_dict[title])
-                                else:
-                                    window_dict[title] = wnd
+                                window_title = title
 
                             elif class_name == "ApplicationFrameWindow":
-                                if title not in window_dict:
-                                    window_dict[title] = wnd
-                                    window_list.append(wnd)
+                                if title != "Cortana":
+                                    if (title != window_title or wnd.isMinimized() or
+                                        wnd in fakeymacs.window_list): # UWPアプリの仮想デスクトップ対策
+                                        window_list.append(wnd)
+                                window_title = None
                             else:
                                 window_list.append(wnd)
             return True
 
-        window_dict = {}
+        window_title = None
         window_list = []
         Window.enum(makeWindowList, None)
 
-        return window_list
+        if minimized_window is None:
+            window_list2 = window_list
+        else:
+            window_list2 = []
+            for wnd in window_list:
+                if ((minimized_window and wnd.isMinimized()) or
+                    (not minimized_window and not wnd.isMinimized())):
+                    window_list2.append(wnd)
+
+        return window_list2
+
+    def saveWindowList():
+        window_list = getWindowList(False)
+
+        # ２つのリストに差異があるか？
+        if set(window_list) ^ set(fakeymacs.window_list):
+            fakeymacs.window_list = window_list
 
     def previous_window():
-        self_insert_command("A-S-Tab")()
+        saveWindowList()
+
+        if fakeymacs.window_list:
+            window_list = fakeymacs.window_list[-1:] + fakeymacs.window_list[:-1]
+            popWindow(window_list[0])()
+            fakeymacs.window_list = window_list
 
     def next_window():
-        self_insert_command("A-Tab")()
+        saveWindowList()
+
+        if fakeymacs.window_list:
+            window_list = fakeymacs.window_list[1:] + fakeymacs.window_list[:1]
+            popWindow(window_list[0])()
+            fakeymacs.window_list = window_list
 
     def move_window_to_previous_display():
         self_insert_command("W-S-Left")()
@@ -2268,17 +2299,22 @@ def configure(keymap):
         wnd = keymap.getTopLevelWindow()
         if wnd and not wnd.isMinimized():
             wnd.minimize()
+            delay()
+            window_list = getWindowList()
+            if wnd in window_list:
+                if wnd is window_list[-1]:
+                    fakeymacs.reverse_window_to_restore = False
+                else:
+                    fakeymacs.reverse_window_to_restore = True
 
     def restore_window():
-        window_list = getWindowList()
+        window_list = getWindowList(True)
 
-        if not fc.reverse_window_to_restore:
+        if not fakeymacs.reverse_window_to_restore:
             window_list.reverse()
 
-        for wnd in window_list:
-            if wnd.isMinimized():
-                wnd.restore()
-                break
+        if  window_list:
+            window_list[0].restore()
 
     def previous_desktop():
         self_insert_command("W-C-Left")()
@@ -2658,3 +2694,16 @@ def configure(keymap):
 
     # 個人設定ファイルのセクション [section-extensions] を読み込んで実行する
     exec(readConfigPersonal("[section-extensions]"), dict(globals(), **locals()))
+
+
+    ####################################################################################################
+    ## 後処理（キーマップの優先順位を調整する）
+    ####################################################################################################
+
+    keymap.window_keymap_list.remove(keymap_global)
+    keymap.window_keymap_list.remove(keymap_tsw)
+    keymap.window_keymap_list.remove(keymap_lw)
+
+    keymap.window_keymap_list.append(keymap_global)
+    keymap.window_keymap_list.append(keymap_tsw)
+    keymap.window_keymap_list.append(keymap_lw)
