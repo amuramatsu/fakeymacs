@@ -27,8 +27,8 @@ keymap.setFont("ＭＳ ゴシック", 12)
 # [section-options] --------------------------------------------------------------------------------
 
 # IMEの設定（次の設定のいずれかを有効にする）
-fc.ime = "old_Microsoft_IME"
-# fc.ime = "new_Microsoft_IME"
+# fc.ime = "old_Microsoft_IME"
+fc.ime = "new_Microsoft_IME"
 # fc.ime = "Google_IME"
 # fc.ime = None
 
@@ -86,6 +86,18 @@ fc.emacs_ime_mode_balloon_message = "▲"
 
 # IME の状態を表示するバルーンメッセージを表示するかどうかを指定する（True: 表示する、False: 表示しない）
 fc.use_ime_status_balloon = True
+
+# IME の状態をテキスト カーソル インジケーターの色で表現するかどうかを指定する
+# （True: 表現する、False: 表現しない）
+# （テキスト カーソル インジケーターを利用するには、次のページを参考とし設定を行ってください
+#   https://faq.nec-lavie.jp/qasearch/1007/app/servlet/relatedqa?QID=022081）
+fc.use_ime_status_cursor_color = False
+
+# IME が ON のときのテキスト カーソル インジケーターの色を指定する
+fc.ime_on_cursor_color = 0x00C800 # 濃い緑
+
+# IME が OFF のときのテキスト カーソル インジケーターの色を指定する
+fc.ime_off_cursor_color = 0x0000FF # 赤
 
 # IME をトグルで切り替えるキーを指定する（複数指定可）
 fc.toggle_input_method_key = []
@@ -253,6 +265,7 @@ if 1:
     fc.vscode_input_sequence = True
     fc.vscode_insert_numbers = True
     fc.vscode_keyboard_macro = False
+    fc.vscode_filter_text = False
 
     exec(readConfigExtension(r"vscode_key\config.py"), dict(globals(), **locals()))
     # vscode_extensions\config.py は、vscode_key\config.py 内部から呼ばれている

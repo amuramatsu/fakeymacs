@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20220408_04"
+fakeymacs_version = "20220506_02"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -63,6 +63,8 @@ fakeymacs_version = "20220408_04"
 #   表示するかどうかを指定できる。
 # ・ime_status_balloon_message 変数の設定により、IME の状態を表示するバルーンメッセージ
 #   の組み合わせ（英数入力、日本語入力）を指定できる。
+# ・use_ime_status_cursor_color 変数の設定により、IME の状態をテキスト カーソル インジ
+#   ケーターの色で表現するかどうかを指定する
 #
 # ＜Emacsキーバインド設定を有効にしたアプリケーションソフトでの動き＞
 # ・use_ctrl_i_as_tab 変数の設定により、C-iキーを Tabキーとして使うかどうかを指定できる。
@@ -137,6 +139,7 @@ import copy
 import datetime
 import ctypes
 import pyauto
+import winreg
 
 import keyhac_keymap
 from keyhac import *
@@ -170,6 +173,60 @@ def configure(keymap):
     else:
         is_japanese_keyboard = False
 
+    # ウィンドウフォーカスが変わった時、すぐに Keyhac に検知させるための設定を行う
+    # （IME の状態をテキスト カーソル インジケーターの色で表現するためにこの機能を追加した）
+    # （https://sites.google.com/site/agkh6mze/howto/winevent）
+    # （https://github.com/Danesprite/windows-fun/blob/master/window%20change%20listener.py）
+    if 1:
+        EVENT_SYSTEM_DIALOGSTART = 0x0010
+        WINEVENT_OUTOFCONTEXT    = 0x0000
+        EVENT_SYSTEM_FOREGROUND  = 0x0003
+        WINEVENT_SKIPOWNPROCESS  = 0x0002
+
+        user32 = ctypes.windll.user32
+        ole32 = ctypes.windll.ole32
+
+        try:
+            # 設定されているか？
+            keymap.fakeymacs_hook
+
+            # reload 時の対策
+            user32.UnhookWinEvent(keymap.fakeymacs_hook)
+            ole32.CoUninitialize()
+        except:
+            pass
+
+        ole32.CoInitialize(None)
+
+        WinEventProcType = ctypes.WINFUNCTYPE(
+            None,
+            ctypes.wintypes.HANDLE,
+            ctypes.wintypes.DWORD,
+            ctypes.wintypes.HWND,
+            ctypes.wintypes.LONG,
+            ctypes.wintypes.LONG,
+            ctypes.wintypes.DWORD,
+            ctypes.wintypes.DWORD
+        )
+
+        def callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
+            delay(0.1)
+            keymap._updateFocusWindow()
+
+        WinEventProc = WinEventProcType(callback)
+
+        user32.SetWinEventHook.restype = ctypes.wintypes.HANDLE
+        keymap.fakeymacs_hook = user32.SetWinEventHook(
+            EVENT_SYSTEM_FOREGROUND,
+            EVENT_SYSTEM_FOREGROUND,
+            0,
+            WinEventProc,
+            0,
+            0,
+            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS
+        )
+
+    # 個人設定ファイルを読み込む
     try:
         with open(dataPath() + r"\config_personal.py", "r", encoding="utf-8-sig") as f:
             config_personal = f.read()
@@ -216,8 +273,8 @@ def configure(keymap):
     ####################################################################################################
 
     # IMEの設定（次の設定のいずれかを有効にする）
-    fc.ime = "old_Microsoft_IME"
-    # fc.ime = "new_Microsoft_IME"
+    # fc.ime = "old_Microsoft_IME"
+    fc.ime = "new_Microsoft_IME"
     # fc.ime = "Google_IME"
     # fc.ime = None
 
@@ -386,6 +443,18 @@ def configure(keymap):
 
     # IME の状態を表示するバルーンメッセージの組み合わせ（英数入力、日本語入力）を指定する
     fc.ime_status_balloon_message = ["[A]", "[あ]"]
+
+    # IME の状態をテキスト カーソル インジケーターの色で表現するかどうかを指定する
+    # （True: 表現する、False: 表現しない）
+    # （テキスト カーソル インジケーターを利用するには、次のページを参考とし設定を行ってください
+    #   https://faq.nec-lavie.jp/qasearch/1007/app/servlet/relatedqa?QID=022081）
+    fc.use_ime_status_cursor_color = False
+
+    # IME が ON のときのテキスト カーソル インジケーターの色を指定する
+    fc.ime_on_cursor_color = 0x00C800 # 濃い緑
+
+    # IME が OFF のときのテキスト カーソル インジケーターの色を指定する
+    fc.ime_off_cursor_color = 0x0000FF # 赤
 
     # IME をトグルで切り替えるキーを指定する（複数指定可）
     fc.toggle_input_method_key = []
@@ -671,11 +740,20 @@ def configure(keymap):
             fakeymacs.ime_cancel = False
             fakeymacs.last_window = window
 
+        fakeymacs.is_keymap_decided = False
+
         if is_task_switching_window(window):
+            fakeymacs.is_keymap_decided = True
             return False
 
         if is_list_window(window):
+            fakeymacs.is_keymap_decided = True
             return False
+
+        if window != last_window:
+            ime_status = window.getImeStatus()
+            setCursorColor(ime_status)
+            popImeBalloon(ime_status)
 
         if (class_name not in fc.emacs_target_class and
             (process_name in fakeymacs.not_emacs_keybind or
@@ -683,15 +761,20 @@ def configure(keymap):
             fakeymacs.keybind = "not_emacs"
             return False
         else:
-            if window != last_window:
-                popImeBalloon()
+            fakeymacs.is_keymap_decided = True
             fakeymacs.keybind = "emacs"
             return True
 
     def is_ime_target(window):
-        if (window.getClassName() not in fc.emacs_target_class and
-            (window.getProcessName() in fakeymacs.not_emacs_keybind or
-             window.getProcessName() in fc.ime_target)):
+        if (fakeymacs.is_keymap_decided == False and
+            window.getProcessName() in fc.ime_target):
+            fakeymacs.is_keymap_decided = True
+            return True
+        else:
+            return False
+
+    def is_other_target(window):
+        if fakeymacs.is_keymap_decided == False:
             return True
         else:
             return False
@@ -702,6 +785,8 @@ def configure(keymap):
     else:
         keymap_emacs = keymap.defineWindowKeymap(check_func=is_emacs_target)
         keymap_ime   = keymap.defineWindowKeymap(check_func=is_ime_target)
+
+    keymap_other = keymap.defineWindowKeymap(check_func=is_other_target)
 
     # Microsoft Word 等では画面に Ctrl ボタンが表示され、Ctrl キーの単押しによりサブウインドウが
     # 開く機能がある。その挙動を抑制するための対策。
@@ -780,34 +865,58 @@ def configure(keymap):
     ##################################################
 
     def enable_input_method():
-        setImeStatus(1)
+        set_input_method(1)
 
     def disable_input_method():
-        setImeStatus(0)
+        set_input_method(0)
 
     def toggle_input_method():
-        setImeStatus(keymap.getWindow().getImeStatus() ^ 1)
+        set_input_method(getImeStatus() ^ 1)
 
-    def setImeStatus(ime_status):
+    def set_input_method(ime_status):
         correctImeStatus()
 
-        if keymap.getWindow().getImeStatus() != ime_status:
+        if getImeStatus() != ime_status:
             # IME を切り替える
-            # （keymap.getWindow().setImeStatus(ime_status) を使わないのは、キーボードマクロの再生時に
-            #   影響がでるため）
+            # （setImeStatus(ime_status) を使わないのは、キーボードマクロの再生時に影響がでるため）
             self_insert_command("A-(25)")()
 
             if fakeymacs.is_playing_kmacro:
                 delay(0.2)
 
+        setCursorColor(ime_status)
         popImeBalloon(ime_status)
+
+    def getImeStatus():
+        return keymap.getWindow().getImeStatus()
+
+    def setImeStatus(ime_status):
+        keymap.getWindow().setImeStatus(ime_status)
+        setCursorColor(ime_status)
 
     def correctImeStatus():
         # Chromium 系ブラウザで発生する問題の対策を行う
         if fakeymacs.correct_ime_status:
-            if keymap.getWindow().getImeStatus():
-                keymap.getWindow().setImeStatus(0) # この行は必要
-                keymap.getWindow().setImeStatus(1)
+            if getImeStatus():
+                setImeStatus(0) # この行は必要
+                setImeStatus(1)
+
+    def setCursorColor(ime_status=None):
+        if fc.use_ime_status_cursor_color:
+            if ime_status is None:
+                ime_status = getImeStatus()
+
+            if ime_status:
+                cursor_color = fc.ime_on_cursor_color
+            else:
+                cursor_color = fc.ime_off_cursor_color
+
+            # https://docs.python.org/ja/3/library/winreg.html
+            # https://itasuke.hatenablog.com/entry/2018/01/08/133510
+            with winreg.OpenKeyEx(winreg.HKEY_CURRENT_USER,
+                                  r"SOFTWARE\Microsoft\Accessibility\CursorIndicator",
+                                  access=winreg.KEY_WRITE) as key:
+                winreg.SetValueEx(key, "IndicatorColor", 0, winreg.REG_DWORD, cursor_color)
 
     def popImeBalloon(ime_status=None, force=False):
         if not fakeymacs.is_playing_kmacro:
@@ -817,7 +926,7 @@ def configure(keymap):
                 # （ただし、force が True の場合は除く）
                 if force or not checkWindow(None, "Qt5152QWindowIcon"):
                     if ime_status is None:
-                        ime_status = keymap.getWindow().getImeStatus()
+                        ime_status = getImeStatus()
 
                     if ime_status:
                         message = fc.ime_status_balloon_message[1]
@@ -857,7 +966,9 @@ def configure(keymap):
         self_insert_command("C-s")()
 
     def write_file():
-        self_insert_command("A-f", "A-a")()
+        self_insert_command("A-f")()
+        delay()
+        self_insert_command("a")()
 
     def dired():
         keymap.ShellExecuteCommand(None, r"explorer.exe", "", "")()
@@ -1150,7 +1261,7 @@ def configure(keymap):
     ##################################################
 
     def kmacro_start_macro():
-        keymap.getWindow().setImeStatus(0)
+        setImeStatus(0)
         keymap.command_RecordStart()
 
     def kmacro_end_macro():
@@ -1182,7 +1293,7 @@ def configure(keymap):
             # キーボードマクロの最初が IME ON の場合、この delay が必要
             delay(0.2)
             fakeymacs.is_playing_kmacro = True
-            keymap.getWindow().setImeStatus(0)
+            setImeStatus(0)
             keymap.command_RecordPlay()
             fakeymacs.is_playing_kmacro = False
 
@@ -1205,7 +1316,7 @@ def configure(keymap):
     def newline():
         self_insert_command("Enter")()
         if not fc.use_emacs_ime_mode:
-            if keymap.getWindow().getImeStatus():
+            if getImeStatus():
                 fakeymacs.ime_cancel = True
 
     def newline_and_indent():
@@ -1569,7 +1680,7 @@ def configure(keymap):
             correctImeStatus()
             func()
             if fc.use_emacs_ime_mode:
-                if keymap.getWindow().getImeStatus():
+                if getImeStatus():
                     # 次の判定は、数引数を指定して日本語入力をした際に必要
                     if fakeymacs.ei_last_window is None:
                         enable_emacs_ime_mode()
@@ -1579,7 +1690,7 @@ def configure(keymap):
         func = self_insert_command(*keys)
         def _func():
             func()
-            keymap.getWindow().setImeStatus(0)
+            setImeStatus(0)
         return _func
 
     def digit(number):
@@ -1685,12 +1796,12 @@ def configure(keymap):
         return _func
 
     def princ(str):
-        imeStatus = keymap.getWindow().getImeStatus()
+        imeStatus = getImeStatus()
         if imeStatus:
-            keymap.getWindow().setImeStatus(0)
+            setImeStatus(0)
         keymap.InputTextCommand(str)()
         if imeStatus:
-            keymap.getWindow().setImeStatus(1)
+            setImeStatus(1)
 
     ##################################################
     ## キーバインド
@@ -1784,13 +1895,23 @@ def configure(keymap):
     define_key(keymap_emacs, "C-u", universal_argument)
 
     ## 「IME の切り替え」のキー設定
-    define_key(keymap_emacs, "(243)",  toggle_input_method)
-    define_key(keymap_emacs, "(244)",  toggle_input_method)
-    define_key(keymap_emacs, "A-(25)", toggle_input_method)
+    define_key(keymap_emacs, "(243)",   toggle_input_method)
+    define_key(keymap_emacs, "(244)",   toggle_input_method)
+    define_key(keymap_emacs, "A-(25)",  toggle_input_method)
+    define_key(keymap_emacs, "(240)",   toggle_input_method)
+    define_key(keymap_emacs, "S-(240)", toggle_input_method)
 
-    define_key(keymap_ime,   "(243)",  toggle_input_method)
-    define_key(keymap_ime,   "(244)",  toggle_input_method)
-    define_key(keymap_ime,   "A-(25)", toggle_input_method)
+    define_key(keymap_ime,   "(243)",   toggle_input_method)
+    define_key(keymap_ime,   "(244)",   toggle_input_method)
+    define_key(keymap_ime,   "A-(25)",  toggle_input_method)
+    define_key(keymap_ime,   "(240)",   toggle_input_method)
+    define_key(keymap_ime,   "S-(240)", toggle_input_method)
+
+    define_key(keymap_other, "(243)",   toggle_input_method)
+    define_key(keymap_other, "(244)",   toggle_input_method)
+    define_key(keymap_other, "A-(25)",  toggle_input_method)
+    define_key(keymap_other, "(240)",   toggle_input_method)
+    define_key(keymap_other, "S-(240)", toggle_input_method)
 
     ## 「ファイル操作」のキー設定
     define_key(keymap_emacs, "Ctl-x C-f", reset_search(reset_undo(reset_counter(reset_mark(find_file)))))
@@ -2102,9 +2223,11 @@ def configure(keymap):
                         define_key2(keymap_ei, mkey, self_insert_command(mkey))
 
         ## 「IME の切り替え」のキー設定
-        define_key(keymap_ei, "(243)",  ei_disable_input_method)
-        define_key(keymap_ei, "(244)",  ei_disable_input_method)
-        define_key(keymap_ei, "A-(25)", ei_disable_input_method)
+        define_key(keymap_ei, "(243)",   ei_disable_input_method)
+        define_key(keymap_ei, "(244)",   ei_disable_input_method)
+        define_key(keymap_ei, "A-(25)",  ei_disable_input_method)
+        define_key(keymap_ei, "(240)",   ei_disable_input_method)
+        define_key(keymap_ei, "S-(240)", ei_disable_input_method)
 
         ## Escキーの設定
         define_key(keymap_ei, "Esc",           ei_esc)
@@ -2154,7 +2277,7 @@ def configure(keymap):
 
 
     ###########################################################################
-    ## Emacs キーバインドの切り替えのキー設定
+    ## 「Emacs キーバインドの切り替え」のキー設定
     ###########################################################################
 
     keymap_global = keymap.defineWindowKeymap()
