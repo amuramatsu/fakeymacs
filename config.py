@@ -5,7 +5,7 @@
 ## Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 ##
 
-fakeymacs_version = "20220506_02"
+fakeymacs_version = "20220601_01"
 
 # このスクリプトは、Keyhac for Windows ver 1.82 以降で動作します。
 #   https://sites.google.com/site/craftware/keyhac-ja
@@ -117,7 +117,8 @@ fakeymacs_version = "20220506_02"
 #     ・http://www.jw7.org/2015/11/03/windows10_virtualdesktop_animation_off/ ）
 # ・window_movement_key_for_desktops 変数に設定したキーにより、アクティブウィンドウの
 #   仮想デスクトップ間の移動が行われる。
-#   （本機能を利用する場合は、Microsoft Store から SylphyHorn をインストールしてください。）
+#   （本機能を利用する場合は、次のページから SylphyHornPlus をインストールしてください。
+#     ・https://github.com/hwtnb/SylphyHornPlusWin11/releases）
 # ・word_register_key 変数に設定したキーにより、IME の「単語登録」プログラムの起動が
 #   行われる。
 # ・clipboardList_key 変数に設定したキーにより、クリップボードリストが起動する。
@@ -210,8 +211,11 @@ def configure(keymap):
         )
 
         def callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
-            delay(0.1)
-            keymap._updateFocusWindow()
+            if keymap.hook_enabled:
+                delay(0.1)
+                keymap._updateFocusWindow()
+            else:
+                setCursorColor(False)
 
         WinEventProc = WinEventProcType(callback)
 
@@ -637,11 +641,12 @@ def configure(keymap):
     # fc.desktop_switching_key += [["W-Left", "W-Right"]]
 
     # アクティブウィンドウを仮想デスクトップ間で移動するキーの組み合わせ（前、後 の順）を指定する（複数指定可）
-    # （本機能を利用する場合は、Microsoft Store から SylphyHorn をインストールしてください。
-    #   Windows 10 では動作を確認しておりますが、Windows 11 では正常に動作しないようです。）
-    # （デフォルトキーは、["W-C-A-Left", "W-C-A-Right"] です。この設定は変更しないでください）
-    # （仮想デスクトップ切り替え時の通知を ON にすると処理が重くなります。代わりに、トレイアイコンに
-    #   デスクトップ番号を表示する機能を ON にすると良いようです。）
+    # （本機能を利用する場合は、次のページから SylphyHornPlus をインストールしてください。
+    #   ・https://github.com/hwtnb/SylphyHornPlusWin11/releases
+    #   SylphyHornPlus は、Microsoft Store からインストール可能な SylphyHorn の Fork で、Windows 11 の
+    #   対応など、改良が加えられたものとなっています。）
+    # （アクティブウィンドウを仮想デスクトップ間で移動するためのデフォルトキーは、["W-C-A-Left", "W-C-A-Right"]
+    #   です。この設定は変更しないでください。）
     fc.window_movement_key_for_desktops = []
     # fc.window_movement_key_for_desktops += [["W-p", "W-n"]]
     # fc.window_movement_key_for_desktops += [["W-Up", "W-Down"]]
@@ -706,7 +711,7 @@ def configure(keymap):
         process_name = window.getProcessName()
         class_name   = window.getClassName()
 
-        if window != last_window:
+        if window is not last_window:
             if (process_name in fc.not_clipboard_target or
                 any([checkWindow(None, c, None, window) for c in fc.not_clipboard_target_class])):
                 # クリップボードの監視用のフックを無効にする
@@ -750,10 +755,10 @@ def configure(keymap):
             fakeymacs.is_keymap_decided = True
             return False
 
-        if window != last_window:
+        if window is not last_window:
             ime_status = window.getImeStatus()
             setCursorColor(ime_status)
-            popImeBalloon(ime_status)
+            popImeBalloon(ime_status, window=window)
 
         if (class_name not in fc.emacs_target_class and
             (process_name in fakeymacs.not_emacs_keybind or
@@ -767,7 +772,8 @@ def configure(keymap):
 
     def is_ime_target(window):
         if (fakeymacs.is_keymap_decided == False and
-            window.getProcessName() in fc.ime_target):
+            (window.getProcessName() in fakeymacs.not_emacs_keybind or
+             window.getProcessName() in fc.ime_target)):
             fakeymacs.is_keymap_decided = True
             return True
         else:
@@ -901,11 +907,8 @@ def configure(keymap):
                 setImeStatus(0) # この行は必要
                 setImeStatus(1)
 
-    def setCursorColor(ime_status=None):
+    def setCursorColor(ime_status):
         if fc.use_ime_status_cursor_color:
-            if ime_status is None:
-                ime_status = getImeStatus()
-
             if ime_status:
                 cursor_color = fc.ime_on_cursor_color
             else:
@@ -914,20 +917,17 @@ def configure(keymap):
             # https://docs.python.org/ja/3/library/winreg.html
             # https://itasuke.hatenablog.com/entry/2018/01/08/133510
             with winreg.OpenKeyEx(winreg.HKEY_CURRENT_USER,
-                                  r"SOFTWARE\Microsoft\Accessibility\CursorIndicator",
+                                  r"Software\Microsoft\Accessibility\CursorIndicator",
                                   access=winreg.KEY_WRITE) as key:
                 winreg.SetValueEx(key, "IndicatorColor", 0, winreg.REG_DWORD, cursor_color)
 
-    def popImeBalloon(ime_status=None, force=False):
+    def popImeBalloon(ime_status, force=False, window=None):
         if not fakeymacs.is_playing_kmacro:
             if force or fc.use_ime_status_balloon:
                 # LINE アプリなど、Qt5152QWindowIcon にマッチするクラスをもつアプリは入力文字に
                 # バルーンヘルプが被るので、バルーンヘルプの表示対象から外す
                 # （ただし、force が True の場合は除く）
-                if force or not checkWindow(None, "Qt5152QWindowIcon"):
-                    if ime_status is None:
-                        ime_status = getImeStatus()
-
+                if force or not checkWindow(None, "Qt5152QWindowIcon", window=window):
                     if ime_status:
                         message = fc.ime_status_balloon_message[1]
                     else:
@@ -966,6 +966,9 @@ def configure(keymap):
         self_insert_command("C-s")()
 
     def write_file():
+        # https://www.sriproot.net/blog/ctrl-shift-s-saveas-922
+        # self_insert_command("C-S-s")()
+
         self_insert_command("A-f")()
         delay()
         self_insert_command("a")()
@@ -1612,7 +1615,7 @@ def configure(keymap):
                 w_keymap[key_list[-1]] = keyCommand(None)
 
     def define_key2(window_keymap, keys, command):
-        define_key(window_keymap, keys, command, False)
+        define_key(window_keymap, keys, command, skip_check=False)
 
     def define_key3(window_keymap, keys, command, check_func):
         define_key(window_keymap, keys, makeKeyCommand(window_keymap, keys, command, check_func))
@@ -2777,9 +2780,15 @@ def configure(keymap):
             if window_list:
                 process_name_length = max(map(len, map(Window.getProcessName, window_list)))
 
-                formatter = "{0:" + str(process_name_length) + "} | {1}"
+                formatter = "{0:" + str(process_name_length) + "} |{1:1}| {2}"
                 for window in window_list:
-                    window_items.append([formatter.format(window.getProcessName(), window.getText()), popWindow(window)])
+                    if window.isMinimized():
+                        icon = "m"
+                    else:
+                        icon = ""
+
+                    window_items.append([formatter.format(window.getProcessName(),
+                                                          icon, window.getText()), popWindow(window)])
 
             window_items.append([list_formatter.format("<Desktop>"),
                                  keymap.ShellExecuteCommand(None, r"shell:::{3080F90D-D7AD-11D9-BD98-0000947B0257}", "", "")])
