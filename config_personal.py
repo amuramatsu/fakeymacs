@@ -32,6 +32,24 @@ keymap.setFont("ＭＳ ゴシック", 12)
 # fc.ime = "Google_IME"
 fc.ime = None
 
+# 日本語キーボード設定をした OS 上で英語キーボードを利用するかどうかを指定する
+# （True: 使う、False: 使わない）
+# （False に設定した場合でも、OS の設定が日本語キーボードになっていれば、ランチャーメニュー
+#   の一番最後に表示されるメニューからキーボード種別を切り替えることができます）
+fc.use_usjis_keyboard_conversion = False
+
+# IME の状態をテキスト カーソル インジケーターの色で表現するかどうかを指定する
+# （True: 表現する、False: 表現しない）
+# （テキスト カーソル インジケーターを利用するには、次のページを参考とし設定を行ってください
+#   https://faq.nec-lavie.jp/qasearch/1007/app/servlet/relatedqa?QID=022081）
+fc.use_ime_status_cursor_color = False
+
+# IME が ON のときのテキスト カーソル インジケーターの色を指定する
+fc.ime_on_cursor_color = 0x00C800 # 濃い緑
+
+# IME が OFF のときのテキスト カーソル インジケーターの色を指定する
+fc.ime_off_cursor_color = 0x0000FF # 赤
+
 # 追加機能オプションの設定
 fc.use_clipboardList = False
 fc.use_lancherList = False
@@ -401,7 +419,7 @@ if 0:
     #                      "firefox.exe",
     #                      ]
 
-    # fc.vscode_prefix_key = [["C-Semicolon", "C-A-Semicolon"]]
+    # fc.vscode_prefix_key = [["C-;", "C-A-;"]]
     fc.use_ctrl_atmark_for_mark = False
     fc.use_direct_input_in_vscode_terminal = False
     fc.esc_mode_in_keyboard_quit = 1
@@ -474,6 +492,14 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
+# 日本語キーボード設定をした OS 上で日本語キーボードを英語配列で利用する場合の設定を行う
+if 0:
+    fc.change_keyboard2_startup = "US"
+    # fc.change_keyboard2_startup = "JP"
+    exec(readConfigExtension(r"change_keyboard2\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
 # クリップボードに格納したファイルもしくはフォルダのパスを emacsclient で開く
 if 0:
     fc.emacsclient_name = r"<emacsclient プログラムをインストールしている Windows のパス>\wslclient-n.exe"
@@ -483,7 +509,7 @@ if 0:
 
 # 指定したキーを押下したときに IME の状態を表示する
 if 0:
-    fc.pop_ime_balloon_key = ["C-Semicolon"]
+    fc.pop_ime_balloon_key = ["C-;"]
     # fc.pop_ime_balloon_key = ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
     exec(readConfigExtension(r"pop_ime_balloon\config.py"), dict(globals(), **locals()))
 
