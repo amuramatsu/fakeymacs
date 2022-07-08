@@ -62,8 +62,8 @@ fc.use_usjp_hack = False
 import platform, os
 nodename = platform.uname()[1]
 if re.match(r"^VPC-[A-Z]\d\d[A-Z]\d+$", nodename):
-    if is_japanese_keyboard and os.getenv("ViewClient_Keyboard.Type") == "4":
-        fc.use_usjp_hack = True
+    if os_keyboard_type == "JP" and os.getenv("ViewClient_Keyboard.Type") == "4":
+        fc.use_usjis_keyboard_conversion = True
 
 ####################################################################################################
 ## 基本設定
@@ -309,8 +309,6 @@ if fc.use_emacs_ime_mode:
     keymap_ctrlm = keymap.defineWindowKeymap(check_func=is_ctrlm_target_wo_ime)
 else:
     keymap_ctrlm = keymap.defineWindowKeymap(check_func=is_ctrlm_target)
-if fc.use_usjp_hack:
-    keymap_usjp = keymap.defineWindowKeymap()
 
 ## 数字キーの設定
 for key in range(10):
@@ -331,35 +329,13 @@ for vkey in [VK_OEM_MINUS, VK_OEM_PLUS, VK_OEM_COMMA, VK_OEM_PERIOD,
     define_key(keymap_ctrlm,        s_vkey, self_insert_command2(       s_vkey))
     define_key(keymap_ctrlm, "S-" + s_vkey, self_insert_command2("S-" + s_vkey))
 
-## 「IME の切り替え」のキー設定 & US->JP hack
-if fc.use_usjp_hack:
-    keymap.replaceKey("(221)", "(220)") # \|
-    keymap.replaceKey("(192)", "(219)") # [ {
-    keymap.replaceKey("(219)", "(221)") # ] }
-    for m in (keymap_emacs, keymap_ime, keymap_usjp, keymap_ctrlm):
-            define_key(m, "(243)", self_insert_command("S-(192)"))   # `
-            define_key(m, "(244)", self_insert_command("S-(192)"))   # `
-            define_key(m, "S-(243)", self_insert_command("S-(222)")) # ~
-            define_key(m, "S-(244)", self_insert_command("S-(222)")) # ~
-            define_key(m, "S-(50)", self_insert_command("(192)"))    # @
-            define_key(m, "S-(54)", self_insert_command("(222)"))    # ^
-            define_key(m, "S-(55)", self_insert_command("S-(54)"))   # &
-            define_key(m, "S-(56)", self_insert_command("S-(186)"))  # *
-            define_key(m, "S-(57)", self_insert_command("S-(56)"))   # (
-            define_key(m, "S-(48)", self_insert_command("S-(57)"))   # )
-            define_key(m, "S-(189)", self_insert_command("S-(226)")) # _
-            define_key(m, "(222)", self_insert_command("S-(189)"))   # =
-            define_key(m, "S-(222)", self_insert_command("S-(187)")) # +
-            define_key(m, "S-(187)", self_insert_command("(186)"))   # :
-            define_key(m, "(186)", self_insert_command("S-(55)"))    # '
-            define_key(m, "S-(186)", self_insert_command("S-(50)"))  # "
-else:
-    define_key(keymap_emacs, "(243)",  toggle_input_method)
-    define_key(keymap_emacs, "(244)",  toggle_input_method)
-    define_key(keymap_ime,   "(243)",  toggle_input_method)
-    define_key(keymap_ime,   "(244)",  toggle_input_method)
-    define_key(keymap_ctrlm, "(243)",  toggle_input_method)
-    define_key(keymap_ctrlm, "(244)",  toggle_input_method)
+## 「IME の切り替え」のキー設定
+define_key(keymap_emacs, "(243)",  toggle_input_method)
+define_key(keymap_emacs, "(244)",  toggle_input_method)
+define_key(keymap_ime,   "(243)",  toggle_input_method)
+define_key(keymap_ime,   "(244)",  toggle_input_method)
+define_key(keymap_ctrlm, "(243)",  toggle_input_method)
+define_key(keymap_ctrlm, "(244)",  toggle_input_method)
 
 define_key(keymap_emacs, "A-(25)", toggle_input_method)
 define_key(keymap_ime,   "A-(25)", toggle_input_method)
