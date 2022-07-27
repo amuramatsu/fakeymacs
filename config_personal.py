@@ -169,6 +169,7 @@ fc.skip_settings_key    = {"keymap_global"    : [], # 全画面共通 Keymap
 # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
 # （リストに指定するキーは、Keyhac で指定可能なマルチストロークではないキーとしてください。
 #   Fakeymacs の記法の "M-f" や "Ctl-x d" などの指定はできません。"A-v"、"C-v" などが指定可能です。）
+# （ここで指定しなくとも、左右のモディファイアキーを使い分けることで入力することは可能です）
 fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
                            "msedge.exe"       : ["C-l", "C-t"],
                            "firefox.exe"      : ["C-l", "C-t"],
@@ -277,6 +278,13 @@ fc.window_switching_key = []
 fc.window_switching_key += [["A-p", "A-n"]]
 # fc.window_switching_key += [["A-S-p", "A-S-n"]]
 # fc.window_switching_key += [["A-Up", "A-Down"]]
+
+# ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフトを指定する
+# （keymap_global 以外のすべてのキーマップをスルーします。ゲームなど、Keyhac によるキー設定と
+#   相性が悪いアプリケーションソフトを指定してください。keymap_base の設定もスルーするため、
+#   英語 -> 日本語キーボード変換の機能が働かなくなることにご留意ください。）
+fc.game_app_list        = ["ffxiv_dx11.exe",         # FINAL FANTASY XIV
+                           ]
 
 # [section-base-2] ---------------------------------------------------------------------------------
 

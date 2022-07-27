@@ -93,9 +93,32 @@ if fc.vscode_occur:
 # --------------------------------------------------------------------------------------------------
 
 if fc.vscode_quick_select:
-    for key in '"' + "';:`()[]{}<>":
-        mkey = "C-A-k {}".format(key)
-        define_key_v(mkey, reset_rect(region(getKeyCommand(keymap_vscode, mkey))))
+    # 日本語キーボードのキー設定に齟齬があるようなので、それを是正する
+    quick_select_jis_keys = {'"' : "S-Caret",
+                             "'" : "Caret",
+                             ";" : "Colon",
+                             ":" : "S-Colon",
+                             "`" : "Atmark",
+                             "(" : "S-9",
+                             ")" : "S-0",
+                             "[" : "OpenBracket",
+                             "]" : "CloseBracket",
+                             "{" : "S-OpenBracket",
+                             "}" : "S-CloseBracket",
+                             "<" : "S-Comma",
+                             ">" : "S-Period",
+                             }
+
+    for key in quick_select_jis_keys:
+        if os_keyboard_type == "JP":
+            ikey = quick_select_jis_keys[key]
+            usjis_conv = False
+        else:
+            ikey = key
+            usjis_conv = True
+
+        define_key_v("C-A-k {}".format(key),
+                     reset_rect(region(self_insert_command_v("C-k", ikey, usjis_conv=usjis_conv))))
 
 # --------------------------------------------------------------------------------------------------
 
