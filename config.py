@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20220726_01"
+fakeymacs_version = "20220728_02"
 
 import time
 import os.path
@@ -171,8 +171,7 @@ def configure(keymap):
     ###########################################################################
 
     # すべてのキーマップを透過（スルー）するアプリケーションソフトを指定する
-    fc.transparent_target   = ["mstsc.exe",                     # Remote Desktop
-                               "MouseWithoutBordersHelper.exe", # Mouse Without Borders
+    fc.transparent_target   = ["mstsc.exe",              # Remote Desktop
                                ]
 
     # Emacs のキーバインドにするウィンドウのクラスネームを指定する（全ての設定に優先する）
@@ -770,8 +769,8 @@ def configure(keymap):
                 else:
                     keymap_base["D-RCtrl"] = "D-RCtrl"
 
-        if (process_name in fc.transparent_target or
-            (class_name not in fc.emacs_target_class and
+        if (class_name not in fc.emacs_target_class and
+            (process_name in fc.transparent_target or
              process_name in fc.game_app_list)):
             fakeymacs.is_keymap_decided = True
             return False
@@ -2358,7 +2357,8 @@ def configure(keymap):
     ###########################################################################
 
     def is_global_target(window):
-        if window.getProcessName() in fc.transparent_target:
+        if (window.getClassName() not in fc.emacs_target_class and
+            window.getProcessName() in fc.transparent_target):
             return False
         else:
             return True

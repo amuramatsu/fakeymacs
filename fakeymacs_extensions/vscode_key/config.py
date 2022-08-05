@@ -9,7 +9,7 @@ try:
     fc.vscode_target
 except:
     # VSCode 用のキーバインドを利用するアプリケーションソフトを指定する
-    # （ブラウザを指定した場合には、vscode.dev にアクセスして開く VSCode で利用可能となります）
+    # （ブラウザを指定した場合には、VS Code Web の画面で利用可能となります）
     fc.vscode_target  = ["Code.exe"]
     fc.vscode_target += ["chrome.exe",
                          "msedge.exe",
@@ -86,7 +86,7 @@ fakeymacs_vscode.post_processing = None
 def is_vscode_target(window):
     if (fakeymacs.keybind == "emacs" and
         window.getProcessName() in fc.vscode_target and
-        window.getClassName() == "Chrome_WidgetWin_1"):
+        window.getClassName() in ["Chrome_WidgetWin_1", "MozillaWindowClass"]):
         return True
     else:
         return False
@@ -109,6 +109,11 @@ def define_key_v(keys, command, skip_check=True):
                 if fnmatch.fnmatch(keys, skey):
                     print("skip settings key : [keymap_vscode] " + keys)
                     return
+
+    if callable(command):
+        command = makeKeyCommand(keymap_emacs, keys, command,
+                                 lambda: (checkWindow(process_name="Code.exe") or
+                                          checkWindow(text="* - Visual Studio Code*")))
 
     define_key(keymap_vscode, keys, command, False)
 
@@ -167,8 +172,10 @@ def post(func):
     return _func
 
 def is_terminal_for_direct_input():
-    title = re.sub(r" - .*$",  r"", keymap.getWindow().getText())
-    return title in fc.terminal_list_for_direct_input
+    for terminal in fc.terminal_list_for_direct_input:
+        if re.search(r"(^| - ){} - ".format(re.escape(terminal)), keymap.getWindow().getText()):
+            return True
+    return False
 
 ## ファイル操作
 def find_directory():
@@ -199,30 +206,25 @@ def next_error():
 
 ## カット / コピー
 def kill_line_v(repeat=1):
-    if checkWindow("code.exe"):
-        if fakeymacs_vscode.vscode_focus == "not_terminal" and not is_terminal_for_direct_input():
-            kill_line(repeat)
-        else:
-            self_insert_command("C-k")()
-    else:
+    if fakeymacs_vscode.vscode_focus == "not_terminal" and not is_terminal_for_direct_input():
         kill_line(repeat)
+    else:
+        self_insert_command("C-k")()
 
 def yank_v():
-    if checkWindow("code.exe"):
-        if fakeymacs_vscode.vscode_focus == "not_terminal" and not is_terminal_for_direct_input():
-            yank()
-        else:
-            self_insert_command("C-y")()
-    else:
+    if fakeymacs_vscode.vscode_focus == "not_terminal" and not is_terminal_for_direct_input():
         yank()
+    else:
+        self_insert_command("C-y")()
 
 ## バッファ / ウィンドウ操作
 def kill_buffer():
-    # vscode.dev で動作するように、C-F4 の発行とはしていない（C-F4 がブラウザでキャッチされるため）
+    # VS Code Web 画面で動作するように、C-F4 の発行とはしていない（C-F4 がブラウザでキャッチされるため）
     # VSCode Command : View: Close Editor
     vscodeExecuteCommand("workbench.action.closeActiveEditor")()
 
 def switch_to_buffer():
+    # VS Code Web 画面で動作するように、C-Tab の発行とはしていない（C-Tab がブラウザでキャッチされるため）
     # VSCode Command : View: Quick Open Privious Recently Used Editor in Group
     vscodeExecuteCommand("VQOPrRUEi")()
     # vscodeExecuteCommand("workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup")()
@@ -234,13 +236,10 @@ def list_buffers():
 
 ## 文字列検索
 def isearch_v(direction):
-    if checkWindow("code.exe"):
-        if fakeymacs_vscode.vscode_focus == "not_terminal" and not is_terminal_for_direct_input():
-            isearch(direction)
-        else:
-            self_insert_command({"backward":"C-r", "forward":"C-s"}[direction])()
-    else:
+    if fakeymacs_vscode.vscode_focus == "not_terminal" and not is_terminal_for_direct_input():
         isearch(direction)
+    else:
+        self_insert_command({"backward":"C-r", "forward":"C-s"}[direction])()
 
 def isearch_backward():
     isearch_v("backward")

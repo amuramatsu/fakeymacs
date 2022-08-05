@@ -20,6 +20,13 @@ except:
 
 try:
     # 設定されているか？
+    fc.vscode_recenter2
+except:
+    # Recenter Top Bottom Extension を利用するかどうかを指定する
+    fc.vscode_recenter2 = False
+
+try:
+    # 設定されているか？
     fc.vscode_occur
 except:
     # Search in Current File Extension を利用するかどうかを指定する
@@ -79,6 +86,16 @@ if fc.vscode_recenter:
         # vscodeExecuteCommand("center-editor-window.center")()
 
     define_key_v("C-l", reset_search(reset_undo(reset_counter(recenter))))
+
+# --------------------------------------------------------------------------------------------------
+
+if fc.vscode_recenter2:
+    def recenter2():
+        # VSCode Command : Recenter Top Bottom
+        vscodeExecuteCommand("RTB")()
+        # vscodeExecuteCommand("recenterTopBottom")()
+
+    define_key_v("C-l", reset_search(reset_undo(reset_counter(recenter2))))
 
 # --------------------------------------------------------------------------------------------------
 
