@@ -73,6 +73,13 @@ if re.match(r"^VPC-[A-Z]\d\d[A-Z]\d+$", nodename):
 # Emacs のキーバインドにするウィンドウのクラスネームを指定する（全ての設定に優先する）
 fc.emacs_target_class   = []                   # 機能を無効にする
 
+# すべてのキーマップを透過（スルー）するアプリケーションソフトを指定する
+# （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
+fc.transparent_target  += [
+    "np2w.exe",            # NekoProject II/w
+    "np21w.exe",           # NekoProject 21/w
+                          ]
+
 # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
 # （Keyhac のメニューから「内部ログ」を ON にすると processname や classname を確認することができます）
 fc.not_emacs_target    += [
