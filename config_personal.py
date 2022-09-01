@@ -78,6 +78,8 @@ fc.emacs_target_class   = []                   # 機能を無効にする
 fc.transparent_target  += [
     "np2w.exe",            # NekoProject II/w
     "np21w.exe",           # NekoProject 21/w
+    "NP2kai_windows.exe",  # NekoProject II kai
+    "NP21kai_windows.exe", # NekoProject 21 kai
                           ]
 
 # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
