@@ -76,6 +76,8 @@ fc.emacs_target_class   = []                   # 機能を無効にする
 # すべてのキーマップを透過（スルー）するアプリケーションソフトを指定する
 # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
 fc.transparent_target  += [
+    "Game.exe",            # Some games...
+    "retroarch.exe",       # RetroArch
     "np2w.exe",            # NekoProject II/w
     "np21w.exe",           # NekoProject 21/w
     "NP2kai_windows.exe",  # NekoProject II kai
@@ -92,6 +94,8 @@ fc.not_emacs_target    += [
     "VirtualBox.exe",      # VirtualBox
     "np2w.exe",            # NekoProject II/w
     "np21w.exe",           # NekoProject 21/w
+    "NP2kai_windows.exe",  # NekoProject II kai
+    "NP21kai_windows.exe", # NekoProject 21 kai
     "SL9821.exe",          # SL9821
     "xm6i.exe",            # XM6i
     "XM8.exe",             # XM8
