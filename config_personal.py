@@ -303,6 +303,10 @@ fc.game_app_list        = ["ffxiv_dx11.exe",         # FINAL FANTASY XIV
 # [section-base-2] ---------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------
+# logicool keyboard for iPad
+keymap.replaceKey("(172)", "Escape")
+keymap.replaceKey("(170)", "(163)")
+
 # emacs ime keymap
 if fc.use_emacs_ime_mode:
     ## 「IME の切り替え」のキー設定
