@@ -121,6 +121,7 @@ fc.ime_target          += [
     "ckw.exe",             # ckw
     "ConEmu.exe",          # ConEmu2
     "ConEmu64.exe",        # ConEmu2 (64bit)
+    "RLogin.exe",          # RLogin
     "nyaos.exe",           # nyaos.exe
     "nyagos.exe",          # nyagos.exe
     "gvim.exe",            # GVim
