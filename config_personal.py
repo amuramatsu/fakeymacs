@@ -167,18 +167,18 @@ for t in fc.ctrlm_target:
 #   利用することができます。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
-fc.skip_settings_key    = {"keymap_base"      : ["W-g"], # ベース Keymap
-                           "keymap_global"    : [],      # グローバル Keymap
-                           "keymap_emacs"     : [],      # Emacs キーバインド対象アプリ用 Keymap
-                           "keymap_vscode"    : [],      # Emacs キーバインド VSCode 拡張用 Keymap
-                           "keymap_ime"       : [],      # IME 切り替え専用アプリ用 Keymap
+fc.skip_settings_key    = {"keymap_base"      : ["*W-g"], # ベース Keymap
+                           "keymap_global"    : [],       # グローバル Keymap
+                           "keymap_emacs"     : [],       # Emacs キーバインド対象アプリ用 Keymap
+                           "keymap_vscode"    : [],       # Emacs キーバインド VSCode 拡張用 Keymap
+                           "keymap_ime"       : [],       # IME 切り替え専用アプリ用 Keymap
                            "keymap_ei"        : [
                                "C-b", "C-f", "C-p", "C-n", "C-a", "C-e",
                                "Back", "C-h", "Delete", "C-d",
                                "Enter", "C-m", "Tab",
-                           ],                            # Emacs 日本語入力モード用 Keymap
-                           "keymap_tsw"       : [],      # タスク切り替え画面用 Keymap
-                           "keymap_lw"        : [],      # リストウィンドウ用 Keymap
+                           ],                             # Emacs 日本語入力モード用 Keymap
+                           "keymap_tsw"       : [],       # タスク切り替え画面用 Keymap
+                           "keymap_lw"        : [],       # リストウィンドウ用 Keymap
                            }
 
 # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
@@ -192,18 +192,18 @@ fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
                            "OUTLOOK.EXE"      : ["C-k"], # complete of address
                            }
 
-# 左右どちらの Ctrlキーを使うかを指定する（"L": 左、"R": 右）
+# 左右どちらの Ctrl キーを使うかを指定する（"L": 左、"R": 右）
 fc.side_of_ctrl_key = "L"
 # fc.side_of_ctrl_key = "R"
 
-# Escキーを Metaキーとして使うかどうかを指定する（True: 使う、False: 使わない）
-# （True（Metaキーとして使う）に設定されている場合、ESC の二回押下で ESC が入力されます）
+# Esc キーを Meta キーとして使うかどうかを指定する（True: 使う、False: 使わない）
+# （True（Meta キーとして使う）に設定されている場合、ESC の二回押下で ESC が入力されます）
 fc.use_esc_as_meta = True
 
-# Emacs日本語入力モードを使うかどうかを指定する（True: 使う、False: 使わない）
+# Emacs 日本語入力モードを使うかどうかを指定する（True: 使う、False: 使わない）
 fc.use_emacs_ime_mode = True
 
-# Emacs日本語入力モードが有効なときに表示するバルーンメッセージを指定する
+# Emacs 日本語入力モードが有効なときに表示するバルーンメッセージを指定する
 # fc.emacs_ime_mode_balloon_message = None
 fc.emacs_ime_mode_balloon_message = "▲"
 
@@ -243,10 +243,12 @@ fc.set_input_method_key = []
 
 ## C-j で英数入力、C-i で日本語入力となる（C-i が Tab として利用できなくなるが、トグルキー C-o との併用可）
 # fc.set_input_method_key += [["C-j", "C-i"]]
+#---------------------------------------------------------------------------------------------------
 
-# Emacs日本語入力モードを利用する際に、IME のショートカットを置き換えるキーの組み合わせ
+#---------------------------------------------------------------------------------------------------
+# Emacs 日本語入力モードを利用する際に、IME のショートカットを置き換えるキーの組み合わせ
 # （置き換え先、置き換え元）を指定する
-# （「ことえり」のキーバインドを利用するための設定例です。Google日本語入力で「ことえり」の
+# （「ことえり」のキーバインドを利用するための設定例です。Google 日本語入力で「ことえり」の
 #   キー設定になっている場合には不要ですが、設定を行っていても問題はありません。）
 fc.emacs_ime_mode_key = []
 #fc.emacs_ime_mode_key += [["C-s", "Left"],    # 文節を縮める
@@ -269,18 +271,16 @@ if is_japanese_keyboard:
     keymap.replaceKey("(29)", "Space")
     keymap.replaceKey("(242)", "Space")
     keymap.replaceKey("Apps", "RAlt")
-
 #---------------------------------------------------------------------------------------------------
 
 # アプリケーションキーとして利用するキーを指定する
 # （修飾キーに Alt は使えないようです）
 fc.application_key = None
 # fc.application_key = "O-RCtrl"
-# fc.application_key = "W-m"
 
 # 数引数の指定に Ctrl+数字キーを使うかを指定する（True: 使う、False: 使わない）
 # （False に指定しても、C-u 数字キーで数引数を指定することができます）
-# fc.use_ctrl_digit_key_for_digit_argument = True
+fc.use_ctrl_digit_key_for_digit_argument = False
 
 # アクティブウィンドウを切り替えるキーの組み合わせ（前、後 の順）を指定する（複数指定可）
 # （A-Esc キーの動作とは異なり、仮想デスクトップを跨ぎ、最小化されていないウィンドウを順に切り替え
@@ -294,6 +294,11 @@ fc.window_switching_key = []
 fc.window_switching_key += [["A-p", "A-n"]]
 # fc.window_switching_key += [["A-S-p", "A-S-n"]]
 # fc.window_switching_key += [["A-Up", "A-Down"]]
+
+# Microsoft Excel のセル内で改行を選択可能かを指定する（True: 選択可、False: 選択不可）
+# （kill_line 関数の挙動を変えるための変数です。Microsoft Excel 2019 以降では True にして
+#   ください。）
+fc.is_newline_selectable_in_Excel = True
 
 # ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフトを指定する
 # （keymap_global 以外のすべてのキーマップをスルーします。ゲームなど、Keyhac によるキー設定と
