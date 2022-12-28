@@ -107,7 +107,7 @@ def define_key_v(keys, command, skip_check=True):
         if "keymap_vscode" in fc.skip_settings_key:
             for skey in fc.skip_settings_key["keymap_vscode"]:
                 if fnmatch.fnmatch(keys, skey):
-                    print("skip settings key : [keymap_vscode] " + keys)
+                    print(f"skip settings key : [keymap_vscode] {keys}")
                     return
 
     if callable(command):
@@ -173,7 +173,7 @@ def post(func):
 
 def is_terminal_for_direct_input():
     for terminal in fc.terminal_list_for_direct_input:
-        if re.search(r"(^| - ){} - ".format(re.escape(terminal)), keymap.getWindow().getText()):
+        if re.search(rf"(^| - ){re.escape(terminal)} - ", keymap.getWindow().getText()):
             return True
     return False
 
@@ -322,7 +322,7 @@ def other_window():
 def switch_focus(number):
     def _func():
         # VSCode Command : View: Focus Side Bar or n-th Editor Group
-        self_insert_command("C-{}".format(number))()
+        self_insert_command(f"C-{number}")()
 
         if fc.use_direct_input_in_vscode_terminal:
             fakeymacs_vscode.vscode_focus = "not_terminal"
@@ -500,16 +500,13 @@ keymap_vscode.applying_func = mergeEmacsMultiStrokeKeymap
 
 ## プレフィックスキーの設定
 for pkey1, pkey2 in fc.vscode_prefix_key:
-    define_key_v(pkey2, keymap.defineMultiStrokeKeymap("<VSCode> " + pkey1))
+    define_key_v(pkey2, keymap.defineMultiStrokeKeymap(f"<VSCode> {pkey1}"))
 
     for vkey in vkeys():
         key = vkToStr(vkey)
-        for mod1 in ["", "W-"]:
-            for mod2 in ["", "A-"]:
-                for mod3 in ["", "C-"]:
-                    for mod4 in ["", "S-"]:
-                        mkey = mod1 + mod2 + mod3 + mod4 + key
-                        define_key_v("{} {}".format(pkey2, mkey), self_insert_command_v(pkey1, mkey))
+        for mod1, mod2, mod3, mod4 in itertools.product(["", "W-"], ["", "A-"], ["", "C-"], ["", "S-"]):
+            mkey = mod1 + mod2 + mod3 + mod4 + key
+            define_key_v(f"{pkey2} {mkey}", self_insert_command_v(pkey1, mkey))
 
 ## 「ファイル操作」のキー設定
 define_key_v("Ctl-x C-d", reset_search(reset_undo(reset_counter(reset_mark(find_directory)))))
