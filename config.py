@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20221227_03"
+fakeymacs_version = "20230111_01"
 
 import time
 import os.path
@@ -252,7 +252,7 @@ def configure(keymap):
     # キーマップ毎にキー設定をスキップするキーを指定する
     # （リストに指定するキーは、define_key の第二引数に指定する記法のキーとしてください。"A-v" や "C-v"
     #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。"M-g*" のようにワイルドカードも
-    #   利用することができます。）
+    #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
     # （ここで指定したキーに新たに別のキー設定をしたいときには、define_key2 関数を利用してください）
     fc.skip_settings_key    = {"keymap_base"      : ["*W-g"], # ベース Keymap
                                "keymap_global"    : [],       # グローバル Keymap
@@ -692,10 +692,10 @@ def configure(keymap):
                        "S-Quote"        : [["S-Colon"],                       "S-2"           ], # "
                        "BackQuote"      : [["(243)", "(244)", "(248)"],       "S-Atmark"      ], # `
                        "S-BackQuote"    : [["S-(243)", "S-(244)", "S-(248)"], "S-Caret"       ], # ~
-                       "(243)"          : [[],                                "(243)"         ],
-                       "S-(243)"        : [[],                                "S-(243)"       ],
-                       "(244)"          : [[],                                "(244)"         ],
-                       "S-(244)"        : [[],                                "S-(244)"       ],
+                       "(243)"          : [[],                                "(243)"         ], # <半角／全角>
+                       "S-(243)"        : [[],                                "S-(243)"       ], # <半角／全角>
+                       "(244)"          : [[],                                "(244)"         ], # <半角／全角>
+                       "S-(244)"        : [[],                                "S-(244)"       ], # <半角／全角>
                        }
 
     def keyStrNormalization(key):
@@ -709,10 +709,10 @@ def configure(keymap):
         key_list = []
         match_flg = False
         if use_usjis_keyboard_conversion:
-            for us_key in usjis_key_table:
+            for us_key, jis_list in usjis_key_table.items():
                 if re.search(rf"(^|[^S]-){re.escape(us_key)}$", key):
-                    for jis_key in usjis_key_table[us_key][0]:
-                        key_list.append(key.replace(us_key, jis_key))
+                    for jis_pos_key in jis_list[0]:
+                        key_list.append(key.replace(us_key, jis_pos_key))
                     match_flg = True
                     break
         if not match_flg:
@@ -722,10 +722,10 @@ def configure(keymap):
     def usjisInput(key):
         key = keyStrNormalization(key)
         if use_usjis_keyboard_conversion:
-            for us_key in usjis_key_table:
+            for us_key, jis_list in usjis_key_table.items():
                 if re.search(rf"(^|[^S]-){re.escape(us_key)}$", key):
-                    jis_key = usjis_key_table[us_key][1]
-                    key = key.replace(us_key, jis_key)
+                    jis_input_key = jis_list[1]
+                    key = key.replace(us_key, jis_input_key)
                     break
         return key
 
@@ -1553,14 +1553,10 @@ def configure(keymap):
                               }
 
     def specialCharToKeyStr(key):
-        for special_char in special_char_key_table:
+        n = 1 if is_japanese_keyboard else 0
+        for special_char, key_str in special_char_key_table.items():
             if re.search(rf"(^|-){re.escape(special_char)}$", key):
-                if is_japanese_keyboard:
-                    str = special_char_key_table[special_char][1]
-                else:
-                    str = special_char_key_table[special_char][0]
-                # key = re.sub(rf"{re.escape(special_char)}$", str, key)
-                key = key[:-1] + str # 一文字の変換であれば、こちらの方が速い
+                key = key[:-1] + key_str[n]
                 break
         return key
 
@@ -1977,13 +1973,14 @@ def configure(keymap):
     # US と JIS のキーボード変換の機能を有効にしている場合は、変換が必要となるキーを、左右両方の
     # モディファイアキーの全てのパターンで keymap_base に登録する
     if use_usjis_keyboard_conversion:
-        for us_key in usjis_key_table:
-            if usjis_key_table[us_key][0]:
+        for us_key, jis_list in usjis_key_table.items():
+            if jis_list[0]:
                 for mod1, mod2, mod3 in itertools.product(["", "LW-", "RW-"],
                                                           ["", "LA-", "RA-"],
                                                           ["", "LC-", "RC-"]):
                     mkey = mod1 + mod2 + mod3 + us_key
-                    define_key(keymap_base, mkey, self_insert_command(mkey))
+                    if not getKeyCommand(keymap_base, mkey):
+                        define_key(keymap_base, mkey, self_insert_command(mkey))
 
     ## マルチストロークキーの設定
     define_key(keymap_emacs, "Ctl-x",  keymap.defineMultiStrokeKeymap(fc.ctl_x_prefix_key))
@@ -2290,9 +2287,6 @@ def configure(keymap):
         ## その他（Emacs 日本語入力モード用）
         ##################################################
 
-        def ei_esc():
-            escape()
-
         def ei_newline():
             self_insert_command("Enter")()
             fakeymacs.ime_cancel = True
@@ -2338,8 +2332,8 @@ def configure(keymap):
         define_key(keymap_ei, "S-(240)", ei_disable_input_method) # CapsLock キー
 
         ## Esc キーの設定
-        define_key(keymap_ei, "Esc", ei_esc)
-        define_key(keymap_ei, "C-[", ei_esc)
+        define_key(keymap_ei, "Esc", escape)
+        define_key(keymap_ei, "C-[", escape)
 
         ## 「カーソル移動」のキー設定
         define_key(keymap_ei, "C-b", backward_char)
@@ -2997,11 +2991,7 @@ def configure(keymap):
 
                 formatter = f"{{0:{process_name_length}}} |{{1:1}}| {{2}}"
                 for window in window_list:
-                    if window.isMinimized():
-                        icon = "m"
-                    else:
-                        icon = ""
-
+                    icon  = "m" if window.isMinimized() else ""
                     window_items.append([formatter.format(window.getProcessName(),
                                                           icon, window.getText()), popWindow(window)])
 
