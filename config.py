@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20230111_01"
+fakeymacs_version = "20230208_01"
 
 import time
 import os.path
@@ -52,7 +52,7 @@ def configure(keymap):
 
     # 個人設定ファイルを読み込む
     try:
-        with open(dataPath() + r"\config_personal.py", "r", encoding="utf-8-sig") as f:
+        with open(rf"{dataPath()}\config_personal.py", "r", encoding="utf-8-sig") as f:
             config_personal = f.read()
     except:
         print("個人設定ファイル config_personal.py は存在しないため、読み込みしていません")
@@ -76,7 +76,7 @@ def configure(keymap):
 
     def readConfigExtension(config_file, msg=True):
         try:
-            with open(dataPath() + r"\fakeymacs_extensions\\" + config_file, "r", encoding="utf-8-sig") as f:
+            with open(rf"{dataPath()}\fakeymacs_extensions\{config_file}", "r", encoding="utf-8-sig") as f:
                 config_extension = f.read()
         except:
             if msg:
@@ -925,9 +925,7 @@ def configure(keymap):
         if getImeStatus() != ime_status:
             # IME を切り替える
             # （setImeStatus(ime_status) を使わないのは、キーボードマクロの再生時に影響がでるため）
-            # self_insert_command("A-(25)")() # 日本語キーボードで PowerShell を使った際に @ が
-            #                                 # 表示されるため、次行に変更
-            self_insert_command("(244)")()
+            self_insert_command("(25)")()
 
             if fakeymacs.is_playing_kmacro:
                 delay(0.2)
