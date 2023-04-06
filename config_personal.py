@@ -113,6 +113,7 @@ fc.ime_target          += [
     "WINWORD.EXE",         # Word
     "POWERPNT.EXE",        # PowerPoint
     "EXCEL.EXE",           # Excel
+    "VISIO.EXE",           # Visio
     "wpa.exe",             # WPS office (Writer)
     "et.exe",              # WPS office (Spredsheet)
     "wpp.exe",             # WPSOffice (Presentation)
