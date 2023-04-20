@@ -142,13 +142,14 @@ fc.ime_target          += [
     "pcbnew.exe",          # KiCAD
     "cvpcb.exe",           # KiCAD
     "pcb_calculator.exe",  # KiCAD
-    "gerbview.exe,"        # KiCAD
+    "gerbview.exe",        # KiCAD
     "Capture.exe",         # OrCAD
     "JabRef.exe",          # JabRef
     "scad3.exe",           # LTspice IV
     "XVIIx86.exe",         # LTspice XVII
     "XVIIx64.exe",         # LTspice XVII (64bit)
     "bsch3v.exe",          # BSch3V
+    "LCoV.exe",            # BSch3V
                           ]
 for t in fc.ime_target:
     if t not in fc.not_emacs_target:
