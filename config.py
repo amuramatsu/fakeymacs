@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20230324_01"
+fakeymacs_version = "20230606_01"
 
 import time
 import os.path
@@ -170,14 +170,16 @@ def configure(keymap):
     ## カスタマイズパラメータの設定
     ###########################################################################
 
-    # すべてのキーマップを透過（スルー）するアプリケーションソフトを指定する
+    # すべてのキーマップを透過（スルー）するアプリケーションソフトを指定する（全ての設定に優先する）
     # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
-    fc.transparent_target   = ["mstsc.exe",              # Remote Desktop
-                               ]
+    fc.transparent_target       = []
 
-    # Emacs のキーバインドにするウィンドウのクラスネームを指定する（全ての設定に優先する）
-    fc.emacs_target_class   = ["Edit",                   # テキスト入力フィールドなどが該当
-                               "RAIL_WINDOW"]            # RemoteApp（アプリが mstsc.exe のため、クラスを指定）
+    # すべてのキーマップを透過（スルー）するウィンドウのクラスネームを指定する（全ての設定に優先する）
+    # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
+    fc.transparent_target_class = ["IHWindowClass"]      # Remote Desktop
+
+    # Emacs のキーバインドにするウィンドウのクラスネームを指定する（fc.not_emacs_target の設定より優先する）
+    fc.emacs_target_class   = ["Edit"]                   # テキスト入力フィールドなどが該当
 
     # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
     # （Keyhac のメニューから「内部ログ」を ON にすると processname や classname を確認することができます）
@@ -558,11 +560,13 @@ def configure(keymap):
                                ["POWERPNT.EXE", "mdiClass"],
                                ]
 
-    # ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフトを指定する
+    # ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフト（プロセス名称と
+    # クラス名称の組み合わせ（ワイルドカード指定可））を指定する
     # （keymap_global 以外のすべてのキーマップをスルーします。ゲームなど、Keyhac によるキー設定と
     #   相性が悪いアプリケーションソフトを指定してください。keymap_base の設定もスルーするため、
     #   英語 -> 日本語キーボード変換の機能が働かなくなることにご留意ください。）
-    fc.game_app_list        = ["ffxiv_dx11.exe",         # FINAL FANTASY XIV
+    fc.game_app_list        = [["ffxiv_dx11.exe", "*"],            # FINAL FANTASY XIV
+                               # ["msrdc.exe",      "RAIL_WINDOW"],  # WSLg
                                ]
 
     # 個人設定ファイルのセクション [section-base-1] を読み込んで実行する
@@ -749,7 +753,7 @@ def configure(keymap):
 
         if window is not fakeymacs.last_window:
             if (process_name in fc.not_clipboard_target or
-                any([checkWindow(None, c, None, window) for c in fc.not_clipboard_target_class])):
+                any(checkWindow(None, c, window=window) for c in fc.not_clipboard_target_class)):
                 # クリップボードの監視用のフックを無効にする
                 keymap.clipboard_history.enableHook(False)
                 fakeymacs.clipboard_hook = False
@@ -766,10 +770,8 @@ def configure(keymap):
                         fakeymacs.correct_ime_status = False
 
             fakeymacs.ctrl_button_app = False
-            for app in fc.ctrl_button_app_list:
-                if checkWindow(*app):
-                    fakeymacs.ctrl_button_app = True
-                    break
+            if any(checkWindow(*app, window=window) for app in fc.ctrl_button_app_list):
+                fakeymacs.ctrl_button_app = True
 
             # Microsoft Word 等では画面に Ctrl ボタンが表示され、Ctrl キーの単押しによりサブウインドウが
             # 開く機能がある。その挙動を抑制するための対策。
@@ -779,9 +781,10 @@ def configure(keymap):
             else:
                 keymap_base[d_ctrl] = d_ctrl
 
-        if (class_name not in fc.emacs_target_class and
-            (process_name in fc.transparent_target or
-             process_name in fc.game_app_list)):
+        if (process_name in fc.transparent_target or
+            process_name in fc.transparent_target_class or
+            any(checkWindow(*app, window=window) if type(app) is list else
+                checkWindow(app, window=window) for app in fc.game_app_list)):
             fakeymacs.is_keymap_decided = True
             return False
         else:
@@ -2383,8 +2386,8 @@ def configure(keymap):
     ###########################################################################
 
     def is_global_target(window):
-        if (window.getClassName() not in fc.emacs_target_class and
-            window.getProcessName() in fc.transparent_target):
+        if (window.getProcessName() in fc.transparent_target or
+            window.getProcessName() in fc.transparent_target_class):
             return False
         else:
             return True
@@ -2437,6 +2440,15 @@ def configure(keymap):
     ##################################################
     ## ウィンドウ操作（デスクトップ用）
     ##################################################
+
+    def getTopLevelWindow():
+        window = keymap.getTopLevelWindow()
+        if (window and
+            window.getProcessName() == "explorer.exe" and
+            window.getClassName() in ["WorkerW", "Shell_TrayWnd"]):
+            return None
+        else:
+            return window
 
     def popWindow(window):
         def _func():
@@ -2579,7 +2591,7 @@ def configure(keymap):
             window.setRect(rect)
             window.setRect(rect)
 
-        window = keymap.getTopLevelWindow()
+        window = getTopLevelWindow()
         if window:
             if display_cnt == 1:
                 if window.isMaximized():
@@ -2621,7 +2633,7 @@ def configure(keymap):
         resize_window(False)
 
     def minimize_window():
-        window = keymap.getTopLevelWindow()
+        window = getTopLevelWindow()
         if window and not window.isMinimized():
             window.minimize()
             delay()
