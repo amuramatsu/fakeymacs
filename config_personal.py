@@ -1,15 +1,12 @@
 ﻿# -*- mode: python; coding: utf-8-with-signature-dos -*-
 
-# https://stackoverflow.com/questions/2904274/globals-and-locals-in-python-exec
-# https://docs.python.org/3/library/functions.html?highlight=exec%20global#exec
-
 # 本ファイルは、config_personal.py というファイル名にすることで個人設定ファイルとして機能します。
 # 本ファイルの設定には [] で括られたセクション名が定義されており、その単位で config.py の中に設定
 # が取り込まれ、exec関数により実行されます。config.py ファイル内の exec関数をコールしているところ
 # を検索すると、何のセクションがどこで読み込まれるかが分かると思います。
 
-# 本ファイルはサンプルファイルです。本ファイルに記載のない設定でも、config.py から設定を取り込み、
-# カスタマイズしてご利用ください。
+# 本ファイルはサンプルファイルです。本ファイルに記載のない設定でも、_config_parameter.py から設定を
+# 取り込み、カスタマイズして利用することができます。
 
 ####################################################################################################
 ## 初期設定
@@ -202,9 +199,25 @@ fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
 fc.side_of_ctrl_key = "L"
 # fc.side_of_ctrl_key = "R"
 
+# C-i キーを Tab キーとして使うかどうかを指定する（True: 使う、False: 使わない）
+fc.use_ctrl_i_as_tab = True
+
 # Esc キーを Meta キーとして使うかどうかを指定する（True: 使う、False: 使わない）
 # （True（Meta キーとして使う）に設定されている場合、ESC の二回押下で ESC が入力されます）
 fc.use_esc_as_meta = True
+
+# C-[ キーを Meta キーとして使うかどうかを指定する（True: 使う、False: 使わない）
+# （True（Meta キーとして使う）に設定されている場合、C-[ の二回押下で ESC が入力されます）
+fc.use_ctrl_openbracket_as_meta = True
+
+# Ctl-x プレフィックスキーに使うキーを指定する
+# （Ctl-x プレフィックスキーのモディファイアキーは、Ctrl または Alt のいずれかから指定してください）
+fc.ctl_x_prefix_key = "C-x"
+# fc.ctl_x_prefix_key = "A-x"
+
+# スクロールに使うキーの組み合わせ（Up、Down の順）を指定する
+# fc.scroll_key = None # PageUp、PageDown キーのみを利用する
+fc.scroll_key = ["M-v", "C-v"]
 
 # Emacs 日本語入力モードを使うかどうかを指定する（True: 使う、False: 使わない）
 fc.use_emacs_ime_mode = True
@@ -288,6 +301,9 @@ fc.application_key = None
 # （False に指定しても、C-u 数字キーで数引数を指定することができます）
 fc.use_ctrl_digit_key_for_digit_argument = False
 
+# 表示しているウィンドウの中で、一番最近までフォーカスがあったウィンドウに移動するキーを指定する
+fc.other_window_key = "A-o"
+
 # アクティブウィンドウを切り替えるキーの組み合わせ（前、後 の順）を指定する（複数指定可）
 # （A-Esc キーの動作とは異なり、仮想デスクトップを跨ぎ、最小化されていないウィンドウを順に切り替え
 #   ます。初期設定は ["A-p", "A-n"] としていますが、Emacs の shell-mode のキーバインドなどと設定が
@@ -300,6 +316,12 @@ fc.window_switching_key = []
 fc.window_switching_key += [["A-p", "A-n"]]
 # fc.window_switching_key += [["A-S-p", "A-S-n"]]
 # fc.window_switching_key += [["A-Up", "A-Down"]]
+
+# クリップボードリストを起動するキーを指定する
+fc.clipboardList_key = "A-y"
+
+# ランチャーリストを起動するキーを指定する
+fc.lancherList_key = "A-l"
 
 # Microsoft Excel のセル内で改行を選択可能かを指定する（True: 選択可、False: 選択不可）
 # （kill_line 関数の挙動を変えるための変数です。Microsoft Excel 2019 以降では True にして
@@ -542,5 +564,13 @@ if 0:
 # 半角と全角の入力を間違えた際、入力モードの切り替えと入力文字の変換を行う
 if 0:
     exec(readConfigExtension(r"zenkaku_hankaku\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Emacs キーバインドを利用しない設定のアプリで、メニューの操作用の Emacs キーバインドを設定する
+if 0:
+    fc.menu_target= ["ttermpro.exe", # TeraTerm
+                     ]
+    exec(readConfigExtension(r"menu_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
