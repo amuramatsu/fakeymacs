@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20230606_01"
+fakeymacs_version = "20230807_01"
 
 import time
 import os.path
@@ -179,7 +179,11 @@ def configure(keymap):
     fc.transparent_target_class = ["IHWindowClass"]      # Remote Desktop
 
     # Emacs のキーバインドにするウィンドウのクラスネームを指定する（fc.not_emacs_target の設定より優先する）
-    fc.emacs_target_class   = ["Edit"]                   # テキスト入力フィールドなどが該当
+    fc.emacs_target_class   = ["Edit",                   # テキスト入力フィールドなどが該当
+                               "Button",                 # ボタン
+                               "ComboBox",               # コンボボックス
+                               "ListBox",                # リストボックス
+                               ]
 
     # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
     # （Keyhac のメニューから「内部ログ」を ON にすると processname や classname を確認することができます）
@@ -300,9 +304,14 @@ def configure(keymap):
     # （True（Meta キーとして使う）に設定されている場合、ESC の二回押下で ESC が入力されます）
     fc.use_esc_as_meta = False
 
+    # C-[ キーを Meta キーとして使うかどうかを指定する（True: 使う、False: 使わない）
+    # （True（Meta キーとして使う）に設定されている場合、C-[ の二回押下で ESC が入力されます）
+    fc.use_ctrl_openbracket_as_meta = True
+
     # Ctl-x プレフィックスキーに使うキーを指定する
     # （Ctl-x プレフィックスキーのモディファイアキーは、Ctrl または Alt のいずれかから指定してください）
     fc.ctl_x_prefix_key = "C-x"
+    # fc.ctl_x_prefix_key = "A-x"
 
     # スクロールに使うキーの組み合わせ（Up、Down の順）を指定する
     # fc.scroll_key = None # PageUp、PageDown キーのみを利用する
@@ -446,9 +455,8 @@ def configure(keymap):
     # （Emacs キーバインドを利用するアプリケーションでかつフォーカスが当たっているアプリケーションソフト
     #   に対して切り替えが機能します。また、Emacs キーバインドを OFF にしても、IME の切り替えは ime_target
     #   に登録したアプリケーションソフトと同様に機能するようにしています。）
-    # （fc.emacs_target_class 変数に指定したクラス（初期値：Edit）に該当するアプリケーションソフト
-    #   （Windows10版 Notepad など）は、Emacs キーバインドを切り替えの対象となりません（常に Emacs
-    #   キーバインドとなります）。）
+    # （fc.emacs_target_class 変数に指定したクラスに該当するアプリケーションソフト（Windows10版 Notepad など）
+    #   は、Emacs キーバインドを切り替えの対象となりません（常に Emacs キーバインドとなります）。）
     fc.toggle_emacs_keybind_key = "C-S-Space"
 
     # アプリケーションキーとして利用するキーを指定する
@@ -565,6 +573,8 @@ def configure(keymap):
     # （keymap_global 以外のすべてのキーマップをスルーします。ゲームなど、Keyhac によるキー設定と
     #   相性が悪いアプリケーションソフトを指定してください。keymap_base の設定もスルーするため、
     #   英語 -> 日本語キーボード変換の機能が働かなくなることにご留意ください。）
+    # （msrdc.exe の行の有効化の必要性については、次のコミットの説明を参照してください。
+    #   https://github.com/smzht/fakeymacs/commit/5ceb921bd754ce348f9cd79b6606086916520945）
     fc.game_app_list        = [["ffxiv_dx11.exe", "*"],            # FINAL FANTASY XIV
                                # ["msrdc.exe",      "RAIL_WINDOW"],  # WSLg
                                ]
@@ -677,30 +687,30 @@ def configure(keymap):
             rtn = func(*param)
             return rtn
 
-    usjis_key_table = {"S-2"            : [["S-2"],                           "Atmark"        ], # @
-                       "S-6"            : [["S-6"],                           "Caret"         ], # ^
-                       "S-7"            : [["S-7"],                           "S-6"           ], # &
-                       "S-8"            : [["S-8"],                           "S-Colon"       ], # *
-                       "S-9"            : [["S-9"],                           "S-8"           ], # (
-                       "S-0"            : [["S-0"],                           "S-9"           ], # )
-                       "S-Minus"        : [["S-Minus"],                       "S-BackSlash"   ], # _
-                       "Plus"           : [["Caret"],                         "S-Minus"       ], # =
-                       "S-Plus"         : [["S-Caret"],                       "S-Semicolon"   ], # +
-                       "OpenBracket"    : [["Atmark"],                        "OpenBracket"   ], # [
-                       "S-OpenBracket"  : [["S-Atmark"],                      "S-OpenBracket" ], # {
-                       "CloseBracket"   : [["OpenBracket"],                   "CloseBracket"  ], # ]
-                       "S-CloseBracket" : [["S-OpenBracket"],                 "S-CloseBracket"], # }
-                       "BackSlash"      : [["CloseBracket"],                  "Yen"           ], # \
-                       "S-BackSlash"    : [["S-CloseBracket"],                "S-Yen"         ], # |
-                       "S-Semicolon"    : [["S-Semicolon"],                   "Colon"         ], # :
-                       "Quote"          : [["Colon"],                         "S-7"           ], # '
-                       "S-Quote"        : [["S-Colon"],                       "S-2"           ], # "
-                       "BackQuote"      : [["(243)", "(244)", "(248)"],       "S-Atmark"      ], # `
-                       "S-BackQuote"    : [["S-(243)", "S-(244)", "S-(248)"], "S-Caret"       ], # ~
-                       "(243)"          : [[],                                "(243)"         ], # <半角／全角>
-                       "S-(243)"        : [[],                                "S-(243)"       ], # <半角／全角>
-                       "(244)"          : [[],                                "(244)"         ], # <半角／全角>
-                       "S-(244)"        : [[],                                "S-(244)"       ], # <半角／全角>
+    usjis_key_table = {"S-2"            : [["S-2"],                "Atmark"        ], # @
+                       "S-6"            : [["S-6"],                "Caret"         ], # ^
+                       "S-7"            : [["S-7"],                "S-6"           ], # &
+                       "S-8"            : [["S-8"],                "S-Colon"       ], # *
+                       "S-9"            : [["S-9"],                "S-8"           ], # (
+                       "S-0"            : [["S-0"],                "S-9"           ], # )
+                       "S-Minus"        : [["S-Minus"],            "S-BackSlash"   ], # _
+                       "Plus"           : [["Caret"],              "S-Minus"       ], # =
+                       "S-Plus"         : [["S-Caret"],            "S-Semicolon"   ], # +
+                       "OpenBracket"    : [["Atmark"],             "OpenBracket"   ], # [
+                       "S-OpenBracket"  : [["S-Atmark"],           "S-OpenBracket" ], # {
+                       "CloseBracket"   : [["OpenBracket"],        "CloseBracket"  ], # ]
+                       "S-CloseBracket" : [["S-OpenBracket"],      "S-CloseBracket"], # }
+                       "BackSlash"      : [["CloseBracket"],       "Yen"           ], # \
+                       "S-BackSlash"    : [["S-CloseBracket"],     "S-Yen"         ], # |
+                       "S-Semicolon"    : [["S-Semicolon"],        "Colon"         ], # :
+                       "Quote"          : [["Colon"],              "S-7"           ], # '
+                       "S-Quote"        : [["S-Colon"],            "S-2"           ], # "
+                       "BackQuote"      : [["(243)", "(244)"],     "S-Atmark"      ], # `
+                       "S-BackQuote"    : [["S-(243)", "S-(244)"], "S-Caret"       ], # ~
+                       "(243)"          : [[],                     "(243)"         ], # <半角／全角>
+                       "S-(243)"        : [[],                     "S-(243)"       ], # S-<半角／全角>
+                       "(244)"          : [[],                     "(244)"         ], # <半角／全角>
+                       "S-(244)"        : [[],                     "S-(244)"       ], # S-<半角／全角>
                        }
 
     def keyStrNormalization(key):
@@ -1581,29 +1591,44 @@ def configure(keymap):
                     key = fc.ctl_x_prefix_key
 
                 if key == "M-":
-                    key_list0 = []
                     if fc.use_esc_as_meta:
-                        key_list2 = copy.copy(key_list1)
-                        key_list2.append("Esc")
-                    key_list1.append("C-OpenBracket")
+                        key_list1 = key_list0 + ["Esc"]
+
+                    if fc.use_ctrl_openbracket_as_meta:
+                        key_list2 = key_list0 + ["C-OpenBracket"]
+
+                    key_list0 = []
                     break
 
                 if "M-" in key:
                     key_list0.append(key.replace("M-", "A-"))
-                    key_list1.append("C-OpenBracket")
-                    key_list1.append(key.replace("M-", ""))
+
+                    if fc.use_esc_as_meta:
+                        key_list1.append("Esc")
+                        key_list1.append(key.replace("M-", ""))
+
+                    elif fc.use_ctrl_openbracket_as_meta:
+                        key_list2.append("C-OpenBracket")
+                        key_list2.append(key.replace("M-", ""))
                 else:
                     key_list0.append(key)
-                    key_list1.append(key)
+
+                    if fc.use_esc_as_meta:
+                        key_list1.append(key)
+
+                    elif fc.use_ctrl_openbracket_as_meta:
+                        key_list2.append(key)
 
             if key_list0:
                 key_lists.append(key_list0)
 
-            if key_list0 != key_list1:
-                key_lists.append(key_list1)
+            if key_list1:
+                if key_list0 != key_list1:
+                    key_lists.append(key_list1)
 
             if key_list2:
-                key_lists.append(key_list2)
+                if key_list0 != key_list2:
+                    key_lists.append(key_list2)
 
             for key_list in key_lists:
                 key_list[0] = addSideOfModifierKey(key_list[0])
@@ -1615,6 +1640,34 @@ def configure(keymap):
 
     def keyInput(key_list):
         return list(map(usjisInput, key_list))
+
+    def commandPlay(command):
+        # モディファイアを離す（keymap.command_RecordPlay 関数を参考）
+        modifier = keymap.modifier
+        input_seq = []
+        for vk_mod in keymap.vk_mod_map.items():
+            if keymap.modifier & vk_mod[1]:
+                input_seq.append(pyauto.KeyUp(vk_mod[0]))
+        pyauto.Input.send(input_seq)
+        keymap.modifier = 0
+
+        command()
+
+        # モディファイアを戻す（keymap.command_RecordPlay 関数を参考）
+        keymap.modifier = 0
+        input_seq = []
+        for vk_mod in keymap.vk_mod_map.items():
+            # 「Time stamp Inversion happend.」メッセージがでると、キーの繰り返し入力後にShift キーが
+            # 押されたままの状態となる。根本的な対策ではないが、Shift キーの 押下の状態の復元を除外する
+            # ことで、暫定的な対策とする。（Shift キーは押しっぱなしにするキーではないので、押した状態
+            # を復元しなくともほとんどの場合、問題は起きない）
+            if vk_mod[0] not in [VK_LSHIFT, VK_RSHIFT]:
+                if modifier & vk_mod[1]:
+                    input_seq.append(pyauto.KeyDown(vk_mod[0]))
+                    keymap.modifier |= vk_mod[1]
+        pyauto.Input.send(input_seq)
+
+    command_dict = {}
 
     def define_key(window_keymap, keys, command, skip_check=True):
         nonlocal keymap_base
@@ -1649,57 +1702,32 @@ def configure(keymap):
 
                     ckey = keyStrNormalization(key)
                     def _command1():
-                        fakeymacs.update_last_keys = True
                         if ckey in fakeymacs.exclution_key:
                             InputKeyCommand(key)()
                         else:
                             command()
-                        if fakeymacs.update_last_keys:
-                            fakeymacs.last_keys = [window_keymap, keys]
                 else:
-                    def _command1():
-                        fakeymacs.update_last_keys = True
-                        command()
-                        if fakeymacs.update_last_keys:
-                            fakeymacs.last_keys = [window_keymap, keys]
+                    _command1 = command
+
+                def _command2():
+                    fakeymacs.update_last_keys = True
+                    _command1()
+                    if fakeymacs.update_last_keys:
+                        fakeymacs.last_keys = [window_keymap, keys]
 
                 def _command3():
                     if fakeymacs.repeat_counter == 1 or fakeymacs.is_playing_kmacro:
-                        _command1()
+                        _command2()
                     else:
-                        def _command2():
-                            # モディファイアを離す（keymap.command_RecordPlay 関数を参考）
-                            modifier = keymap.modifier
-                            input_seq = []
-                            for vk_mod in keymap.vk_mod_map.items():
-                                if keymap.modifier & vk_mod[1]:
-                                    input_seq.append(pyauto.KeyUp(vk_mod[0]))
-                            pyauto.Input.send(input_seq)
-                            keymap.modifier = 0
+                        keymap.delayedCall(lambda: commandPlay(_command2), 0)
 
-                            _command1()
-
-                            # モディファイアを戻す（keymap.command_RecordPlay 関数を参考）
-                            keymap.modifier = 0
-                            input_seq = []
-                            for vk_mod in keymap.vk_mod_map.items():
-                                # 「Time stamp Inversion happend.」メッセージがでると、キーの繰り返し入力後に
-                                # Shift キーが押されたままの状態となる。根本的な対策ではないが、Shift キーの
-                                # 押下の状態の復元を除外することで、暫定的な対策とする。
-                                # （Shift キーは押しっぱなしにするキーではないので、押した状態を復元しなくとも
-                                #   ほとんどの場合、問題は起きない）
-                                if vk_mod[0] not in [VK_LSHIFT, VK_RSHIFT]:
-                                    if modifier & vk_mod[1]:
-                                        input_seq.append(pyauto.KeyDown(vk_mod[0]))
-                                        keymap.modifier |= vk_mod[1]
-                            pyauto.Input.send(input_seq)
-
-                        keymap.delayedCall(_command2, 0)
                 return _command3
             else:
                 return command
 
         for key_list in kbd(keys):
+            command_dict[(window_keymap, tuple(key_list))] = command
+
             for pos_list in keyPos(key_list):
                 if len(pos_list) == 1:
                     window_keymap[pos_list[0]] = _keyCommand(key_list[0])
@@ -1736,11 +1764,8 @@ def configure(keymap):
 
     def getKeyCommand(window_keymap, keys):
         try:
-            key_list = kbd(keys)[-1]
-            pos_list = keyPos(key_list)[0]
-            for key in pos_list:
-                window_keymap = window_keymap[key]
-            func = window_keymap
+            key_list = kbd(keys)[0]
+            func = command_dict[(window_keymap, tuple(key_list))]
         except:
             func = None
 
@@ -1940,6 +1965,18 @@ def configure(keymap):
         keymap.command_ReloadConfig()
         keymap.popBalloon("reloaded", "[Reloaded]", 1000)
 
+    def editConfigPersonal():
+        config_filename = rf"{dataPath()}\config_personal.py"
+
+        def jobEditConfig(job_item):
+            keymap.editTextFile(config_filename)
+
+        def jobEditConfigFinished(job_item):
+            print( ckit.strings["log_config_editor_launched"] )
+            print( "" )
+
+        job_item = ckit.JobItem( jobEditConfig, jobEditConfigFinished )
+        ckit.JobQueue.defaultQueue().enqueue(job_item)
 
     ##################################################
     ## キーバインド
@@ -2036,21 +2073,28 @@ def configure(keymap):
             define_key(keymap_emacs, f"C-q {mkey}", self_insert_command(mkey))
 
     ## Esc キーの設定
-    define_key(keymap_emacs, "C-[ C-[", reset_undo(reset_counter(escape)))
     if fc.use_esc_as_meta:
         define_key(keymap_emacs, "Esc Esc", reset_undo(reset_counter(escape)))
     else:
         define_key(keymap_emacs, "Esc", reset_undo(reset_counter(escape)))
 
+    if fc.use_ctrl_openbracket_as_meta:
+        define_key(keymap_emacs, "C-[ C-[", reset_undo(reset_counter(escape)))
+    else:
+        define_key(keymap_emacs, "C-[", reset_undo(reset_counter(escape)))
+
     ## universal-argument キーの設定
     define_key(keymap_emacs, "C-u", universal_argument)
 
     ## 「IME の切り替え」のキー設定
-    define_key(keymap_base, "A-(25)",  toggle_input_method) # Alt-` キー
+    define_key(keymap_base, "C-`",     toggle_input_method) # C-` キー
+    define_key(keymap_base, "A-(25)",  toggle_input_method) # A-` キー
     define_key(keymap_base, "(243)",   toggle_input_method) # <半角／全角> キー
     define_key(keymap_base, "(244)",   toggle_input_method) # <半角／全角> キー
+    define_key(keymap_base, "C-(243)", toggle_input_method) # C-<半角／全角> キー
+    define_key(keymap_base, "C-(244)", toggle_input_method) # C-<半角／全角> キー
     define_key(keymap_base, "(240)",   toggle_input_method) # CapsLock キー
-    define_key(keymap_base, "S-(240)", toggle_input_method) # CapsLock キー
+    define_key(keymap_base, "S-(240)", toggle_input_method) # S-CapsLock キー
 
     ## 「ファイル操作」のキー設定
     define_key(keymap_emacs, "Ctl-x C-f", reset_search(reset_undo(reset_counter(reset_mark(find_file)))))
@@ -2327,11 +2371,14 @@ def configure(keymap):
         ##################################################
 
         ## 「IME の切り替え」のキー設定
-        define_key(keymap_ei, "A-(25)",  ei_disable_input_method) # Alt-` キー
+        define_key(keymap_ei, "C-`",     ei_disable_input_method) # C-` キー
+        define_key(keymap_ei, "A-(25)",  ei_disable_input_method) # A-` キー
         define_key(keymap_ei, "(243)",   ei_disable_input_method) # <半角／全角> キー
         define_key(keymap_ei, "(244)",   ei_disable_input_method) # <半角／全角> キー
+        define_key(keymap_ei, "C-(243)", ei_disable_input_method) # C-<半角／全角> キー
+        define_key(keymap_ei, "C-(244)", ei_disable_input_method) # C-<半角／全角> キー
         define_key(keymap_ei, "(240)",   ei_disable_input_method) # CapsLock キー
-        define_key(keymap_ei, "S-(240)", ei_disable_input_method) # CapsLock キー
+        define_key(keymap_ei, "S-(240)", ei_disable_input_method) # S-CapsLock キー
 
         ## Esc キーの設定
         define_key(keymap_ei, "Esc", escape)
@@ -2972,13 +3019,14 @@ def configure(keymap):
 
     # その他
     fc.other_items = [
-        ["Edit   config.py", keymap.command_EditConfig],
-        ["Reload config.py", lambda: reloadConfig(0)],
+        ["Edit   config.py",          keymap.command_EditConfig],
+        ["Edit   config_personal.py", editConfigPersonal],
+        ["Reload config file",        lambda: reloadConfig(0)],
     ]
     if os_keyboard_type == "JP":
         fc.other_items += [
-            ["Reload config.py (to  US layout)", lambda: reloadConfig(1)],
-            ["Reload config.py (to JIS layout)", lambda: reloadConfig(2)],
+            ["Reload config file (to  US layout)", lambda: reloadConfig(1)],
+            ["Reload config file (to JIS layout)", lambda: reloadConfig(2)],
         ]
     fc.other_items[0][0] = list_formatter.format(fc.other_items[0][0])
 

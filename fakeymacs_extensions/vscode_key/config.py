@@ -132,20 +132,21 @@ def self_insert_command_v(*key_list, usjis_conv=True):
             setImeStatus(1)
     return _func
 
-def vscodeExecuteCommand(command):
+def vscodeExecuteCommand(command, esc=False):
     def _func():
         self_insert_command("f1")()
         princ(command)
         self_insert_command("Enter")()
 
-        # 上記のコマンドが実行できない時にコマンドパレットの表示を消すために入力する
-        self_insert_command("Esc")()
+        if esc:
+            # 上記のコマンドが実行できない時にコマンドパレットの表示を消すために入力する
+            self_insert_command("Esc")()
     return _func
 
-def vscodeExecuteCommand2(command):
+def vscodeExecuteCommand2(command, esc=False):
     def _func():
         setImeStatus(0)
-        vscodeExecuteCommand(command)()
+        vscodeExecuteCommand(command, esc)()
     return _func
 
 def rect(func):
@@ -217,6 +218,7 @@ def kill_line_v(repeat=1):
 def yank_v():
     if fakeymacs_vscode.vscode_focus == "not_terminal" and not is_terminal_for_direct_input():
         yank()
+        delay() # C-u による繰り返し実行時に必要
     else:
         self_insert_command("C-y")()
 
@@ -258,7 +260,7 @@ def focus_into_panel():
 
 def close_panel():
     # VSCode Command : View: Close Panel
-    vscodeExecuteCommand("VCPa")()
+    vscodeExecuteCommand("VCPa", esc=True)()
     # vscodeExecuteCommand("workbench.action.closePanel")()
 
 def toggle_maximized_panel():
@@ -453,8 +455,8 @@ def keyboard_quit_v2():
         keyboard_quit(esc=True)
         fakeymacs_vscode.post_processing = None
     else:
-        if fakeymacs.last_keys in [[keymap_vscode, "C-g"],
-                                   [keymap_vscode, "C-A-g"]]:
+        if (fakeymacs.last_keys[0] is keymap_vscode and
+            fakeymacs.last_keys[1] in ["C-g", "C-A-G"]):
             keyboard_quit(esc=True)
             fakeymacs_vscode.post_processing = None
         else:
@@ -572,13 +574,13 @@ define_key_v("C-A-r",   reset_search(reset_undo(reset_counter(reset_rect(cursor_
 define_key_v("C-A-g",   reset_search(reset_counter(reset_mark(keyboard_quit_v1))))
 
 ## 「ターミナル操作」のキー設定
-if is_japanese_keyboard:
-    define_key_v("C-S-(243)", reset_search(reset_undo(reset_counter(reset_mark(create_terminal)))))
-    define_key_v("C-S-(244)", reset_search(reset_undo(reset_counter(reset_mark(create_terminal)))))
-    define_key_v("C-(243)",   reset_search(reset_undo(reset_counter(reset_mark(toggle_terminal)))))
-    define_key_v("C-(244)",   reset_search(reset_undo(reset_counter(reset_mark(toggle_terminal)))))
-    define_key_v("C-A-(248)", reset_search(reset_undo(reset_counter(reset_mark(create_terminal_in_editor_area)))))
+define_key_v("C-S-(243)", reset_search(reset_undo(reset_counter(reset_mark(create_terminal)))))
+define_key_v("C-S-(244)", reset_search(reset_undo(reset_counter(reset_mark(create_terminal)))))
+define_key_v("C-(243)",   reset_search(reset_undo(reset_counter(reset_mark(toggle_terminal)))))
+define_key_v("C-(244)",   reset_search(reset_undo(reset_counter(reset_mark(toggle_terminal)))))
+define_key_v("C-A-(248)", reset_search(reset_undo(reset_counter(reset_mark(create_terminal_in_editor_area)))))
 
+if is_japanese_keyboard:
     define_key_v("C-S-@", reset_search(reset_undo(reset_counter(reset_mark(create_terminal)))))
     if not fc.use_ctrl_atmark_for_mark:
         define_key_v("C-@", reset_search(reset_undo(reset_counter(reset_mark(toggle_terminal)))))
