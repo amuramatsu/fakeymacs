@@ -688,3 +688,17 @@ if 0:
     exec(readConfigExtension(r"menu_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
+
+# 現在アクティブなウィンドウと同じプロセスのウィンドウを順に切り替えるキーを設定する
+if 0:
+    exec(readConfigExtension(r"window_switching_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# SpaceFN を実現する設定を行う
+if 0:
+    fc.space_fn_key = "Space"
+    # fc.space_fn_key = "(29)" # 「無変換」キー
+    exec(readConfigExtension(r"space_fn\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20230807_01"
+fakeymacs_version = "20230907_03"
 
 import time
 import os.path
@@ -628,7 +628,7 @@ def configure(keymap):
 
         def _callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
             if keymap.hook_enabled:
-                delay(0.1)
+                delay(0.02)
                 keymap._updateFocusWindow()
             else:
                 setCursorColor(False)
@@ -792,12 +792,14 @@ def configure(keymap):
                 keymap_base[d_ctrl] = d_ctrl
 
         if (process_name in fc.transparent_target or
-            process_name in fc.transparent_target_class or
+            class_name in fc.transparent_target_class or
             any(checkWindow(*app, window=window) if type(app) is list else
                 checkWindow(app, window=window) for app in fc.game_app_list)):
+            fakeymacs.is_base_target = False
             fakeymacs.is_keymap_decided = True
             return False
         else:
+            fakeymacs.is_base_target = True
             fakeymacs.is_keymap_decided = False
             return True
 
@@ -832,11 +834,11 @@ def configure(keymap):
             (class_name not in fc.emacs_target_class and
              (process_name in fakeymacs.not_emacs_keybind or
               process_name in fc.not_emacs_target))):
-            fakeymacs.keybind = "not_emacs"
+            fakeymacs.is_emacs_target = False
             return False
         else:
+            fakeymacs.is_emacs_target = True
             fakeymacs.is_keymap_decided = True
-            fakeymacs.keybind = "emacs"
             return True
 
     def is_ime_target(window):
@@ -1409,10 +1411,15 @@ def configure(keymap):
                 fakeymacs.is_undo_mode = True
 
     def kill_emacs():
-        # Excel のファイルを開いた直後一回目、kill_emacs が正常に動作しない。その対策。
-        self_insert_command("D-Alt", "F4")()
-        delay(0.1)
-        self_insert_command("U-Alt")()
+        # # Excel のファイルを開いた直後一回目、kill_emacs が正常に動作しない。その対策。
+        # self_insert_command("D-Alt", "F4")()
+        # delay(0.1)
+        # self_insert_command("U-Alt")()
+
+        # 別な問題（ダイアログで S や N の入力ができない）が発生するようになったので、
+        # 元の設定に戻して様子を見る
+        self_insert_command("A-F4")()
+
 
     def universal_argument():
         if fakeymacs.is_universal_argument:
@@ -1585,6 +1592,7 @@ def configure(keymap):
             key_list0 = []
             key_list1 = []
             key_list2 = []
+            key_lists0 = []
 
             for key in map(specialCharToKeyStr, keys.split()):
                 if key == "Ctl-x":
@@ -1620,18 +1628,19 @@ def configure(keymap):
                         key_list2.append(key)
 
             if key_list0:
-                key_lists.append(key_list0)
+                key_lists0.append(key_list0)
 
             if key_list1:
                 if key_list0 != key_list1:
-                    key_lists.append(key_list1)
+                    key_lists0.append(key_list1)
 
             if key_list2:
                 if key_list0 != key_list2:
-                    key_lists.append(key_list2)
+                    key_lists0.append(key_list2)
 
-            for key_list in key_lists:
+            for key_list in key_lists0:
                 key_list[0] = addSideOfModifierKey(key_list[0])
+                key_lists.append(list(map(keyStrNormalization, key_list)))
 
         return key_lists
 
@@ -1692,23 +1701,31 @@ def configure(keymap):
                             return
                     break
 
-        def _keyCommand(key):
+        def _keyCommand1(key_list):
             nonlocal keymap_emacs
 
             if callable(command):
-                if (key is not None and
+                if (len(key_list) == 1 and
                     "keymap_emacs" in locals() and
                     window_keymap is locals()["keymap_emacs"]):
 
-                    ckey = keyStrNormalization(key)
                     def _command1():
-                        if ckey in fakeymacs.exclution_key:
+                        key = key_list[0]
+                        if key in fakeymacs.exclution_key:
                             InputKeyCommand(key)()
                         else:
                             command()
                 else:
                     _command1 = command
 
+                return _command1
+            else:
+                return command
+
+        def _keyCommand2(key_list):
+            _command1 = _keyCommand1(key_list)
+
+            if callable(_command1):
                 def _command2():
                     fakeymacs.update_last_keys = True
                     _command1()
@@ -1723,15 +1740,18 @@ def configure(keymap):
 
                 return _command3
             else:
-                return command
+                return _command1
 
         for key_list in kbd(keys):
-            command_dict[(window_keymap, tuple(key_list))] = command
+            command_dict[(window_keymap, tuple(key_list))] = _keyCommand1(key_list)
 
             for pos_list in keyPos(key_list):
-                if len(pos_list) == 1:
-                    window_keymap[pos_list[0]] = _keyCommand(key_list[0])
+                w_keymap = window_keymap
+                for key in pos_list[:-1]:
+                    w_keymap = w_keymap[key]
+                w_keymap[pos_list[-1]] = _keyCommand2(key_list)
 
+                if len(pos_list) == 1:
                     # Alt キーを単押しした際に、カーソルがメニューへ移動しないようにするための対策
                     # （https://www.haijin-boys.com/discussions/4583）
                     if re.match(r"O-LAlt$", pos_list[0], re.IGNORECASE):
@@ -1739,11 +1759,6 @@ def configure(keymap):
 
                     elif re.match(r"O-RAlt$", pos_list[0], re.IGNORECASE):
                         window_keymap["D-RAlt"] = "D-RAlt", "(255)"
-                else:
-                    w_keymap = window_keymap
-                    for key in pos_list[:-1]:
-                        w_keymap = w_keymap[key]
-                    w_keymap[pos_list[-1]] = _keyCommand(None)
 
     def define_key2(window_keymap, keys, command):
         define_key(window_keymap, keys, command, skip_check=False)
@@ -1761,6 +1776,21 @@ def configure(keymap):
             window_keymap1.keymap = {**window_keymap2.keymap, **window_keymap1.keymap}
         except:
             pass
+
+    def getKeyAction(key):
+        key_list = kbd(key)[0]
+        pos_list = keyPos(key_list)[0]
+        if len(pos_list) == 1:
+            key_cond = keyhac_keymap.KeyCondition.fromString(pos_list[0])
+            def _func():
+                try:
+                    keymap.current_map[key_cond]()
+                except:
+                    pass
+        else:
+            _func = lambda: None
+
+        return _func
 
     def getKeyCommand(window_keymap, keys):
         try:
@@ -1795,7 +1825,8 @@ def configure(keymap):
         def _func():
             # 「define_key(keymap_base, "W-S-m", self_insert_command("W-S-m"))」のような設定を
             # した場合、 Shift に RShift を使うと正常に動作しない。その対策。
-            if (keymap.modifier & (keyhac_keymap.MODKEY_WIN_L | keyhac_keymap.MODKEY_WIN_R) and
+            if ((keymap.modifier & (keyhac_keymap.MODKEY_WIN_L | keyhac_keymap.MODKEY_WIN_R) or
+                 keymap.modifier & (keyhac_keymap.MODKEY_ALT_L | keyhac_keymap.MODKEY_ALT_R)) and
                 keymap.modifier & keyhac_keymap.MODKEY_SHIFT_R and
                 "S-" in key_list[-1]):
                 key_list[-1] = re.sub(r"(^|-)(S-)", r"\1R\2", key_list[-1])
@@ -1972,10 +2003,10 @@ def configure(keymap):
             keymap.editTextFile(config_filename)
 
         def jobEditConfigFinished(job_item):
-            print( ckit.strings["log_config_editor_launched"] )
-            print( "" )
+            print(ckit.strings["log_config_editor_launched"])
+            print("")
 
-        job_item = ckit.JobItem( jobEditConfig, jobEditConfigFinished )
+        job_item = ckit.JobItem(jobEditConfig, jobEditConfigFinished)
         ckit.JobQueue.defaultQueue().enqueue(job_item)
 
     ##################################################
@@ -2136,7 +2167,7 @@ def configure(keymap):
     define_key(keymap_emacs, "End",      reset_search(reset_undo(reset_counter(mark(move_end_of_line, True)))))
     define_key(keymap_emacs, "C-Home",   reset_search(reset_undo(reset_counter(mark(beginning_of_buffer, False)))))
     define_key(keymap_emacs, "C-End",    reset_search(reset_undo(reset_counter(mark(end_of_buffer, True)))))
-    define_key(keymap_emacs, "PageUP",   reset_search(reset_undo(reset_counter(mark(scroll_up, False)))))
+    define_key(keymap_emacs, "PageUp",   reset_search(reset_undo(reset_counter(mark(scroll_up, False)))))
     define_key(keymap_emacs, "PageDown", reset_search(reset_undo(reset_counter(mark(scroll_down, True)))))
 
     define_key(keymap_emacs, "S-Left",     reset_search(reset_undo(reset_counter(mark2(repeat(backward_char), False)))))
@@ -2149,7 +2180,7 @@ def configure(keymap):
     define_key(keymap_emacs, "S-End",      reset_search(reset_undo(reset_counter(mark2(move_end_of_line, True)))))
     define_key(keymap_emacs, "C-S-Home",   reset_search(reset_undo(reset_counter(mark2(beginning_of_buffer, False)))))
     define_key(keymap_emacs, "C-S-End",    reset_search(reset_undo(reset_counter(mark2(end_of_buffer, True)))))
-    define_key(keymap_emacs, "S-PageUP",   reset_search(reset_undo(reset_counter(mark2(scroll_up, False)))))
+    define_key(keymap_emacs, "S-PageUp",   reset_search(reset_undo(reset_counter(mark2(scroll_up, False)))))
     define_key(keymap_emacs, "S-PageDown", reset_search(reset_undo(reset_counter(mark2(scroll_down, True)))))
 
     ## 「カット / コピー / 削除 / アンドゥ」のキー設定
@@ -2457,27 +2488,29 @@ def configure(keymap):
 
     ## Alt+数字キー列の設定
     if fc.use_alt_digit_key_for_f1_to_f12:
+        mkey = "A-"
         for i in range(10):
-            define_key(keymap_global, f"A-{(i + 1) % 10}", self_insert_command(vkToStr(VK_F1 + i)))
+            define_key(keymap_global, mkey + f"{(i + 1) % 10}", self_insert_command(vkToStr(VK_F1 + i)))
 
-        define_key(keymap_global, "A--", self_insert_command(vkToStr(VK_F11)))
+        define_key(keymap_global, mkey + "-", self_insert_command(vkToStr(VK_F11)))
 
         if is_japanese_keyboard:
-            define_key(keymap_global, "A-^", self_insert_command(vkToStr(VK_F12)))
+            define_key(keymap_global, mkey + "^", self_insert_command(vkToStr(VK_F12)))
         else:
-            define_key(keymap_global, "A-=", self_insert_command(vkToStr(VK_F12)))
+            define_key(keymap_global, mkey + "=", self_insert_command(vkToStr(VK_F12)))
 
     ## Alt+Shift+数字キー列の設定
     if fc.use_alt_shift_digit_key_for_f13_to_f24:
+        mkey = "A-S-"
         for i in range(10):
-            define_key(keymap_global, f"A-S-{(i + 1) % 10}", self_insert_command(vkToStr(VK_F13 + i)))
+            define_key(keymap_global, mkey + f"{(i + 1) % 10}", self_insert_command(vkToStr(VK_F13 + i)))
 
-        define_key(keymap_global, "A-S--", self_insert_command(vkToStr(VK_F23)))
+        define_key(keymap_global, mkey + "-", self_insert_command(vkToStr(VK_F23)))
 
         if is_japanese_keyboard:
-            define_key(keymap_global, "A-S-^", self_insert_command(vkToStr(VK_F24)))
+            define_key(keymap_global, mkey + "^", self_insert_command(vkToStr(VK_F24)))
         else:
-            define_key(keymap_global, "A-S-=", self_insert_command(vkToStr(VK_F24)))
+            define_key(keymap_global, mkey + "=", self_insert_command(vkToStr(VK_F24)))
 
 
     ###########################################################################
@@ -2510,40 +2543,42 @@ def configure(keymap):
             fakeymacs.window_list = []
         return _func
 
-    def getWindowList(minimized_window=None):
+    def getWindowList(minimized_window=None, process_name=None):
         def _makeWindowList(window, arg):
             nonlocal window_title
 
             if window.isVisible() and not window.getOwner():
-                process_name = window.getProcessName()
-                class_name = window.getClassName()
-                title = re.sub(r".* ‎- ", r"", window.getText())
+                process_name2 = window.getProcessName()
 
-                # RemoteApp を利用する際のおまじない
-                if (process_name == "mstsc.exe" and
-                    class_name == "RAIL_WINDOW" and
-                    title == " (リモート)"):
-                    pass
+                if process_name is None or process_name == process_name2:
+                    class_name = window.getClassName()
+                    title = re.sub(r".* ‎- ", r"", window.getText())
 
-                elif class_name == "Emacs" or title != "":
-                    if (not re.match(fc.window_operation_exclusion_class, class_name) and
-                        not re.match(fc.window_operation_exclusion_process, process_name)):
+                    # RemoteApp を利用する際のおまじない
+                    if (process_name2 == "mstsc.exe" and
+                        class_name == "RAIL_WINDOW" and
+                        title == " (リモート)"):
+                        pass
 
-                        # バックグラウンドで起動している UWPアプリが window_list に登録されるのを抑制する
-                        # （http://mrxray.on.coocan.jp/Delphi/plSamples/320_AppList.htm）
-                        # （http://mrxray.on.coocan.jp/Delphi/plSamples/324_CheckRun_UWPApp.htm）
+                    elif class_name == "Emacs" or title != "":
+                        if (not re.match(fc.window_operation_exclusion_class, class_name) and
+                            not re.match(fc.window_operation_exclusion_process, process_name2)):
 
-                        if class_name == "Windows.UI.Core.CoreWindow":
-                            window_title = title
+                            # バックグラウンドで起動している UWPアプリが window_list に登録されるのを抑制する
+                            # （http://mrxray.on.coocan.jp/Delphi/plSamples/320_AppList.htm）
+                            # （http://mrxray.on.coocan.jp/Delphi/plSamples/324_CheckRun_UWPApp.htm）
 
-                        elif class_name == "ApplicationFrameWindow":
-                            if title != "Cortana":
-                                if (title != window_title or window.isMinimized() or
-                                    window in fakeymacs.window_list): # UWPアプリの仮想デスクトップ対策
-                                    window_list.append(window)
-                            window_title = None
-                        else:
-                            window_list.append(window)
+                            if class_name == "Windows.UI.Core.CoreWindow":
+                                window_title = title
+
+                            elif class_name == "ApplicationFrameWindow":
+                                if title != "Cortana":
+                                    if (title != window_title or window.isMinimized() or
+                                        window in fakeymacs.window_list): # UWPアプリの仮想デスクトップ対策
+                                        window_list.append(window)
+                                window_title = None
+                            else:
+                                window_list.append(window)
             return True
 
         window_title = None
@@ -2561,28 +2596,41 @@ def configure(keymap):
 
         return window_list2
 
-    def saveWindowList():
-        window_list = getWindowList(False)
+    window_list = []
+    window_switching_time = 0
+
+    def windowList():
+        nonlocal window_list
+        nonlocal window_switching_time
+
+        if time.time() - window_switching_time > 1.5:
+            window_list = getWindowList(False)
+
+        window_switching_time = time.time()
+        return window_list
+
+    def switchWindows(window_list_func, direction):
+        window_list = window_list_func()
 
         # ２つのリストに差異があるか？
         if set(window_list) ^ set(fakeymacs.window_list):
             fakeymacs.window_list = window_list
 
-    def previous_window():
-        saveWindowList()
-
         if fakeymacs.window_list:
-            window_list = fakeymacs.window_list[-1:] + fakeymacs.window_list[:-1]
+            index = {"previous":-1, "next":1}[direction]
+            window_list = fakeymacs.window_list[index:] + fakeymacs.window_list[:index]
             popWindow(window_list[0])()
             fakeymacs.window_list = window_list
 
-    def next_window():
-        saveWindowList()
+    def previous_window(window_list_func):
+        def _func():
+            keymap.delayedCall(lambda: switchWindows(window_list_func, "previous"), 0)
+        return _func
 
-        if fakeymacs.window_list:
-            window_list = fakeymacs.window_list[1:] + fakeymacs.window_list[:1]
-            popWindow(window_list[0])()
-            fakeymacs.window_list = window_list
+    def next_window(window_list_func):
+        def _func():
+            keymap.delayedCall(lambda: switchWindows(window_list_func, "next"), 0)
+        return _func
 
     def move_window_to_previous_display():
         self_insert_command("W-S-Left")()
@@ -2719,8 +2767,8 @@ def configure(keymap):
 
     # アクティブウィンドウの切り替え
     for previous_key, next_key in fc.window_switching_key:
-        define_key(keymap_global, previous_key, previous_window)
-        define_key(keymap_global, next_key,     next_window)
+        define_key(keymap_global, previous_key, previous_window(windowList))
+        define_key(keymap_global, next_key,     next_window(windowList))
 
     # アクティブウィンドウのディスプレイ間移動
     for previous_key, next_key in fc.window_movement_key_for_displays:
@@ -2849,7 +2897,7 @@ def configure(keymap):
     ##################################################
 
     def lw_newline():
-        if fakeymacs.keybind == "emacs":
+        if fakeymacs.is_emacs_target == True:
             self_insert_command("Enter")()
         else:
             self_insert_command("S-Enter")()
