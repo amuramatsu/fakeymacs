@@ -333,6 +333,8 @@ fc.is_newline_selectable_in_Excel = True
 # （keymap_global 以外のすべてのキーマップをスルーします。ゲームなど、Keyhac によるキー設定と
 #   相性が悪いアプリケーションソフトを指定してください。keymap_base の設定もスルーするため、
 #   英語 -> 日本語キーボード変換の機能が働かなくなることにご留意ください。）
+# （msrdc.exe の行の有効化の必要性については、次のコミットの説明を参照してください。
+#   https://github.com/smzht/fakeymacs/commit/5ceb921bd754ce348f9cd79b6606086916520945）
 fc.game_app_list        = [["ffxiv_dx11.exe", "*"],            # FINAL FANTASY XIV
                            # ["msrdc.exe",      "RAIL_WINDOW"],  # WSLg
                            ]
@@ -585,6 +587,9 @@ if 0:
 if 0:
     fc.space_fn_key = "Space"
     # fc.space_fn_key = "(29)" # 「無変換」キー
+    # fc.space_fn_window_keymap_list = [keymap_emacs, keymap_ime]
+    # fc.space_fn_window_keymap_list += [keymap_ei]
+    # fc.space_fn_window_keymap_list += [fakeymacs.keymap_vscode]
     exec(readConfigExtension(r"space_fn\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
