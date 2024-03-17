@@ -520,7 +520,7 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
-# Emacs の場合、IME 切り替え用のキーを C-\ に置き換える
+# Emacs を利用する際のキーバインドの調整を行う
 if 0:
     exec(readConfigExtension(r"real_emacs\config.py"), dict(globals(), **locals()))
 
@@ -590,8 +590,14 @@ if 1:
 # --------------------------------------------------------------------------------------------------
 
 # 旧 Microsoft IME を使って文節長を変更した際、文節の表示が正しく行われないアプリの対策を行う
-if 0:
+if 1:
     exec(readConfigExtension(r"bunsetsu_correction\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Boss だ！
+if 0:
+    exec(readConfigExtension(r"boss\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
@@ -604,6 +610,7 @@ if 0:
     fc.space_fn_key = "Space"
     # fc.space_fn_key = "(29)" # 「無変換」キー
     # fc.space_fn_window_keymap_list = [keymap_emacs]
+    # fc.space_fn_window_keymap_list += [keymap_lw]
     # fc.space_fn_window_keymap_list += [keymap_ime]
     # fc.space_fn_window_keymap_list += [keymap_ei]
     # fc.space_fn_window_keymap_list += [fakeymacs.keymap_vscode]
