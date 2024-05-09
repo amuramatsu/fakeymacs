@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20240409_01"
+fakeymacs_version = "20240423_01"
 
 import time
 import os.path
@@ -568,15 +568,17 @@ def configure(keymap):
                                ["POWERPNT.EXE", "mdiClass"],
                                ]
 
-    # ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフト（プロセス名称と
-    # クラス名称の組み合わせ（ワイルドカード指定可））を指定する
+    # ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフト（プロセス名称のみ、
+    # もしくは、プロセス名称、クラス名称、ウィンドウタイトルのリスト（ワイルドカード指定可、
+    # リストの後ろの項目から省略可））を指定する
     # （keymap_global 以外のすべてのキーマップをスルーします。ゲームなど、Keyhac によるキー設定と
     #   相性が悪いアプリケーションソフトを指定してください。keymap_base の設定もスルーするため、
     #   英語 -> 日本語キーボード変換の機能が働かなくなることにご留意ください。）
     # （msrdc.exe の行の有効化の必要性については、次のコミットの説明を参照してください。
     #   https://github.com/smzht/fakeymacs/commit/5ceb921bd754ce348f9cd79b6606086916520945）
-    fc.game_app_list        = [["ffxiv_dx11.exe", "*"],            # FINAL FANTASY XIV
-                               # ["msrdc.exe",      "RAIL_WINDOW"],  # WSLg
+    fc.game_app_list        = ["ffxiv_dx11.exe",              # FINAL FANTASY XIV
+                               # ["msrdc.exe", "RAIL_WINDOW"],  # WSLg
+                               # ["chrome.exe", "Chrome_WidgetWin_1", "（ウィンドウタイトル）"],
                                ]
 
     # 個人設定ファイルのセクション [section-base-1] を読み込んで実行する
@@ -812,8 +814,12 @@ def configure(keymap):
 
         return fakeymacs.is_base_target
 
+    fakeymacs.is_emacs_target = False
+
     def is_emacs_target(window):
         if window is not fakeymacs.last_window or fakeymacs.force_update:
+            fakeymacs.is_emacs_target_in_previous_window = fakeymacs.is_emacs_target
+
             process_name = window.getProcessName()
             class_name   = window.getClassName()
 
@@ -1839,7 +1845,6 @@ def configure(keymap):
         if usjis_conv:
             key_list = keyInput(key_list)
 
-        func = keymap.InputKeyCommand(*key_list)
         def _func():
             # 「define_key(keymap_base, "W-S-m", self_insert_command("W-S-m"))」のような設定を
             # した場合、 Shift に RShift を使うと正常に動作しない。その対策。
@@ -1848,9 +1853,13 @@ def configure(keymap):
                  keymap.modifier & (keyhac_keymap.MODKEY_ALT_L | keyhac_keymap.MODKEY_ALT_R)) and
                 "S-" in key_list[-1]):
                 key_list[-1] = re.sub(r"(^|-)(S-)", r"\1R\2", key_list[-1])
-                keymap.InputKeyCommand(*key_list)()
+
+            if fakeymacs.shift_down:
+                key_list2 = ["D-Shift"] + key_list + ["U-Shift"]
             else:
-                func()
+                key_list2 = key_list
+
+            keymap.InputKeyCommand(*key_list2)()
 
             # Microsoft Word 等では画面に Ctrl ボタンが表示され、Ctrl キーの単押しによりサブウインドウが
             # 開く機能がある。その挙動を抑制するための対策。
@@ -1909,17 +1918,14 @@ def configure(keymap):
             digit_argument(number)
         return _func
 
+    fakeymacs.shift_down = False
+
     def mark(func, forward_direction):
-        # M-< や M-> 押下時に D-Shift が解除されないようにする対策
-        func_d_shift = self_insert_command("D-LShift", "D-RShift")
-        func_u_shift = self_insert_command("U-LShift", "U-RShift")
         def _func():
             if fakeymacs.is_marked:
-                func_d_shift()
-                # Windows 11 で遅延が顕著に発生するようになったので一旦コメント化（必要かもしれないが..）
-                # delay()
+                fakeymacs.shift_down = True
                 func()
-                func_u_shift()
+                fakeymacs.shift_down = False
 
                 # fakeymacs.forward_direction が未設定の場合、設定する
                 if fakeymacs.forward_direction is None:
@@ -2925,7 +2931,7 @@ def configure(keymap):
     ##################################################
 
     def lw_newline():
-        if fakeymacs.is_emacs_target == True:
+        if fakeymacs.is_emacs_target_in_previous_window:
             self_insert_command("Enter")()
         else:
             self_insert_command("S-Enter")()
