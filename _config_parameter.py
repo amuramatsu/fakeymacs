@@ -370,58 +370,6 @@ fc.use_alt_shift_digit_key_for_f13_to_f24 = False
 # 表示しているウィンドウの中で、一番最近までフォーカスがあったウィンドウに移動するキーを指定する
 fc.other_window_key = "A-o"
 
-# アクティブウィンドウを切り替えるキーの組み合わせ（前、後 の順）を指定する（複数指定可）
-# （A-Esc キーの動作とは異なり、仮想デスクトップを跨ぎ、最小化されていないウィンドウを順に切り替え
-#   ます。初期設定は ["A-p", "A-n"] としていますが、Emacs の shell-mode のキーバインドなどと設定が
-#   被る場合には、["A-S-p", "A-S-n"] などの異なる設定とするか、Emacs 側に次の設定を入れて、Emacs 側
-#   のキーの設定を置き換えてご利用ください。
-#     (define-key key-translation-map (kbd "M-S-p") (kbd "M-p"))
-#     (define-key key-translation-map (kbd "M-S-n") (kbd "M-n"))
-#  ）
-fc.window_switching_key = []
-fc.window_switching_key += [["A-p", "A-n"]]
-# fc.window_switching_key += [["A-S-p", "A-S-n"]]
-# fc.window_switching_key += [["A-Up", "A-Down"]]
-
-# アクティブウィンドウをディスプレイ間で移動するキーの組み合わせ（前、後 の順）を指定する（複数指定可）
-# （デフォルトキーは、["W-S-Left", "W-S-Right"]）
-fc.window_movement_key_for_displays = []
-fc.window_movement_key_for_displays += [[None, "W-o"]]
-# fc.window_movement_key_for_displays += [[None, "A-S-o"]]
-
-# デュアルディスプレイにそれぞれ表示されているウィンドウを入れ替えるキーを指定する
-fc.transpose_windows_key = "W-t"
-
-# ウィンドウを最大化、リストアするキーの組み合わせ（リストア、最大化 の順）を指定する（複数指定可）
-# （マルチディスプレイでの最大化にも対応しています）
-fc.window_maximize_key = []
-fc.window_maximize_key += [["W-S-q", "W-q"]] # Windows ショートカットキーの W-q の機能は、W-s で代用可
-# fc.window_maximize_key += [["W-S-m", "W-m"]] # Windows ショートカットキーの W-m の機能は、W-d で代用可
-# fc.window_maximize_key += [["W-S-s", "W-s"]] # Windows ショートカットキーの W-s の機能は、W-q で代用可
-
-# ウィンドウを最小化、リストアするキーの組み合わせ（リストア、最小化 の順）を指定する（複数指定可）
-fc.window_minimize_key = []
-fc.window_minimize_key += [["A-S-m", "A-m"]]
-
-# 仮想デスクトップを切り替えるキーの組み合わせ（前、後 の順）を指定する（複数指定可）
-# （仮想デスクトップを切り替えた際にフォーカスのあるウィンドウを適切に処理するため、設定するキーは
-#   Win キーとの組み合わせとしてください）
-# （デフォルトキーは、["W-C-Left", "W-C-Right"]）
-fc.desktop_switching_key = []
-fc.desktop_switching_key += [["W-b", "W-f"]]
-# fc.desktop_switching_key += [["W-Left", "W-Right"]]
-
-# アクティブウィンドウを仮想デスクトップ間で移動するキーの組み合わせ（前、後 の順）を指定する（複数指定可）
-# （本機能を利用する場合は、次のページから SylphyHornPlus をインストールしてください。
-#   ・https://github.com/hwtnb/SylphyHornPlusWin11/releases
-#   SylphyHornPlus は、Microsoft Store からインストール可能な SylphyHorn の Fork で、Windows 11 の
-#   対応など、改良が加えられたものとなっています。）
-# （アクティブウィンドウを仮想デスクトップ間で移動するためのデフォルトキーは、["W-C-A-Left", "W-C-A-Right"]
-#   です。この設定は変更しないでください。）
-fc.window_movement_key_for_desktops = []
-# fc.window_movement_key_for_desktops += [["W-p", "W-n"]]
-# fc.window_movement_key_for_desktops += [["W-Up", "W-Down"]]
-
 # ウィンドウ操作（other_window、restore_window など）の対象としたくないアプリケーションソフトの
 # “クラス名称”を指定する
 # （re.match 関数（先頭からのマッチ）の正規表現に「|」を使って繋げて指定してください。
@@ -567,30 +515,27 @@ fc.lancherList_listers = [
 # https://github.com/smzht/fakeymacs/blob/master/fakeymacs_manuals/extensions.org
 
 # --------------------------------------------------------------------------------------------------
-
-# Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
-if 0:
-    fc.chrome_list= ["chrome.exe",
-                     "msedge.exe"]
-    fc.quick_tabs_shortcut_key = "A-q"
-    exec(readConfigExtension(r"chrome_quick_tabs\config.py"), dict(globals(), **locals()))
-
+# ■ ウィンドウ操作関連
 # --------------------------------------------------------------------------------------------------
 
-# Emacs の shell-command-on-region の機能をサポートする
+# ウィンドウ操作のための設定を行う
 if 0:
-    fc.unix_tool = "WSL"
-    # fc.unix_tool = "MSYS2"
-    # fc.unix_tool = "Cygwin"
-    # fc.unix_tool = "BusyBox"
-    # fc.bash_options = []
-    fc.bash_options = ["-l"]
-    exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
+    fc.window_minimize_key   = [["A-S-m", "A-m"]]
+    fc.window_maximize_key   = [["W-S-q", "W-q"]]
+    fc.window_switching_key  = [["A-p", "A-n"]]
+    fc.window_switching_key2 = [["A-S-p", "A-S-n"]]
+    fc.window_movement_key_for_displays = [[None, "W-o"]]
+    fc.transpose_windows_key = "W-t"
+    fc.desktop_switching_key = [["W-b", "W-f"]]
+    fc.window_movement_key_for_desktops = []
+    exec(readConfigExtension(r"window_operation\config.py"), dict(globals(), **locals()))
 
+# --------------------------------------------------------------------------------------------------
+# ■ VSCode 関連
 # --------------------------------------------------------------------------------------------------
 
 # VSCode 用のキーの設定を行う
-if 1:
+if 0:
     fc.vscode_target  = ["Code.exe"]
     fc.vscode_target += ["chrome.exe",
                          "msedge.exe",
@@ -617,11 +562,7 @@ if 1:
     # vscode_extensions\config.py は、vscode_key\config.py 内部から呼ばれている
 
 # --------------------------------------------------------------------------------------------------
-
-# Everything を起動するキーを指定する
-if 0:
-    exec(readConfigExtension(r"everything\config.py"), dict(globals(), **locals()))
-
+# ■ ブラウザ関連
 # --------------------------------------------------------------------------------------------------
 
 # ブラウザをポップアップしてから、ブラウザのショートカットキーを入力するキーを設定する
@@ -633,15 +574,73 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
-# 指定したアプリケーションソフトに F2（編集モード移行）を割り当てるキーを設定する
+# Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
 if 0:
-    exec(readConfigExtension(r"edit_mode\config.py"), dict(globals(), **locals()))
+    fc.chrome_list= ["chrome.exe",
+                     "msedge.exe"]
+    fc.quick_tabs_shortcut_key = "A-q"
+    exec(readConfigExtension(r"chrome_quick_tabs\config.py"), dict(globals(), **locals()))
 
+# --------------------------------------------------------------------------------------------------
+# ■ IME 関連
+# --------------------------------------------------------------------------------------------------
+
+# 半角と全角の入力を間違えた際、入力モードの切り替えと入力文字の変換を行う
+if 0:
+    exec(readConfigExtension(r"zenkaku_hankaku\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# 指定したキーを押下したときに IME の状態を表示する
+if 0:
+    fc.pop_ime_balloon_key = ["C-;"]
+    # fc.pop_ime_balloon_key = ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
+    exec(readConfigExtension(r"pop_ime_balloon\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+# ■ Emacs キーバインド関連
+# --------------------------------------------------------------------------------------------------
+
+# Emacs の shell-command-on-region の機能をサポートする
+if 0:
+    fc.unix_tool = "WSL"
+    # fc.unix_tool = "MSYS2"
+    # fc.unix_tool = "Cygwin"
+    # fc.unix_tool = "BusyBox"
+    # fc.bash_options = []
+    fc.bash_options = ["-l"]
+    exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Emacs キーバインドを利用しない設定のアプリで、メニューの操作用の Emacs キーバインドを設定する
+if 0:
+    fc.menu_target= ["ttermpro.exe", # TeraTerm
+                     ]
+    exec(readConfigExtension(r"menu_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+# ■ Emacs 関連
 # --------------------------------------------------------------------------------------------------
 
 # Emacs を利用する際のキーバインドの調整を行う
 if 0:
     exec(readConfigExtension(r"real_emacs\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# クリップボードに格納したファイルもしくはフォルダのパスを emacsclient で開く
+if 0:
+    fc.emacsclient_name = r"<emacsclient プログラムをインストールしている Windows のパス>\wslclient-n.exe"
+    exec(readConfigExtension(r"emacsclient\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+# ■ キーボード関連
+# --------------------------------------------------------------------------------------------------
+
+# 60% US キーボードのキー不足（Delete キー、Backquote キー不足）の対策を行う
+if 0:
+    exec(readConfigExtension(r"compact_keyboard\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
@@ -660,46 +659,7 @@ if 0:
     exec(readConfigExtension(r"change_keyboard2\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
-
-# クリップボードに格納したファイルもしくはフォルダのパスを emacsclient で開く
-if 0:
-    fc.emacsclient_name = r"<emacsclient プログラムをインストールしている Windows のパス>\wslclient-n.exe"
-    exec(readConfigExtension(r"emacsclient\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# 指定したキーを押下したときに IME の状態を表示する
-if 0:
-    fc.pop_ime_balloon_key = ["C-;"]
-    # fc.pop_ime_balloon_key = ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
-    exec(readConfigExtension(r"pop_ime_balloon\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# 60% US キーボードのキー不足（Delete キー、Backquote キー不足）の対策を行う
-if 0:
-    exec(readConfigExtension(r"compact_keyboard\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# 半角と全角の入力を間違えた際、入力モードの切り替えと入力文字の変換を行う
-if 0:
-    exec(readConfigExtension(r"zenkaku_hankaku\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# Emacs キーバインドを利用しない設定のアプリで、メニューの操作用の Emacs キーバインドを設定する
-if 0:
-    fc.menu_target= ["ttermpro.exe", # TeraTerm
-                     ]
-    exec(readConfigExtension(r"menu_key\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# 現在アクティブなウィンドウと同じプロセスのウィンドウを順に切り替えるキーを設定する
-if 0:
-    exec(readConfigExtension(r"window_switching_key\config.py"), dict(globals(), **locals()))
-
+# ■ 不具合是正関連
 # --------------------------------------------------------------------------------------------------
 
 # YouTube で Space による停止、再生が正しく機能しないことの暫定的な対策を行う
@@ -711,6 +671,30 @@ if 1:
 # 旧 Microsoft IME を使って文節長を変更した際、文節の表示が正しく行われないアプリの対策を行う
 if 1:
     exec(readConfigExtension(r"bunsetsu_correction\config.py"), dict(globals(), **locals()))
+
+
+# --------------------------------------------------------------------------------------------------
+# ■ その他
+# --------------------------------------------------------------------------------------------------
+
+# アプリでショートカットキーが設定されていないメニューコマンドにキーを設定する
+if 0:
+    fc.menu_command_key = [["chrome.exe", 35024, "C-A-r"], # 現在のタブの右隣に新しいタブを開く
+                           ["msedge.exe", 35024, "C-A-r"], # 現在のタブの右隣に新しいタブを開く
+                           ]
+    exec(readConfigExtension(r"menu_command_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# 指定したアプリケーションソフトに F2（編集モード移行）を割り当てるキーを設定する
+if 0:
+    exec(readConfigExtension(r"edit_mode\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Everything を起動するキーを指定する
+if 0:
+    exec(readConfigExtension(r"everything\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
