@@ -85,6 +85,7 @@ fc.not_emacs_target     = ["wsl.exe",                # WSL
                            "ubuntu1804.exe",         # WSL
                            "ubuntu2004.exe",         # WSL
                            "ubuntu2204.exe",         # WSL
+                           "ubuntu2404.exe",         # WSL
                            "debian.exe",             # WSL
                            "kali.exe",               # WSL
                            "SLES-12.exe",            # WSL
@@ -370,14 +371,12 @@ fc.use_alt_shift_digit_key_for_f13_to_f24 = False
 # 表示しているウィンドウの中で、一番最近までフォーカスがあったウィンドウに移動するキーを指定する
 fc.other_window_key = "A-o"
 
-# ウィンドウ操作（other_window、restore_window など）の対象としたくないアプリケーションソフトの
-# “クラス名称”を指定する
+# ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトの“クラス名称”を指定する
 # （re.match 関数（先頭からのマッチ）の正規表現に「|」を使って繋げて指定してください。
 #   完全マッチとするためには $ の指定が必要です。）
 fc.window_operation_exclusion_class = r"Progman$"
 
-# ウィンドウ操作（other_window、restore_window など）の対象としたくないアプリケーションソフトの
-# “プロセス名称”を指定する
+# ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトの“プロセス名称”を指定する
 # （re.match 関数（先頭からのマッチ）の正規表現に「|」を使って繋げて指定してください。
 #   完全マッチとするためには $ の指定が必要です。）
 fc.window_operation_exclusion_process = r"RocketDock\.exe$"  # サンプルとして RocketDock.exe を登録
@@ -520,15 +519,57 @@ fc.lancherList_listers = [
 
 # ウィンドウ操作のための設定を行う
 if 0:
-    fc.window_minimize_key   = [["A-S-m", "A-m"]]
-    fc.window_maximize_key   = [["W-S-q", "W-q"]]
-    fc.window_switching_key  = [["A-p", "A-n"]]
-    fc.window_switching_key2 = [["A-S-p", "A-S-n"]]
-    fc.window_movement_key_for_displays = [[None, "W-o"]]
+    fc.minimize_window_key = [["A-S-m", "A-m"]]
+    fc.maximize_window_key = [["W-S-q", "W-q"]]
+    fc.switch_windows_key  = [["A-p", "A-n"]]
+    fc.switch_windows_key2 = [["A-S-p", "A-S-n"]]
+    fc.move_window_key_for_displays = [[None, "W-o"]]
     fc.transpose_windows_key = "W-t"
-    fc.desktop_switching_key = [["W-b", "W-f"]]
-    fc.window_movement_key_for_desktops = []
+    fc.switch_desktops_key = [["W-b", "W-f"]]
+    fc.move_window_key_for_desktops = []
     exec(readConfigExtension(r"window_operation\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+# ■ ブラウザ関連
+# --------------------------------------------------------------------------------------------------
+
+# Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 QuicKey を起動する
+if 0:
+    fc.chrome_list= ["msedge.exe",
+                     "chrome.exe"]
+    fc.quickey_shortcut_key = "A-q"
+    exec(readConfigExtension(r"chrome_quickey\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# ブラウザをポップアップしてから、ブラウザのショートカットキーを入力するキーを設定する
+if 0:
+    fc.browser_list= ["chrome.exe",
+                      "msedge.exe",
+                      "firefox.exe"]
+    exec(readConfigExtension(r"browser_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+# ■ Emacs キーバインド関連
+# --------------------------------------------------------------------------------------------------
+
+# Emacs の shell-command-on-region の機能をサポートする
+if 0:
+    fc.unix_tool = "WSL"
+    # fc.unix_tool = "MSYS2"
+    # fc.unix_tool = "Cygwin"
+    # fc.unix_tool = "BusyBox"
+    # fc.bash_options = []
+    fc.bash_options = ["-l"]
+    exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Emacs キーバインドを利用しない設定のアプリで、メニューの操作用の Emacs キーバインドを設定する
+if 0:
+    fc.menu_target= ["ttermpro.exe", # TeraTerm
+                     ]
+    exec(readConfigExtension(r"menu_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 # ■ VSCode 関連
@@ -562,26 +603,6 @@ if 0:
     # vscode_extensions\config.py は、vscode_key\config.py 内部から呼ばれている
 
 # --------------------------------------------------------------------------------------------------
-# ■ ブラウザ関連
-# --------------------------------------------------------------------------------------------------
-
-# ブラウザをポップアップしてから、ブラウザのショートカットキーを入力するキーを設定する
-if 0:
-    fc.browser_list= ["chrome.exe",
-                      "msedge.exe",
-                      "firefox.exe"]
-    exec(readConfigExtension(r"browser_key\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 Quick Tabs を起動する
-if 0:
-    fc.chrome_list= ["chrome.exe",
-                     "msedge.exe"]
-    fc.quick_tabs_shortcut_key = "A-q"
-    exec(readConfigExtension(r"chrome_quick_tabs\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
 # ■ IME 関連
 # --------------------------------------------------------------------------------------------------
 
@@ -596,28 +617,6 @@ if 0:
     fc.pop_ime_balloon_key = ["C-;"]
     # fc.pop_ime_balloon_key = ["O-" + fc.side_of_ctrl_key + "Ctrl"] # Ctrl キーの単押し
     exec(readConfigExtension(r"pop_ime_balloon\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-# ■ Emacs キーバインド関連
-# --------------------------------------------------------------------------------------------------
-
-# Emacs の shell-command-on-region の機能をサポートする
-if 0:
-    fc.unix_tool = "WSL"
-    # fc.unix_tool = "MSYS2"
-    # fc.unix_tool = "Cygwin"
-    # fc.unix_tool = "BusyBox"
-    # fc.bash_options = []
-    fc.bash_options = ["-l"]
-    exec(readConfigExtension(r"shell_command_on_region\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# Emacs キーバインドを利用しない設定のアプリで、メニューの操作用の Emacs キーバインドを設定する
-if 0:
-    fc.menu_target= ["ttermpro.exe", # TeraTerm
-                     ]
-    exec(readConfigExtension(r"menu_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 # ■ Emacs 関連
@@ -671,7 +670,6 @@ if 1:
 # 旧 Microsoft IME を使って文節長を変更した際、文節の表示が正しく行われないアプリの対策を行う
 if 1:
     exec(readConfigExtension(r"bunsetsu_correction\config.py"), dict(globals(), **locals()))
-
 
 # --------------------------------------------------------------------------------------------------
 # ■ その他
