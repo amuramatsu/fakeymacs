@@ -74,11 +74,13 @@ fc.transparent_target  += [
     "retroarch.exe",       # RetroArch
     "np2w.exe",            # NekoProject II/w
     "np21w.exe",           # NekoProject 21/w
-    "np2.exe",             # NekoProject II fmgen
-    "np2sx.exe",           # NekoProject IIsx fmgen
-    "np21.exe",            # NekoProject 21 fmgen
+    "np2x64w.exe",         # NekoProject II/w (64bit)
+    "np21x64w.exe",        # NekoProject 21/w (64bit)
     "np2nt.exe",           # NekoProject II fmgen
-    "np2sx.exe",           # NekoProject IIsx fmgen
+    "np2sxnt.exe",         # NekoProject IIsx fmgen
+    "np21nt.exe",          # NekoProject 21 fmgen
+    "np2nt.exe",           # NekoProject II fmgen
+    "np2sxnt.exe",         # NekoProject IIsx fmgen
     "np21nt.exe",          # NekoProject 21 fmgen
     "NP2kai_windows.exe",  # NekoProject II kai
     "NP21kai_windows.exe", # NekoProject 21 kai
