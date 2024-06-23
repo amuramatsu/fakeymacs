@@ -154,14 +154,14 @@ fc.ime_target           = ["wsl.exe",                # WSL
 #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
-fc.skip_settings_key    = {"keymap_base"      : ["*W-g"], # ベース Keymap
-                           "keymap_global"    : [],       # グローバル Keymap
-                           "keymap_emacs"     : [],       # Emacs キーバインド対象アプリ用 Keymap
-                           "keymap_vscode"    : [],       # Emacs キーバインド VSCode 拡張用 Keymap
-                           "keymap_ime"       : [],       # IME 切り替え専用アプリ用 Keymap
-                           "keymap_ei"        : [],       # Emacs 日本語入力モード用 Keymap
-                           "keymap_tsw"       : [],       # タスク切り替え画面用 Keymap
-                           "keymap_lw"        : [],       # リストウィンドウ用 Keymap
+fc.skip_settings_key    = {"keymap_base"      : ["*W-g", "A-Tab"], # ベース Keymap
+                           "keymap_global"    : [], # グローバル Keymap
+                           "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
+                           "keymap_vscode"    : [], # Emacs キーバインド VSCode 拡張用 Keymap
+                           "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
+                           "keymap_ei"        : [], # Emacs 日本語入力モード用 Keymap
+                           "keymap_tsw"       : [], # タスク切り替え画面用 Keymap
+                           "keymap_lw"        : [], # リストウィンドウ用 Keymap
                            }
 
 # Emacs のキーバインドにするアプリケーションソフトで、Emacs キーバインドから除外するキーを指定する
@@ -226,7 +226,7 @@ fc.ime_status_balloon_message = ["[A]", "[あ]"]
 
 # ウィンドウが切り替わった際、IME の状態をリセット（英数入力）するかを指定する（True: する、False: しない）
 fc.use_ime_status_reset = False
-        
+
 # IME をトグルで切り替えるキーを指定する（複数指定可）
 fc.toggle_input_method_key = []
 fc.toggle_input_method_key += ["C-Yen"]
@@ -365,11 +365,9 @@ fc.application_key = None
 # （False に指定しても、C-u 数字キーで数引数を指定することができます）
 fc.use_ctrl_digit_key_for_digit_argument = False
 
-# F1 から F12 を Alt+数字キー列として使うかを指定する（True: 使う、False: 使わない）
+# 数字キー列が Alt キーと一緒に押されたとき、F1 から F12 のファンクションキーとして使うかを指定する
+# （True: 使う、False: 使わない）
 fc.use_alt_digit_key_for_f1_to_f12 = False
-
-# F13 から F24 を Alt-Shift+数字キー列として使うかを指定する（True: 使う、False: 使わない）
-fc.use_alt_shift_digit_key_for_f13_to_f24 = False
 
 # 表示しているウィンドウの中で、一番最近までフォーカスがあったウィンドウに移動するキーを指定する
 fc.other_window_key = "A-o"
@@ -430,6 +428,12 @@ fc.game_app_list        = ["ffxiv_dx11.exe",              # FINAL FANTASY XIV
 # （https://github.com/qmk/qmk_firmware/blob/master/docs/feature_grave_esc.md）
 # define_key(keymap_base, "S-Esc", self_insert_command("~"))
 # define_key(keymap_base, "W-Esc", self_insert_command("`"))
+
+# A-Tab で起動するタスク切り替え画面で、Alt+j,l,i,k のキーを使ってタスクを移動するための設定
+# define_key(keymap_tsw, "A-j", self_insert_command("A-Left"))
+# define_key(keymap_tsw, "A-l", self_insert_command("A-Right"))
+# define_key(keymap_tsw, "A-i", self_insert_command("A-Up"))
+# define_key(keymap_tsw, "A-k", self_insert_command("A-Down"))
 
 ####################################################################################################
 ## クリップボードリストの設定
