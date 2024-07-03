@@ -15,6 +15,7 @@
 
 print(startupString())
 
+exec(readConfigExtension(r"fix_clipboard.py"), dict(globals(), **locals()))
 keymap.editor = r"notepad.exe"
 keymap.setFont("ＭＳ ゴシック", 12)
 
