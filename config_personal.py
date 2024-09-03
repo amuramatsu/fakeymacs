@@ -71,6 +71,7 @@ if re.match(r"^VPC-[A-Z]\d\d[A-Z]\d+$", nodename):
 # すべてのキーマップを透過（スルー）するアプリケーションソフトを指定する（全ての設定に優先する）
 # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
 fc.transparent_target  += [
+    "etxc.exe",            # Exceed TurboX
     "Game.exe",            # Some games...
     "retroarch.exe",       # RetroArch
     "np2w.exe",            # NekoProject II/w
@@ -98,6 +99,7 @@ fc.emacs_target_class   = []                   # 機能を無効にする
 # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
 # （Keyhac のメニューから「内部ログ」を ON にすると processname や classname を確認することができます）
 fc.not_emacs_target    += [
+    "etxc.exe",            # Exceed TurboX
     "TurboVNC.exe",        # TurboVNC
     "mstsc.exe",           # Remote Desktop
     "vmware-view.exe",     # VMware Horizon 
