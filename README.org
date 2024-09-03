@@ -41,8 +41,11 @@ manual は次のリンクを参照してください。
 （モードに入ると、▲のマークが表示されます。） Emacs 日本語入力モードになると Emacs キーバインド
 として利用できるキーが限定され、その他のキーは Windows にそのまま渡されるようになるため、
 IME のショートカットキーが利用できるようになります。
-また、このモードでは IME のショートカットを置き換える機能もサポートしており、初期値では
+また、このモードでは IME のショートカットキーを置き換える機能もサポートしており、初期値では
 「ことえり」のキーバインドを利用できるようにしています。
+詳しくは、次のページの「■ 「Emacs 日本語入力モード」のキーバインド」の項を参照してください。
+
+- [[/fakeymacs_manuals/key_bindings.org#-emacs-日本語入力モードのキーバインド]]
 
 ** キーマップのレイヤー構成
 
@@ -52,7 +55,11 @@ IME のショートカットキーが利用できるようになります。
 
 [[/fakeymacs_manuals/keymap_layer/keymap_layer.png]]
 
+※ keymap_remote レイヤーは、fc.use_capslock_as_ctrl 変数が True の時に機能するレイヤーです。
+
 ※ keymap_vscode レイヤーは、vscode_key Extension を有効にしたときに機能するレイヤーです。
+
+※ keymap_ei レイヤーは、fc.use_emacs_ime_mode 変数が True の時に機能するレイヤーです。
 
 ** 使い方
 
@@ -153,22 +160,22 @@ _config_personal.py ファイルを config_personal.pyという名称に変更�
 | fc.game_app_list           | ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフトを指定する |
 |----------------------------+----------------------------------------------------------------------------------|
 
-※ 1) で CapsLock に右 Control キーを割り当てた場合には、fc.side_of_ctrl_key を "R" に
+※ 1) で CapsLock に右 Control キーを割り当てた場合には、fc.side_of_ctrl_key 変数を "R" に
 変更する必要があります。この場合、左 Control キーは従来どおり Windows ショートカット用
 のキーとして利用できます。
 
 ※ 管理権限を持たない PC を利用している場合でレジストリによるキーの置き換えができない場合、
-fc.use_capslock_as_ctrl を True にすることで CapsLock キーを Control キーとして利用することができます。\\
-　また、この機能を利用する場合、次の点に留意してください。
+fc.use_capslock_as_ctrl 変数を True にすることで CapsLock キーを Control キーとして利用することができます。\\
+　この機能を利用する場合、次の点にご留意ください。
 - 本機能を利用する場合、モディファイアキーとして User2（U2）が利用されます。
-- fc.transparent_target や fc.game_app_list に指定したアプリにはこの機能は適用されません。
-- fc.side_of_ctrl_key を "R" に設定することで CapsLock キーを右コントロールキーとして Emacs キーバインド用のキーとして利用することができます。この場合、左下にあるコントロールキーは Windows ショートカットキーやマウスとの連携用のキーとして使うことができます。
+- fc.transparent_target 変数や fc.game_app_list 変数に指定したアプリにはこの機能は適用されません。
+- fc.side_of_ctrl_key 変数を "R" に設定することで CapsLock キーを右コントロールキーとして Emacs キーバインド用のキーとして利用することができます。この場合、左下にあるコントロールキーは Windows ショートカットキーやマウスとの連携用のキーとして使うことができます。
 - C-CapsLock で CapsLock の切り替えを可能としています。
 - 次の制約事項がありますので、ご理解の上ご利用ください。
  - CapsLock キーをマウスと組み合せて利用することはできません。
- - CapsLock キーと他のモディファイアキーを複合して使うキーバインドを入力した後、何れかの一部のモディファイアキーを離して次のキーバインドを入力することはできません。（例えば、CapsLock+Alt+l を押下した後、Alt と l のみを離して p を入力するということはできません。）
+ - CapsLock キーと他のモディファイアキーを複合して使うキーバインドを入力した後、何れかの一部のモディファイアキーを離して次のキーバインドを入力することはできません。（例えば、CapsLock+Alt+l を押下した後、Alt と l のみを離して d を入力するということはできません。）
  - OS の設定が日本語キーボードの場合、キーボードマクロの記録の際に CapsLock キーを用いたキーバインドを使うことはできません。（キーボードマクロの記録の開始、終了のキーバインドで CapsLock キーを利用することは可能です。）
- - リモートデスクトップ接続先でこの機能を利用する場合には、接続元、接続先に同じバージョンの Fakeymacs をインストールし、両側で fc.use_capslock_as_ctrl を True に設定し、リモートデスクトップ接続の「オプション」の「ローカルリソース」->「キーボード」で「このコンピューター」を選択してから接続してください。またこの選択をする場合、接続先での一部のキーバインドが変更となることにご留意ください。
+ - リモートデスクトップ接続先でこの機能を利用する場合には、接続元、接続先に同じバージョンの Fakeymacs をインストールし、両側で fc.use_capslock_as_ctrl 変数を True に設定し、リモートデスクトップ接続の「オプション」の「ローカルリソース」->「キーボード」で「このコンピューター」を選択してから接続してください。またこの選択をする場合、接続先での一部のキーバインドが変更となることにご留意ください。
   - https://www.yellowhouse.jp/windows10remote-desktop-option/#toc13
   - https://atmarkit.itmedia.co.jp/ait/articles/0508/27/news022.html
  - VcXsrv などの X ウィンドウサーバソフトで、カーソル移動が遅くなる場合があります。（WSLg は問題なし）
@@ -188,7 +195,7 @@ config_personal.py には、Fakeymacs の拡張機能を有効化／無効化す
 （拡張機能を有効化する場合には、if 0: を if 1: にしてください。
 また、必要であれば、コンフィグレーションパラメータの設定も行ってください。）
 
-- https://github.com/smzht/fakeymacs/blob/master/fakeymacs_manuals/extensions.org
+- [[/fakeymacs_manuals/extensions.org]]
 
 VSCode を利用する場合には、次の vscode_key Extension 用のコンフィグレーションパラメータの設定は
 確認してください。
@@ -217,7 +224,7 @@ fc.use_usjis_keyboard_conversion 変数を True に設定してください。
 英語配列では使わないキーを英語キーボードのキー配置にあるキーに再割当てすることで、
 日本語キーボードを英語キーボードのキー配置により近い形で利用することが可能となります。
 
-- https://github.com/smzht/fakeymacs/tree/master/fakeymacs_extensions/change_keyboard2
+- [[/fakeymacs_extensions/change_keyboard2]]
 
 *** 10) テキスト カーソル インジケーターの設定を行う（オプション）
 

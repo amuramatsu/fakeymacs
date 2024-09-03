@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20240823_01"
+fakeymacs_version = "20240901_01"
 
 import time
 import os.path
@@ -262,7 +262,7 @@ def configure(keymap):
     #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。"M-g*" のようにワイルドカードも
     #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
     # （ここで指定したキーに新たに別のキー設定をしたいときには、define_key2 関数を利用してください）
-    fc.skip_settings_key    = {"keymap_base"      : ["*W-g", "A-Tab"], # ベース Keymap
+    fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab"], # ベース Keymap
                                "keymap_global"    : [], # グローバル Keymap
                                "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
                                "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
@@ -742,6 +742,9 @@ def configure(keymap):
             if os_keyboard_type == "JP":
                 window_keymap[     user2_key  ] = shiftDown(f"D-{user2_key}")
                 window_keymap[f"U-{user2_key}"] = shiftUp(  f"U-{user2_key}")
+
+                window_keymap["U-LShift"] = shiftUp("U-LShift") # for Remote Desktop
+                window_keymap["U-RShift"] = shiftUp("U-RShift") # for Remote Desktop
 
                 window_keymap["U-U2-LShift"] = shiftDown("U-U2-LShift")
                 window_keymap["U-U2-RShift"] = shiftDown("U-U2-RShift")
@@ -1394,9 +1397,8 @@ def configure(keymap):
                              (keymap.record_seq[-1] == (ctl_x_prefix_vkey[1], True) and
                               keymap.record_seq[-2] == (VK_CAPITAL, True))) and
                             keymap.record_seq[-3] == (ctl_x_prefix_vkey[1], False)):
-                            keymap.record_seq.pop()
-                            keymap.record_seq.pop()
-                            keymap.record_seq.pop()
+                            for _ in range(3):
+                                keymap.record_seq.pop()
                             if keymap.record_seq[-1] == (VK_CAPITAL, False):
                                 for i in range(len(keymap.record_seq) - 1, -1, -1):
                                     if keymap.record_seq[i] == (VK_CAPITAL, False):
@@ -1406,19 +1408,40 @@ def configure(keymap):
                             else:
                                 # CapsLock の入力が連続して行われる場合があるための対処
                                 keymap.record_seq.append((VK_CAPITAL, True))
+                        else:
+                            # Remote Desktop を利用する場合の対策
+                            if (keymap.record_seq[-1] == (user2_vkey, True) and
+                                keymap.record_seq[-2] == (ctl_x_prefix_vkey[1], True) and
+                                keymap.record_seq[-3] == (ctl_x_prefix_vkey[1], False) and
+                                keymap.record_seq[-4] == (user2_vkey, False)):
+                                for _ in range(4):
+                                    keymap.record_seq.pop()
                 else:
                     if len(keymap.record_seq) >= 2:
                         if keymap.record_seq[-1] == (VK_CAPITAL, True):
                             keymap.record_seq.pop()
                         if (keymap.record_seq[-1] == (ctl_x_prefix_vkey[1], True) and
                             keymap.record_seq[-2] == (ctl_x_prefix_vkey[1], False)):
-                            keymap.record_seq.pop()
-                            keymap.record_seq.pop()
+                            for _ in range(2):
+                                keymap.record_seq.pop()
                             for i in range(len(keymap.record_seq) - 1, -1, -1):
                                 if keymap.record_seq[i] == (VK_CAPITAL, False):
                                     keymap.record_seq.pop()
                                 else:
                                     break
+                        else:
+                            # Remote Desktop を利用する場合の対策
+                            if len(keymap.record_seq) >= 8:
+                                if (keymap.record_seq[-1] == (VK_LSHIFT, True) and
+                                    keymap.record_seq[-2] == (user2_vkey, True) and
+                                    keymap.record_seq[-3] == (VK_LSHIFT, False) and
+                                    keymap.record_seq[-4] == (ctl_x_prefix_vkey[1], True) and
+                                    keymap.record_seq[-5] == (ctl_x_prefix_vkey[1], False) and
+                                    keymap.record_seq[-6] == (VK_LSHIFT, True) and
+                                    keymap.record_seq[-7] == (VK_LSHIFT, False) and
+                                    keymap.record_seq[-8] == (user2_vkey, False)):
+                                    for _ in range(8):
+                                        keymap.record_seq.pop()
 
     def kmacro_end_and_call_macro():
         def _kmacro_end_and_call_macro():
@@ -2557,19 +2580,18 @@ def configure(keymap):
 
     if fc.use_alt_digit_key_for_f1_to_f12:
         for mod1, mod2, mod3 in itertools.product(["", "W-"], ["", "C-"], ["", "S-"]):
-            mod = mod1 + mod2 + mod3
+            mod = "A-" + mod1 + mod2 + mod3
 
-            mkey = "A-" + mod
             for i in range(10):
                 define_key(keymap_global,
-                           mkey + f"{(i + 1) % 10}", self_insert_command(mod + vkToStr(VK_F1 + i)))
+                           mod + f"{(i + 1) % 10}", self_insert_command(mod + vkToStr(VK_F1 + i)))
 
-            define_key(keymap_global, mkey + "-", self_insert_command(mod + vkToStr(VK_F11)))
+            define_key(keymap_global, mod + "-", self_insert_command(mod + vkToStr(VK_F11)))
 
             if is_japanese_keyboard:
-                define_key(keymap_global, mkey + "^", self_insert_command(mod + vkToStr(VK_F12)))
+                define_key(keymap_global, mod + "^", self_insert_command(mod + vkToStr(VK_F12)))
             else:
-                define_key(keymap_global, mkey + "=", self_insert_command(mod + vkToStr(VK_F12)))
+                define_key(keymap_global, mod + "=", self_insert_command(mod + vkToStr(VK_F12)))
 
 
     ###########################################################################

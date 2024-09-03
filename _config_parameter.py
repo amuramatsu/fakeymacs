@@ -154,7 +154,7 @@ fc.ime_target           = ["wsl.exe",                # WSL
 #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
-fc.skip_settings_key    = {"keymap_base"      : ["*W-g", "A-Tab"], # ベース Keymap
+fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab"], # ベース Keymap
                            "keymap_global"    : [], # グローバル Keymap
                            "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
                            "keymap_vscode"    : [], # Emacs キーバインド VSCode 拡張用 Keymap
@@ -397,7 +397,7 @@ fc.command_name = r"cmd.exe"
 
 # コマンドのリピート回数の最大値を指定する
 # （数値を大きくしていくと「Time stamp inversion happened.」が発生するので注意してください）
-fc.repeat_max _ 128
+fc.repeat_max = 128
 
 # Microsoft Excel のセル内で改行を選択可能かを指定する（True: 選択可、False: 選択不可）
 # （kill_line 関数の挙動を変えるための変数です。Microsoft Excel 2019 以降では True にして
