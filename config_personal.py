@@ -182,7 +182,7 @@ for t in fc.ctrlm_target:
 #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
-fc.skip_settings_key    = {"keymap_base"      : ["*W-g", "A-Tab"], # ベース Keymap
+fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab"], # ベース Keymap
                            "keymap_global"    : [], # グローバル Keymap
                            "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
                            "keymap_vscode"    : [], # Emacs キーバインド VSCode 拡張用 Keymap
@@ -221,9 +221,6 @@ fc.use_esc_as_meta = True
 # C-[ キーを Meta キーとして使うかどうかを指定する（True: 使う、False: 使わない）
 # （True（Meta キーとして使う）に設定されている場合、C-[ の二回押下で ESC が入力されます）
 fc.use_ctrl_openbracket_as_meta = True
-
-# CapsLock キーを Ctrl キーとして使うかどうかを指定する（True: 使う、False: 使わない）
-fc.use_capslock_as_ctrl  = False
 
 # Ctl-x プレフィックスキーに使うキーを指定する
 # （Ctl-x プレフィックスキーのモディファイアキーは、Ctrl または Alt のいずれかから指定してください）
@@ -667,5 +664,11 @@ if 0:
     # fc.space_fn_window_keymap_list += [keymap_ei]
     # fc.space_fn_window_keymap_list += [fakeymacs.keymap_vscode]
     exec(readConfigExtension(r"space_fn\config.py"), dict(globals(), **locals()))
+
+# [section-extension-capslock_key] -----------------------------------------------------------------
+
+# CapsLock キーを Ctrl キーとして使うための設定を行う
+if 0:
+    exec(readConfigExtension(r"capslock_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
