@@ -6,10 +6,10 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20240901_01"
+fakeymacs_version = "20240913_01"
 
 import time
-import os.path
+import os
 import re
 import fnmatch
 import copy
@@ -308,9 +308,6 @@ def configure(keymap):
     # C-[ キーを Meta キーとして使うかどうかを指定する（True: 使う、False: 使わない）
     # （True（Meta キーとして使う）に設定されている場合、C-[ の二回押下で ESC が入力されます）
     fc.use_ctrl_openbracket_as_meta = True
-
-    # CapsLock キーを Ctrl キーとして使うかどうかを指定する（True: 使う、False: 使わない）
-    fc.use_capslock_as_ctrl  = False
 
     # Ctl-x プレフィックスキーに使うキーを指定する
     # （Ctl-x プレフィックスキーのモディファイアキーは、Ctrl または Alt のいずれかから指定してください）
@@ -698,73 +695,6 @@ def configure(keymap):
 
 
     ###########################################################################
-    ## CapsLock キーを Ctrl キーとして使うための設定
-    ###########################################################################
-
-    fakeymacs.shift_down2 = False
-
-    if fc.use_capslock_as_ctrl:
-        user2_vkey = 236 # リモートデスクトップ接続先に渡る仮想キーコードを選択する必要有り
-        user2_key = keyhac_keymap.KeyCondition.vkToStr(user2_vkey)
-
-        keymap.replaceKey("CapsLock", user2_key)
-        keymap.replaceKey(240, user2_key)
-
-        if os_keyboard_type == "US":
-            keymap.replaceKey(241, user2_key)
-            keymap.replaceKey(242, user2_key)
-
-        keymap.defineModifier(user2_key, "User2")
-
-        def shiftDown(key):
-            def _func():
-                keymap.InputKeyCommand(key)()
-                keymap.InputKeyCommand("D-Shift")()
-                fakeymacs.shift_down2 = True
-            return _func
-
-        def shiftUp(key):
-            def _func():
-                keymap.InputKeyCommand(key)()
-                if fakeymacs.shift_down2:
-                    keymap.InputKeyCommand("U-Shift")()
-                    fakeymacs.shift_down2 = False
-            return _func
-
-        def postProcessing(key):
-            def _func():
-                keymap.InputKeyCommand(key)()
-                shiftUp(f"U-{user2_key}")()
-                keymap.modifier &= ~keymap.vk_mod_map[user2_vkey]
-            return _func
-
-        def capslockSet(window_keymap):
-            if os_keyboard_type == "JP":
-                window_keymap[     user2_key  ] = shiftDown(f"D-{user2_key}")
-                window_keymap[f"U-{user2_key}"] = shiftUp(  f"U-{user2_key}")
-
-                window_keymap["U-LShift"] = shiftUp("U-LShift") # for Remote Desktop
-                window_keymap["U-RShift"] = shiftUp("U-RShift") # for Remote Desktop
-
-                window_keymap["U-U2-LShift"] = shiftDown("U-U2-LShift")
-                window_keymap["U-U2-RShift"] = shiftDown("U-U2-RShift")
-
-                window_keymap[f"C-{user2_key}"] = "S-CapsLock" # CapsLock の切り替え
-            else:
-                window_keymap["U-U2-LShift"] = postProcessing("U-U2-LShift")
-                window_keymap["U-U2-RShift"] = postProcessing("U-U2-RShift")
-
-                window_keymap[f"C-{user2_key}"] = "CapsLock" # CapsLock の切り替え
-
-            window_keymap["U-U2-LCtrl"] = postProcessing("U-U2-LCtrl")
-            window_keymap["U-U2-RCtrl"] = postProcessing("U-U2-RCtrl")
-            window_keymap["U-U2-LAlt"]  = postProcessing("U-U2-LAlt")
-            window_keymap["U-U2-RAlt"]  = postProcessing("U-U2-RAlt")
-            window_keymap["U-U2-LWin"]  = postProcessing("U-U2-LWin")
-            window_keymap["U-U2-RWin"]  = postProcessing("U-U2-RWin")
-
-
-    ###########################################################################
     ## 基本機能の設定
     ###########################################################################
 
@@ -777,6 +707,8 @@ def configure(keymap):
     fakeymacs.correct_ime_status = False
     fakeymacs.window_list = []
     fakeymacs.delayed_command = None
+    fakeymacs.shift_down = False
+    fakeymacs.shift_down2 = False
 
     def is_base_target(window):
         if window is not fakeymacs.last_window or fakeymacs.force_update:
@@ -1374,9 +1306,8 @@ def configure(keymap):
                  (keymap.record_seq[-1] == (ctl_x_prefix_vkey[1], True) and
                   keymap.record_seq[-2] == (ctl_x_prefix_vkey[0], True))) and
                 keymap.record_seq[-3] == (ctl_x_prefix_vkey[1], False)):
-                keymap.record_seq.pop()
-                keymap.record_seq.pop()
-                keymap.record_seq.pop()
+                for _ in range(3):
+                    keymap.record_seq.pop()
                 if keymap.record_seq[-1] == (ctl_x_prefix_vkey[0], False):
                     for i in range(len(keymap.record_seq) - 1, -1, -1):
                         if keymap.record_seq[i] == (ctl_x_prefix_vkey[0], False):
@@ -1386,62 +1317,6 @@ def configure(keymap):
                 else:
                     # コントロール系の入力が連続して行われる場合があるための対処
                     keymap.record_seq.append((ctl_x_prefix_vkey[0], True))
-
-            elif (fc.use_capslock_as_ctrl and
-                  ctl_x_prefix_vkey[0] in [VK_LCONTROL, VK_RCONTROL]):
-
-                if os_keyboard_type == "US":
-                    if len(keymap.record_seq) >= 4:
-                        if (((keymap.record_seq[-1] == (VK_CAPITAL, True) and
-                              keymap.record_seq[-2] == (ctl_x_prefix_vkey[1], True)) or
-                             (keymap.record_seq[-1] == (ctl_x_prefix_vkey[1], True) and
-                              keymap.record_seq[-2] == (VK_CAPITAL, True))) and
-                            keymap.record_seq[-3] == (ctl_x_prefix_vkey[1], False)):
-                            for _ in range(3):
-                                keymap.record_seq.pop()
-                            if keymap.record_seq[-1] == (VK_CAPITAL, False):
-                                for i in range(len(keymap.record_seq) - 1, -1, -1):
-                                    if keymap.record_seq[i] == (VK_CAPITAL, False):
-                                        keymap.record_seq.pop()
-                                    else:
-                                        break
-                            else:
-                                # CapsLock の入力が連続して行われる場合があるための対処
-                                keymap.record_seq.append((VK_CAPITAL, True))
-                        else:
-                            # Remote Desktop を利用する場合の対策
-                            if (keymap.record_seq[-1] == (user2_vkey, True) and
-                                keymap.record_seq[-2] == (ctl_x_prefix_vkey[1], True) and
-                                keymap.record_seq[-3] == (ctl_x_prefix_vkey[1], False) and
-                                keymap.record_seq[-4] == (user2_vkey, False)):
-                                for _ in range(4):
-                                    keymap.record_seq.pop()
-                else:
-                    if len(keymap.record_seq) >= 2:
-                        if keymap.record_seq[-1] == (VK_CAPITAL, True):
-                            keymap.record_seq.pop()
-                        if (keymap.record_seq[-1] == (ctl_x_prefix_vkey[1], True) and
-                            keymap.record_seq[-2] == (ctl_x_prefix_vkey[1], False)):
-                            for _ in range(2):
-                                keymap.record_seq.pop()
-                            for i in range(len(keymap.record_seq) - 1, -1, -1):
-                                if keymap.record_seq[i] == (VK_CAPITAL, False):
-                                    keymap.record_seq.pop()
-                                else:
-                                    break
-                        else:
-                            # Remote Desktop を利用する場合の対策
-                            if len(keymap.record_seq) >= 8:
-                                if (keymap.record_seq[-1] == (VK_LSHIFT, True) and
-                                    keymap.record_seq[-2] == (user2_vkey, True) and
-                                    keymap.record_seq[-3] == (VK_LSHIFT, False) and
-                                    keymap.record_seq[-4] == (ctl_x_prefix_vkey[1], True) and
-                                    keymap.record_seq[-5] == (ctl_x_prefix_vkey[1], False) and
-                                    keymap.record_seq[-6] == (VK_LSHIFT, True) and
-                                    keymap.record_seq[-7] == (VK_LSHIFT, False) and
-                                    keymap.record_seq[-8] == (user2_vkey, False)):
-                                    for _ in range(8):
-                                        keymap.record_seq.pop()
 
     def kmacro_end_and_call_macro():
         def _kmacro_end_and_call_macro():
@@ -1787,7 +1662,7 @@ def configure(keymap):
                 return command
 
         def _keyCommand2(key_list):
-            _command1 = _keyCommand1(key_list)
+            _command1 = command_dict[(window_keymap, tuple(key_list))] = _keyCommand1(key_list)
             up_key = key_list[0].startswith("U-")
 
             if callable(_command1):
@@ -1814,21 +1689,11 @@ def configure(keymap):
                 return _command1
 
         for key_list in kbd(keys):
-            command_dict[(window_keymap, tuple(key_list))] = _keyCommand1(key_list)
-
             for pos_list in keyPos(key_list):
                 w_keymap = window_keymap
                 for key in pos_list[:-1]:
                     w_keymap = w_keymap[key]
                 w_keymap[pos_list[-1]] = _keyCommand2(key_list)
-
-                if fc.use_capslock_as_ctrl:
-                    if re.search(rf"(^|-)({fc.side_of_ctrl_key}|)C-", pos_list[-1]):
-                        pos = re.sub(rf"(^|-)({fc.side_of_ctrl_key}|)C-", r"\1U2-", pos_list[-1])
-                        w_keymap[pos] = _keyCommand2(key_list)
-
-                    if not callable(w_keymap[pos_list[-1]]):
-                        capslockSet(w_keymap[pos_list[-1]])
 
                 if len(pos_list) == 1:
                     # Alt キーを単押しした際に、カーソルがメニューへ移動しないようにするための対策
@@ -1900,19 +1765,24 @@ def configure(keymap):
         if usjis_conv:
             key_list = keyInput(key_list)
 
+        if "S-" in key_list[-1]:
+            shift_check = True
+        else:
+            shift_check = False
+
         def _func():
-            # 「define_key(keymap_base, "W-S-m", self_insert_command("W-S-m"))」のような設定を
-            # した場合、 Shift に RShift を使うと正常に動作しない。その対策。
-            if (keymap.modifier & keyhac_keymap.MODKEY_SHIFT_R and
-                (keymap.modifier & (keyhac_keymap.MODKEY_WIN_L | keyhac_keymap.MODKEY_WIN_R) or
-                 keymap.modifier & (keyhac_keymap.MODKEY_ALT_L | keyhac_keymap.MODKEY_ALT_R)) and
-                "S-" in key_list[-1]):
-                key_list[-1] = re.sub(r"(^|-)(S-)", r"\1R\2", key_list[-1])
+            key_list2 = list(key_list)
+
+            if shift_check:
+                # 「define_key(keymap_base, "W-S-m", self_insert_command("W-S-m"))」のような設定を
+                # した場合、 Shift に RShift を使うと正常に動作しない。その対策。
+                if (keymap.modifier & keyhac_keymap.MODKEY_SHIFT_R and
+                    (keymap.modifier & (keyhac_keymap.MODKEY_WIN_L | keyhac_keymap.MODKEY_WIN_R) or
+                     keymap.modifier & (keyhac_keymap.MODKEY_ALT_L | keyhac_keymap.MODKEY_ALT_R))):
+                    key_list2[-1] = re.sub(r"(^|-)(S-)", r"\1R\2", key_list2[-1])
 
             if fakeymacs.shift_down:
-                key_list2 = ["D-Shift"] + key_list + ["U-Shift"]
-            else:
-                key_list2 = key_list
+                key_list2 = ["D-Shift"] + key_list2 + ["U-Shift"]
 
             if fakeymacs.shift_down2:
                 key_list2 = ["U-Shift"] + key_list2 + ["D-Shift"]
@@ -1975,8 +1845,6 @@ def configure(keymap):
             fakeymacs.is_universal_argument = True
             digit_argument(number)
         return _func
-
-    fakeymacs.shift_down = False
 
     def mark(func, forward_direction):
         def _func():
@@ -3045,30 +2913,5 @@ def configure(keymap):
     # 個人設定ファイルのセクション [section-extension-space_fn] を読み込んで実行する
     exec(readConfigPersonal("[section-extension-space_fn]"), dict(globals(), **locals()))
 
-    # CapsLock キーを Ctrl キーとして使うための設定を行う
-    if fc.use_capslock_as_ctrl:
-        capslockSet(keymap_base)
-
-        keymap_remote = keymap.defineWindowKeymap(class_name="IHWindowClass")
-
-        def remote_command(key):
-            def _func():
-                key_list = [key]
-                if fakeymacs.shift_down2:
-                    key_list = ["U-Shift"] + key_list + ["D-Shift"]
-                keymap.InputKeyCommand(*key_list)()
-            return _func
-
-        for vkey in vkeys():
-            key = vkToStr(vkey)
-            for mod1, mod2, mod3 in itertools.product(["", "W-"], ["", "A-"], ["", "S-"]):
-                mkey = "U2-" + mod1 + mod2 + mod3 + key
-                keymap_remote[mkey] = remote_command(mkey)
-
-        for mod1, mod2, mod3 in itertools.product(["", "W-"], ["", "A-"], ["", "S-"]):
-            mkey = mod1 + mod2 + mod3 + user2_key
-            keymap_remote[     mkey  ] = f"D-{mkey}"
-            keymap_remote[f"U-{mkey}"] = f"U-{mkey}"
-
-        capslockSet(keymap_remote)
-        keymap_remote[f"C-{user2_key}"] = f"C-{user2_key}" # CapsLock の切り替え
+    # 個人設定ファイルのセクション [section-extension-capslock_key] を読み込んで実行する
+    exec(readConfigPersonal("[section-extension-capslock_key]"), dict(globals(), **locals()))
