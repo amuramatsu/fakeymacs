@@ -131,6 +131,7 @@ fc.ime_target           = ["wsl.exe",                # WSL
                            "ubuntu1804.exe",         # WSL
                            "ubuntu2004.exe",         # WSL
                            "ubuntu2204.exe",         # WSL
+                           "ubuntu2404.exe",         # WSL
                            "debian.exe",             # WSL
                            "kali.exe",               # WSL
                            "SLES-12.exe",            # WSL
@@ -544,7 +545,8 @@ if 0:
 # Chrome 系ブラウザで Ctl-x C-b を入力した際、Chrome の拡張機能 QuicKey を起動する
 if 0:
     fc.chrome_list= ["msedge.exe",
-                     "chrome.exe"]
+                     "chrome.exe",
+                     ]
     fc.quickey_shortcut_key = "A-q"
     exec(readConfigExtension(r"chrome_quickey\config.py"), dict(globals(), **locals()))
 
@@ -554,7 +556,8 @@ if 0:
 if 0:
     fc.browser_list= ["chrome.exe",
                       "msedge.exe",
-                      "firefox.exe"]
+                      "firefox.exe",
+                      ]
     exec(readConfigExtension(r"browser_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
@@ -585,30 +588,20 @@ if 0:
 
 # VSCode 用のキーの設定を行う
 if 0:
-    fc.vscode_target  = ["Code.exe"]
-    fc.vscode_target += ["chrome.exe",
-                         "msedge.exe",
-                         "firefox.exe",
-                         ]
+    fc.vscode_target = ["Code.exe",
+                        "Cursor.exe",
+                        ]
+    fc.vscode_browser_target = ["chrome.exe",
+                                "msedge.exe",
+                                "firefox.exe",
+                                ]
 
     # fc.vscode_prefix_key = [["C-;", "C-A-;"]]
     fc.use_ctrl_atmark_for_mark = False
     fc.use_direct_input_in_vscode_terminal = False
     fc.esc_mode_in_keyboard_quit = 1
 
-    # VSCode Extension 用のキーの設定を行う
-    fc.vscode_dired = False
-    fc.vscode_recenter = False
-    fc.vscode_recenter2 = False
-    fc.vscode_occur = False
-    fc.vscode_quick_select = True
-    fc.vscode_input_sequence = True
-    fc.vscode_insert_numbers = True
-    fc.vscode_keyboard_macro = False
-    fc.vscode_filter_text = False
-
     exec(readConfigExtension(r"vscode_key\config.py"), dict(globals(), **locals()))
-    # vscode_extensions\config.py は、vscode_key\config.py 内部から呼ばれている
 
 # --------------------------------------------------------------------------------------------------
 # ■ IME 関連
@@ -725,7 +718,7 @@ if 0:
     # fc.space_fn_window_keymap_list += [fakeymacs.keymap_vscode]
     exec(readConfigExtension(r"space_fn\config.py"), dict(globals(), **locals()))
 
-# [section-extension-capslock_key] -------------------------------------------------------------
+# [section-extension-capslock_key] -----------------------------------------------------------------
 
 # CapsLock キーを Ctrl キーとして使うための設定を行う
 if 0:

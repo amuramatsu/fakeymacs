@@ -11,7 +11,8 @@ VSCode 用のキーの設定を行う拡張機能です。
 |----------------------------------------+-------------------------------------------------------------------------------------------------------|
 | Configuration parameter                | Description                                                                                           |
 |----------------------------------------+-------------------------------------------------------------------------------------------------------|
-| fc.vscode_target                       | VSCode 用のキーバインドを利用するアプリケーションソフトを指定する                                     |
+| fc.vscode_target                       | VSCode 用のキーバインドを利用するアプリケーションソフト（ブラウザアプリを除く）を指定する             |
+| fc.vscode_browser_target               | VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザアプリを指定する                        |
 | fc.vscode_prefix_key                   | 置き換えするプレフィックスキーの組み合わせ（VSCode のキー、Fakeymacs のキー）を指定する（複数指定可） |
 | fc.use_ctrl_atmark_for_mark            | 日本語キーボードを利用する際、VSCode で  C-@ をマーク用のキーとして使うかどうかを指定する             |
 | fc.use_direct_input_in_vscode_terminal | パネルのターミナル内で４つのキー（C-k、C-r、C-s、C-y）のダイレクト入力機能を使うかどうかを指定する    |
@@ -19,9 +20,8 @@ VSCode 用のキーの設定を行う拡張機能です。
 | fc.esc_mode_in_keyboard_quit           | keyboard_quit 関数コール時の Esc キーの発行方法を指定する                                             |
 |----------------------------------------+-------------------------------------------------------------------------------------------------------|
 
-※ fc.vscode_target 変数の初期値には、ブラウザのアプリケーションソフトも複数指定しています。
-これは、ブラウザで vscode.dev にアクセスしたときに VSCode 用のキーバインドを利用できる
-ようにするためです。
+※ fc.vscode_browser_target 変数は、ブラウザで VS Code Web の画面にアクセスした際（vscode.dev にアクセス
+したとき等）に、VSCode 用のキーバインドを利用できるようにするための設定です。
 
 ※ fc.vscode_prefix_key 変数は、VSCode のプレフィックスキーを使う際、後に入力した文字が全角文字で
 入力されることがある問題を対策するために設けた設定です。
@@ -46,9 +46,9 @@ True に設定した場合でも Toggle Terminal 用のキーとして C-<半角
 設定値 2 の利用は、VSCode で Jupyter Notebook を使う場合などを想定しています。
 設定値 1 の場合でも、C-A-g キーにより Esc キーを発行しない keyboard_quit を利用できます。
 
-※ fc.esc_mode_in_keyboard_quit 変数の設定は、fc.vscode_target 変数で指定する全てのアプリケーション
-ソフトに影響します。fc.vscode_target 変数にブラウザアプリを指定している場合には、そこにも影響
-しますので、ご留意ください。
+※ fc.esc_mode_in_keyboard_quit 変数の設定は、fc.vscode_target 変数および fc.vscode_browser_target
+変数に指定する全てのアプリケーションソフトに影響します。fc.vscode_browser_target 変数に指定した
+ブラウザアプリにも影響しますので、ご留意ください。
 
 *** キーバインド
 
@@ -303,10 +303,21 @@ def vscodeExecuteCommand(command, esc=False):
 
 - 引数で指定したコマンドを実行する関数
 
+*** 拡張機能（Extensions）
+
+本拡張機能では、さらに以下の拡張機能が利用できます。
+
+|-------------------+---------------------------------------|
+| Extension name    | Description                           |
+|-------------------+---------------------------------------|
+| [[/fakeymacs_extensions/vscode_key/vscode_extensions][vscode_extensions]] | VSCode Extension 用のキーの設定を行う |
+|-------------------+---------------------------------------|
+
 *** 留意事項
 
-● 本フォルダにある _config_personal.py を config_personal.py というファイル名にすることで
+● 本フォルダにある _config_personal.py を config_personal.py というファイル名にすることで、
 機能拡張ファイルとして機能します。vscode_key Extension の機能を拡張する際にご利用ください。
+また、上記で説明している拡張機能（vscode_extensions）もこの機能拡張ファイルの中から読み込まれます。
 
 ● fc.side_of_ctrl_key 変数で設定した側でない Ctrl キーを使う、C-q を前置する、fc.vscode_prefix_key
 で指定した Fakeymacs 用のプレフィックスキーを使うことで、VSCode 本来のショートカットキーを
