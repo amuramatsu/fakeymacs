@@ -74,6 +74,7 @@ fc.transparent_target  += [
     "etxc.exe",            # Exceed TurboX
     "Game.exe",            # Some games...
     "retroarch.exe",       # RetroArch
+    "Fusion.exe",          # Kega Fusion
     "np2w.exe",            # NekoProject II/w
     "np21w.exe",           # NekoProject 21/w
     "np2x64w.exe",         # NekoProject II/w (64bit)
@@ -86,6 +87,14 @@ fc.transparent_target  += [
     "np21nt.exe",          # NekoProject 21 fmgen
     "NP2kai_windows.exe",  # NekoProject II kai
     "NP21kai_windows.exe", # NekoProject 21 kai
+    "SL9821.exe",          # SL9821
+    "pc98rl.exe",          # ePC-98RL
+    "xm6i.exe",            # XM6i
+    "XM8.exe",             # XM8
+    "dosbox*.exe",         # DosBox and DosBox-X
+    "BasiliskII.exe",      # BasiliskII
+    "SheepShaver.exe",     # SheepShaver
+    "qemu-system*.exe",    # QEMU
     "QUASI88.exe",         # QUASI88
                           ]
 
@@ -98,25 +107,14 @@ fc.emacs_target_class   = []                   # 機能を無効にする
 
 # Emacs のキーバインドに“したくない”アプリケーションソフトを指定する
 # （Keyhac のメニューから「内部ログ」を ON にすると processname や classname を確認することができます）
+fc.not_emacs_target    += fc.transparent_target
 fc.not_emacs_target    += [
-    "etxc.exe",            # Exceed TurboX
     "TurboVNC.exe",        # TurboVNC
     "mstsc.exe",           # Remote Desktop
+    "vmware.exe",          # VMware
     "vmware-view.exe",     # VMware Horizon 
     "wfica32.exe",         # Citrix Receiver
     "VirtualBox.exe",      # VirtualBox
-    "np2w.exe",            # NekoProject II/w
-    "np21w.exe",           # NekoProject 21/w
-    "NP2kai_windows.exe",  # NekoProject II kai
-    "NP21kai_windows.exe", # NekoProject 21 kai
-    "SL9821.exe",          # SL9821
-    "xm6i.exe",            # XM6i
-    "XM8.exe",             # XM8
-    "BasiliskII.exe",      # BasiliskII
-    "SheepShaver.exe",     # SheepShaver
-    "Game.exe",            # Some games...
-    "retroarch.exe",       # RetroArch
-    "Fusion.exe",          # Kega Fusion
                           ]
 
 # IME の切り替え“のみをしたい”アプリケーションソフトを指定する
@@ -338,7 +336,8 @@ fc.lancherList_key = "A-l"
 # （msrdc.exe の行の有効化の必要性については、次のコミットの説明を参照してください。
 #   https://github.com/smzht/fakeymacs/commit/5ceb921bd754ce348f9cd79b6606086916520945）
 fc.game_app_list        = ["ffxiv_dx11.exe",              # FINAL FANTASY XIV
-                           # ["msrdc.exe", "RAIL_WINDOW"],  # WSLg
+                           ["msrdc.exe", "RAIL_WINDOW"],  # WSLg
+                           ["javaw.exe", "SunAwtFrame", "*XEiJ (X68000 Emulator in Java)*"], # XEiJ
                            # ["chrome.exe", "Chrome_WidgetWin_1", "（ウィンドウタイトル）"],
                            ]
 
