@@ -61,17 +61,17 @@ fc.chromium_browser_list = ["chrome.exe",
 ####################################################################################################
 # [section-base-1] ---------------------------------------------------------------------------------
 
-# すべてのキーマップを透過（スルー）するアプリケーションソフト（ワイルドカード指定可）を指定する
+# すべてのキーマップを透過するアプリケーションソフトのプロセス名称（ワイルドカード指定可）を指定する
 # （全ての設定に優先します）
 # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
 fc.transparent_target       = []
 
-# すべてのキーマップを透過（スルー）するウィンドウのクラスネーム（ワイルドカード指定可）を指定する
+# すべてのキーマップを透過するウィンドウのクラス名称（ワイルドカード指定可）を指定する
 # （全ての設定に優先します）
 # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
 fc.transparent_target_class = ["IHWindowClass"]      # Remote Desktop
 
-# Emacs のキーバインドにするウィンドウのクラスネーム（ワイルドカード指定可）を指定する
+# Emacs のキーバインドにするウィンドウのクラス名称（ワイルドカード指定可）を指定する
 # （fc.not_emacs_target の設定より優先します）
 fc.emacs_target_class   = ["Edit",                   # テキスト入力フィールドなどが該当
                            "Button",                 # ボタン
@@ -164,11 +164,11 @@ fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
                            "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
                            }
 
-# clipboard 監視の対象外とするアプリケーションソフト（ワイルドカード指定可）を指定する
+# clipboard 監視の対象外とするアプリケーションソフトのプロセス名称（ワイルドカード指定可）を指定する
 fc.not_clipboard_target = []
 fc.not_clipboard_target += ["EXCEL.EXE"] # Microsoft Excel
 
-# clipboard 監視の対象外とするウィンドウのクラスネーム（ワイルドカード指定可）を指定する
+# clipboard 監視の対象外とするウィンドウのクラス名称（ワイルドカード指定可）を指定する
 fc.not_clipboard_target_class = []
 fc.not_clipboard_target_class += ["HwndWrapper*"] # WPF アプリ
 
@@ -339,9 +339,9 @@ else:
 #---------------------------------------------------------------------------------------------------
 
 # Emacs キーバインドを切り替えるキーを指定する
-# （Emacs キーバインドを利用するアプリケーションでかつフォーカスが当たっているアプリケーションソフト
-#   に対して切り替えが機能します。また、Emacs キーバインドを OFF にしても、IME の切り替えは ime_target
-#   に登録したアプリケーションソフトと同様に機能するようにしています。）
+# （Emacs キーバインドを利用するアプリケーションソフトでかつフォーカスが当たっているソフトに対して
+#   切り替えが機能します。また、Emacs キーバインドを OFF にしても、IME の切り替えは ime_target に
+#   登録したアプリケーションソフトと同様に機能するようにしています。）
 # （fc.emacs_target_class 変数に指定したクラスに該当するアプリケーションソフト（Windows10版 Notepad など）
 #   は、Emacs キーバインドを切り替えの対象となりません（常に Emacs キーバインドとなります）。）
 fc.toggle_emacs_keybind_key = "C-S-Space"
@@ -362,15 +362,13 @@ fc.use_alt_digit_key_for_f1_to_f12 = False
 # 表示しているウィンドウの中で、一番最近までフォーカスがあったウィンドウに移動するキーを指定する
 fc.other_window_key = "A-o"
 
-# ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトの“クラス名称”を指定する
-# （re.match 関数（先頭からのマッチ）の正規表現に「|」を使って繋げて指定してください。
-#   完全マッチとするためには $ の指定が必要です。）
-fc.window_operation_exclusion_class = r"Progman$"
+# ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトのクラス名称を指定する
+# （正規表現で指定してください（複数指定する場合は「|」で連結してください））
+fc.window_operation_exclusion_class = r"Progman"
 
-# ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトの“プロセス名称”を指定する
-# （re.match 関数（先頭からのマッチ）の正規表現に「|」を使って繋げて指定してください。
-#   完全マッチとするためには $ の指定が必要です。）
-fc.window_operation_exclusion_process = r"RocketDock\.exe$"  # サンプルとして RocketDock.exe を登録
+# ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトのプロセス名称を指定する
+# （正規表現で指定してください（複数指定する場合は「|」で連結してください））
+fc.window_operation_exclusion_process = r"RocketDock\.exe"  # サンプルとして RocketDock.exe を登録
 
 # クリップボードリストを起動するキーを指定する
 fc.clipboardList_key = "A-y"
@@ -606,6 +604,17 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 # ■ Emacs 関連
+# --------------------------------------------------------------------------------------------------
+
+# Emacs をターミナルソフトで動かす場合に event-apply-modifier を使ってキーの置き換えを行う
+if 0:
+    fc.emacs_terminal = ["ubuntu*.exe",
+                         [None, None,  "さくらのクラウドシェル (リモート)"],
+                         ]
+    fc.emacs_replace_key = [["C-;", "C-x @ c ;"],
+                            ]
+    exec(readConfigExtension(r"emacs_terminal\config.py"), dict(globals(), **locals()))
+
 # --------------------------------------------------------------------------------------------------
 
 # Emacs を利用する際のキーバインドの調整を行う

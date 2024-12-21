@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20241207_01"
+fakeymacs_version = "20241216_01"
 
 import time
 import os
@@ -170,17 +170,17 @@ def configure(keymap):
     ## カスタマイズパラメータの設定
     ###########################################################################
 
-    # すべてのキーマップを透過（スルー）するアプリケーションソフト（ワイルドカード指定可）を指定する
+    # すべてのキーマップを透過するアプリケーションソフトのプロセス名称（ワイルドカード指定可）を指定する
     # （全ての設定に優先します）
     # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
     fc.transparent_target       = []
 
-    # すべてのキーマップを透過（スルー）するウィンドウのクラスネーム（ワイルドカード指定可）を指定する
+    # すべてのキーマップを透過するウィンドウのクラス名称（ワイルドカード指定可）を指定する
     # （全ての設定に優先します）
     # （keymap_base、keymap_global を含むすべてのキーマップをスルーします）
     fc.transparent_target_class = ["IHWindowClass"]      # Remote Desktop
 
-    # Emacs のキーバインドにするウィンドウのクラスネーム（ワイルドカード指定可）を指定する
+    # Emacs のキーバインドにするウィンドウのクラス名称（ワイルドカード指定可）を指定する
     # （fc.not_emacs_target の設定より優先します）
     fc.emacs_target_class   = ["Edit",                   # テキスト入力フィールドなどが該当
                                "Button",                 # ボタン
@@ -271,11 +271,11 @@ def configure(keymap):
                                "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
                                }
 
-    # clipboard 監視の対象外とするアプリケーションソフト（ワイルドカード指定可）を指定する
+    # clipboard 監視の対象外とするアプリケーションソフトのプロセス名称（ワイルドカード指定可）を指定する
     fc.not_clipboard_target = []
     fc.not_clipboard_target += ["EXCEL.EXE"] # Microsoft Excel
 
-    # clipboard 監視の対象外とするウィンドウのクラスネーム（ワイルドカード指定可）を指定する
+    # clipboard 監視の対象外とするウィンドウのクラス名称（ワイルドカード指定可）を指定する
     fc.not_clipboard_target_class = []
     fc.not_clipboard_target_class += ["HwndWrapper*"] # WPF アプリ
 
@@ -446,9 +446,9 @@ def configure(keymap):
     #---------------------------------------------------------------------------------------------------
 
     # Emacs キーバインドを切り替えるキーを指定する
-    # （Emacs キーバインドを利用するアプリケーションでかつフォーカスが当たっているアプリケーションソフト
-    #   に対して切り替えが機能します。また、Emacs キーバインドを OFF にしても、IME の切り替えは ime_target
-    #   に登録したアプリケーションソフトと同様に機能するようにしています。）
+    # （Emacs キーバインドを利用するアプリケーションソフトでかつフォーカスが当たっているソフトに対して
+    #   切り替えが機能します。また、Emacs キーバインドを OFF にしても、IME の切り替えは ime_target に
+    #   登録したアプリケーションソフトと同様に機能するようにしています。）
     # （fc.emacs_target_class 変数に指定したクラスに該当するアプリケーションソフト（Windows10版 Notepad など）
     #   は、Emacs キーバインドを切り替えの対象となりません（常に Emacs キーバインドとなります）。）
     fc.toggle_emacs_keybind_key = "C-S-Space"
@@ -469,15 +469,13 @@ def configure(keymap):
     # 表示しているウィンドウの中で、一番最近までフォーカスがあったウィンドウに移動するキーを指定する
     fc.other_window_key = "A-o"
 
-    # ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトの“クラス名称”を指定する
-    # （re.match 関数（先頭からのマッチ）の正規表現に「|」を使って繋げて指定してください。
-    #   完全マッチとするためには $ の指定が必要です。）
-    fc.window_operation_exclusion_class = r"Progman$"
+    # ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトのクラス名称を指定する
+    # （正規表現で指定してください（複数指定する場合は「|」で連結してください））
+    fc.window_operation_exclusion_class = r"Progman"
 
-    # ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトの“プロセス名称”を指定する
-    # （re.match 関数（先頭からのマッチ）の正規表現に「|」を使って繋げて指定してください。
-    #   完全マッチとするためには $ の指定が必要です。）
-    fc.window_operation_exclusion_process = r"RocketDock\.exe$"  # サンプルとして RocketDock.exe を登録
+    # ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトのプロセス名称を指定する
+    # （正規表現で指定してください（複数指定する場合は「|」で連結してください））
+    fc.window_operation_exclusion_process = r"RocketDock\.exe"  # サンプルとして RocketDock.exe を登録
 
     # クリップボードリストを起動するキーを指定する
     fc.clipboardList_key = "A-y"
@@ -700,13 +698,48 @@ def configure(keymap):
     fakeymacs.shift_down = False
     fakeymacs.shift_down2 = False
 
+    regex = "|".join([fnmatch.translate(p) for p in fc.transparent_target])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    transparent_target = re.compile(regex)
+
+    regex = "|".join([fnmatch.translate(c) for c in fc.transparent_target_class])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    transparent_target_class = re.compile(regex)
+
+    regex = "|".join([fnmatch.translate(p) for p in fc.not_clipboard_target])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    not_clipboard_target = re.compile(regex)
+
+    regex = "|".join([fnmatch.translate(c) for c in fc.not_clipboard_target_class])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    not_clipboard_target_class = re.compile(regex)
+
+    regex = "|".join([fnmatch.translate(c) for c in fc.emacs_target_class])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    emacs_target_class = re.compile(regex)
+
+    regex = "|".join([fnmatch.translate(app) for app in fc.not_emacs_target if type(app) is str])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    not_emacs_target1 = re.compile(regex)
+    not_emacs_target2 = [app for app in fc.not_emacs_target if type(app) is list]
+
+    regex = "|".join([fnmatch.translate(app) for app in fc.ime_target if type(app) is str])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    ime_target1 = re.compile(regex)
+    ime_target2 = [app for app in fc.ime_target if type(app) is list]
+
+    regex = "|".join([fnmatch.translate(app) for app in fc.game_app_list if type(app) is str])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    game_app_list1 = re.compile(regex)
+    game_app_list2 = [app for app in fc.game_app_list if type(app) is list]
+
     def is_base_target(window):
         if window is not fakeymacs.last_window or fakeymacs.force_update:
             process_name = window.getProcessName()
             class_name   = window.getClassName()
 
-            if (any(checkWindow(p, window=window) for p in fc.not_clipboard_target) or
-                any(checkWindow(class_name=c, window=window) for c in fc.not_clipboard_target_class)):
+            if (not_clipboard_target.match(window.getProcessName()) or
+                not_clipboard_target_class.match(window.getClassName())):
                 # クリップボードの監視用のフックを無効にする
                 keymap.clipboard_history.enableHook(False)
                 fakeymacs.clipboard_hook = False
@@ -738,10 +771,10 @@ def configure(keymap):
                 fakeymacs.is_base_target = True
                 fakeymacs.keymap_decided = True
 
-            elif (any(checkWindow(p, window=window) for p in fc.transparent_target) or
-                  any(checkWindow(class_name=c, window=window) for c in fc.transparent_target_class) or
-                  any(checkWindow(*app, window=window) if type(app) is list else
-                      checkWindow( app, window=window) for app in fc.game_app_list)):
+            elif (transparent_target.match(window.getProcessName()) or
+                  transparent_target_class.match(window.getClassName()) or
+                  game_app_list1.match(window.getProcessName()) or
+                  any(checkWindow(*app, window=window) for app in game_app_list2)):
                 fakeymacs.is_base_target = False
                 fakeymacs.keymap_decided = True
             else:
@@ -765,10 +798,10 @@ def configure(keymap):
             class_name   = window.getClassName()
 
             if (fakeymacs.keymap_decided == True or
-                (not any(checkWindow(class_name=c, window=window) for c in fc.emacs_target_class) and
+                (not emacs_target_class.match(window.getClassName()) and
                  (process_name in fakeymacs.not_emacs_keybind or
-                  any(checkWindow(*app, window=window) if type(app) is list else
-                      checkWindow( app, window=window) for app in fc.not_emacs_target)))):
+                  not_emacs_target1.match(window.getProcessName()) or
+                  any(checkWindow(*app, window=window) for app in not_emacs_target2)))):
                 fakeymacs.is_emacs_target = False
             else:
                 reset_undo(reset_counter(reset_mark(lambda: None)))()
@@ -794,8 +827,8 @@ def configure(keymap):
 
             if (fakeymacs.keymap_decided == False and
                 (process_name in fakeymacs.not_emacs_keybind or
-                 any(checkWindow(*app, window=window) if type(app) is list else
-                     checkWindow( app, window=window) for app in fc.ime_target))):
+                 ime_target1.match(window.getProcessName()) or
+                 any(checkWindow(*app, window=window) for app in ime_target2))):
                 fakeymacs.is_ime_target = True
             else:
                 fakeymacs.is_ime_target = False
@@ -864,9 +897,9 @@ def configure(keymap):
         class_name   = keymap.getWindow().getClassName()
         process_name = keymap.getWindow().getProcessName()
 
-        if (not any(checkWindow(class_name=c, window=window) for c in fc.emacs_target_class) and
-            not any(checkWindow(*app, window=window) if type(app) is list else
-                    checkWindow( app, window=window) for app in fc.not_emacs_target)):
+        if (not emacs_target_class.match(class_name) and
+            not (not_emacs_target1.match(process_name) or
+                 any(checkWindow(*app) for app in not_emacs_target2))):
             if process_name in fakeymacs.not_emacs_keybind:
                 fakeymacs.not_emacs_keybind.remove(process_name)
                 keymap.popBalloon("keybind", "[Enable Emacs keybind]", 1000)
@@ -1710,10 +1743,10 @@ def configure(keymap):
                 if len(pos_list) == 1:
                     # Alt キーを単押しした際に、カーソルがメニューへ移動しないようにするための対策
                     # （https://www.haijin-boys.com/discussions/4583）
-                    if re.match(r"O-LAlt$", pos_list[0], re.IGNORECASE):
+                    if re.fullmatch(r"O-LAlt", pos_list[0], re.IGNORECASE):
                         window_keymap["D-LAlt"] = "D-LAlt", "(255)"
 
-                    elif re.match(r"O-RAlt$", pos_list[0], re.IGNORECASE):
+                    elif re.fullmatch(r"O-RAlt", pos_list[0], re.IGNORECASE):
                         window_keymap["D-RAlt"] = "D-RAlt", "(255)"
 
     def define_key2(window_keymap, keys, command):
@@ -2437,8 +2470,8 @@ def configure(keymap):
     ###########################################################################
 
     def is_global_target(window):
-        if (any(checkWindow(p, window=window) for p in fc.transparent_target) or
-            any(checkWindow(class_name=c, window=window) for c in fc.transparent_target_class)):
+        if (transparent_target.match(window.getProcessName()) or
+            transparent_target_class.match(window.getClassName())):
             return False
         else:
             return True
@@ -2525,8 +2558,8 @@ def configure(keymap):
                         pass
 
                     elif class_name == "Emacs" or title != "":
-                        if (not re.match(fc.window_operation_exclusion_class, class_name) and
-                            not re.match(fc.window_operation_exclusion_process, process_name2)):
+                        if (not re.fullmatch(fc.window_operation_exclusion_class, class_name) and
+                            not re.fullmatch(fc.window_operation_exclusion_process, process_name2)):
 
                             # バックグラウンドで起動している UWPアプリが window_list に登録されるのを抑制する
                             # （http://mrxray.on.coocan.jp/Delphi/plSamples/320_AppList.htm）
