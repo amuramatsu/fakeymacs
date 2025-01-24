@@ -74,6 +74,7 @@ if re.match(r"^VPC-[A-Z]\d\d[A-Z]\d+$", nodename):
 fc.transparent_target  += [
     "etxc.exe",            # Exceed TurboX
     "Game.exe",            # Some games...
+    "GamePro.exe",         # Some games...
     "retroarch.exe",       # RetroArch
     "Fusion.exe",          # Kega Fusion
     "np2w.exe",            # NekoProject II/w
