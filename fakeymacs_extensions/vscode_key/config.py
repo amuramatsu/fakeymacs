@@ -14,6 +14,28 @@ except:
 
 try:
     # 設定されているか？
+    fc.vscode_browser_target
+except:
+    # VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザアプリを指定する
+    fc.vscode_browser_target = ["chrome.exe",
+                                "msedge.exe",
+                                "firefox.exe",
+                                "mstsc.exe", # RemoteApp 経由でブラウザを使う場合
+                                ]
+
+fc.vscode_target += fc.vscode_browser_target
+
+try:
+    # 設定されているか？
+    fc.vscode_browser_title
+except:
+    # VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザタブのタイトルを指定する
+    fc.vscode_browser_title = ["* - Visual Studio Code*",
+                               "* - Firebase Studio*",
+                               ]
+
+try:
+    # 設定されているか？
     fc.cursor_target
 except:
     # Cursor 用のキーバインドを利用するアプリケーションソフトを指定する
@@ -24,43 +46,45 @@ fc.vscode_target += fc.cursor_target
 
 try:
     # 設定されているか？
-    fc.vscode_browser_target
+    fc.windsurf_target
 except:
-    # VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザアプリを指定する
-    fc.vscode_browser_target = ["chrome.exe",
-                                "msedge.exe",
-                                "firefox.exe",
-                                ]
+    # Windsurf 用のキーバインドを利用するアプリケーションソフトを指定する
+    fc.windsurf_target = ["Windsurf.exe",
+                          ]
 
-fc.vscode_target += fc.vscode_browser_target
-
-# fc.vscode_target に設定しているアプリケーションソフトが fc.not_emacs_target に設定してある場合、
-# それを除外する
-for target in fc.vscode_target:
-    if any(fnmatch.fnmatch(target, app) for app in fc.not_emacs_target if type(app) is str):
-        fc.vscode_target.remove(target)
+fc.vscode_target += fc.windsurf_target
 
 try:
     # 設定されているか？
     fc.vscode_prefix_key
 except:
     # 置き換えするプレフィックスキーの組み合わせ（VSCode のキー、Fakeymacs のキー）を指定する（複数指定可）
-    # （置き換えた Fakeymacs のプレフィックスキーを利用することにより、プレフィックスキーの後に入力する
-    #   キーが全角文字で入力されることが無くなります）
+    # （プレフィッスクキーの後に入力するキーが、Fakeymacs で置き換えられないようにする対策です）
     # （同じキーを指定することもできます）
     # （Fakeymacs のキーに Meta キー（M-）は指定できません）
-    fc.vscode_prefix_key = [["C-k", "C-A-k"]]
+    fc.vscode_prefix_key = [["C-k", "C-A-k"],
+                            ]
 
 try:
     # 設定されているか？
     fc.cursor_prefix_key
 except:
     # 置き換えするプレフィックスキーの組み合わせ（Cursor のキー、Fakeymacs のキー）を指定する（複数指定可）
-    # （置き換えた Fakeymacs のプレフィックスキーを利用することにより、プレフィックスキーの後に入力する
-    #   キーが全角文字で入力されることが無くなります）
+    # （プレフィッスクキーの後に入力するキーが、Fakeymacs で置き換えられないようにする対策です）
     # （同じキーを指定することもできます）
     # （Fakeymacs のキーに Meta キー（M-）は指定できません）
-    fc.cursor_prefix_key = [["C-m", "C-A-m"]]
+    fc.cursor_prefix_key = [["C-m", "C-A-m"],
+                            ]
+
+try:
+    # 設定されているか？
+    fc.windsurf_prefix_key
+except:
+    # 置き換えするプレフィックスキーの組み合わせ（Windsurf のキー、Fakeymacs のキー）を指定する（複数指定可）
+    # （プレフィッスクキーの後に入力するキーが、Fakeymacs で置き換えられないようにする対策です）
+    # （同じキーを指定することもできます）
+    # （Fakeymacs のキーに Meta キー（M-）は指定できません）
+    fc.windsurf_prefix_key = []
 
 try:
     # 設定されているか？
@@ -79,6 +103,15 @@ except:
     fc.cursor_replace_key = [["C-e", "C-A-e"],
                              ["C-l", "C-A-l"],
                              ]
+
+try:
+    # 設定されているか？
+    fc.windsurf_replace_key
+except:
+    # 置き換えするキーの組み合わせ（Windsurf のキー、Fakeymacs のキー）を指定する（複数指定可）
+    # （Fakeymacs のキーに Meta キー（M-）は指定できません）
+    fc.windsurf_replace_key = [["C-l", "C-A-l"],
+                               ]
 
 try:
     # 設定されているか？
@@ -115,8 +148,8 @@ try:
     # 設定されているか？
     fc.esc_mode_in_keyboard_quit
 except:
-    # keyboard_quit 関数コール時の Esc キーの発行方法を指定する
-    # （1：Esc キーを常に発行する
+    # keyboard_quit 関数実行時（C-g 押下時）の Esc キーの発行方法を指定する
+    # （1：C-g を押下した際、常に Esc キーを発行する
     #   2：C-g を２回連続して押下した場合に Esc キーを発行する）
     fc.esc_mode_in_keyboard_quit = 1
 
@@ -161,7 +194,7 @@ def define_key_v(keys, command, skip_check=True):
     if callable(command):
         command = makeKeyCommand(keymap_emacs, keys, command,
                                  lambda: (keymap.getWindow().getProcessName() not in fc.vscode_browser_target or
-                                          checkWindow(text="* - Visual Studio Code*")))
+                                          any(checkWindow(text=title) for title in fc.vscode_browser_title)))
 
     define_key(keymap_vscode, keys, command, False)
 
@@ -620,6 +653,7 @@ define_key_v("C-A-S-b", reset_search(reset_undo(reset_counter(reset_rect(repeat(
 define_key_v("C-A-S-f", reset_search(reset_undo(reset_counter(reset_rect(repeat(mark_forward_word))))))
 define_key_v("C-A-a",   reset_search(reset_undo(reset_counter(reset_rect(mark_beginning_of_line)))))
 define_key_v("C-A-e",   reset_search(reset_undo(reset_counter(reset_rect(mark_end_of_line)))))
+define_key_v("C-A-S-e", reset_search(reset_undo(reset_counter(reset_rect(mark_end_of_line)))))
 define_key_v("C-A-d",   reset_search(reset_undo(reset_counter(reset_rect(mark_next_like_this)))))
 define_key_v("C-A-S-d", reset_search(reset_undo(reset_counter(reset_rect(mark_all_like_this)))))
 define_key_v("C-A-s",   reset_search(reset_undo(reset_counter(reset_rect(skip_to_next_like_this)))))
@@ -698,6 +732,39 @@ for pkey1, pkey2 in fc.cursor_prefix_key:
 ## キーの置き換え設定
 for key1, key2 in fc.cursor_replace_key:
     define_key_c(key2, self_insert_command(key1))
+
+# --------------------------------------------------------------------------------------------------
+
+# Windsurf 用の追加設定
+
+def define_key_w(keys, command):
+    define_key(keymap_windsurf, keys, command)
+
+def is_windsurf_target(window):
+    if (fakeymacs.is_vscode_target == True and
+        window.getProcessName() in fc.windsurf_target):
+        return True
+    else:
+        return False
+
+if fc.use_emacs_ime_mode:
+    keymap_windsurf = keymap.defineWindowKeymap(check_func=lambda wnd: is_windsurf_target(wnd) and not is_emacs_ime_mode(wnd))
+else:
+    keymap_windsurf = keymap.defineWindowKeymap(check_func=is_windsurf_target)
+
+## Windsurf 用プレフィックスキーの置き換え設定
+for pkey1, pkey2 in fc.windsurf_prefix_key:
+    define_key_w(pkey2, keymap.defineMultiStrokeKeymap(f"<Windsurf> {pkey1}"))
+
+    for vkey in vkeys():
+        key = vkToStr(vkey)
+        for mod1, mod2, mod3, mod4 in itertools.product(["", "W-"], ["", "A-"], ["", "C-"], ["", "S-"]):
+            mkey = mod1 + mod2 + mod3 + mod4 + key
+            define_key_w(f"{pkey2} {mkey}", self_insert_command_v(pkey1, mkey))
+
+## キーの置き換え設定
+for key1, key2 in fc.windsurf_replace_key:
+    define_key_w(key2, self_insert_command(key1))
 
 # --------------------------------------------------------------------------------------------------
 

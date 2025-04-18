@@ -4,34 +4,40 @@
 
 ** ■ VSCode 用のキーの設定を行う
 
-VSCode 用のキーの設定を行う拡張機能です。AI Code Editor の Cursor にも対応しています。
+VSCode 用のキーの設定を行う拡張機能です。AI Code Editor の Cursor や Windsurf にも対応しています。
+また、ブラウザで動作する VS Code Web にも対応しており、vscode.dev、github.dev、Firebase Studio
+などでも利用可能です。
 
 *** 環境設定
 
-本拡張機能を使うために、次の設定を行ってください。
+本拡張機能を使うために、次の設定、確認を行ってください。
 
 **** 1) 必要に応じて config_personal.py ファイルを作成する
 
-本フォルダにある _config_personal.py を config_personal.py というファイル名にすることで、
-機能拡張ファイルとして機能します。
-以降で説明している拡張機能（vscode_extensions）もこの機能拡張ファイルの中から
-読み込まれます。
+必要に応じて、本フォルダにある _config_personal.py を config_personal.py というファイル名
+に複写して作成してください。
+config_personal.py を作成することで、本拡張機能の個人設定ファイルとして機能します。
+以降で説明している拡張機能（vscode_extensions）もこの個人設定ファイルの中から読み込まれます。
 
-**** 2) VSCode または Cursor に対する共通の設定を行う
+**** 2) VSCode、Cursor、Windsurf 共通の設定を行う
 
 Preferences: Open User Settings (JSON) の機能で settings.json を開き、 次の設定を
 追加してください。
 
 #+BEGIN_EXAMPLE
-    "terminal.integrated.allowChords": false,
+    "editor.wordSegmenterLocales": ["ja"],
     "editor.find.seedSearchStringFromSelection": "never",
+    "terminal.integrated.allowChords": false,
     "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${appName} - ${focusedView}",
 #+END_EXAMPLE
 
 **** 3) Cursor を使う場合の設定を行う
 
 Cursor を利用する場合、AI のインラインアシスタント機能を起動するショートカットキー Ctrl+k が
-Emacs キーバインドと重複するため、キーの変更が必要となります。
+拡張機能でプレフィックスキーとして設定されているものがあること（Cursor ではプレフィックスキーが
+Ctrl+m に置き換えられていますが、拡張機能の一部でプレフィックスキーが置き換えられずに Ctrl+k
+キーのまま使われています）やターミナルで kill-line のキーと競合しているため、キーの変更が必要
+となります。
 Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.json を開き、
 次の設定（Ctrl+k を Ctrl+e に変更する設定）を追加してください。
 
@@ -39,12 +45,12 @@ Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.
     {
         "key": "ctrl+k",
         "command": "-aipopup.action.modal.generate",
-        "when": "editorFocus && !composerBarIsVisible && !composerControlPanelIsVisible"
+        "when": "editorFocus && !composerBarIsVisible"
     },
     {
         "key": "ctrl+e",
         "command": "aipopup.action.modal.generate",
-        "when": "editorFocus && !composerBarIsVisible && !composerControlPanelIsVisible"
+        "when": "editorFocus && !composerBarIsVisible"
     },
     {
         "key": "ctrl+k",
@@ -58,12 +64,48 @@ Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.
     },
 #+END_EXAMPLE
 
-Ctrl+e キーはさらに fc.cursor_replace_key 変数の設定により、Ctrl+Alt+e キーに置き換えられます。
-最終的に Cursor の Ctrl+k キーの機能を使うには、Ctrl+Alt+e キーを入力する必要があります。
-また、fc.cursor_replace_key 変数では、Ctrl+l キーを Ctrl+Alt+l キーに置き換える設定も行っています。
-詳しくは、以降の「Cursor AI 専用のキーバインド」の項を参照してください。
+**** 4) キーの置き換えの設定がされているものを確認する
 
-**** 4) PowerShell を Emacs キーバインドで使うための設定を行う
+本拡張機能では、次のとおりキーの置き換えの設定を行っています。
+利用の際は、置き換え後のキーの確認をお願いします。
+
+***** ● プレフィックスキーの置き換え設定
+
+|------------+----------------------------|
+| アプリ名称 | 初期設定値                 |
+|------------+----------------------------|
+| VScode     | C-k → C-A-k               |
+|------------+----------------------------|
+| Cursor     | C-k → C-A-k、C-m → C-A-m |
+|------------+----------------------------|
+| Windsurf   | C-k → C-A-k               |
+|------------+----------------------------|
+
+***** ● AI のインラインアシスタント機能用キーの置き換え設定
+
+|------------+----------------------------|
+| アプリ名称 | 初期設定値                 |
+|------------+----------------------------|
+| Cursor     | C-e → C-A-e、C-l → C-A-l |
+|------------+----------------------------|
+| Windsurf   | C-l → C-A-l               |
+|------------+----------------------------|
+
+※ Cursor では、3) で置き換えた C-e キーをさらに C-A-e キーに置き換えをしています。
+最終的に Cursor の C-k キーの機能を使うには、C-A-e キーを入力する必要があります。
+その他、C-l キーは、C-A-l キーに置き換えをしています。
+
+※ Firabase Studio では、AI のインラインアシスタント機能用キーとして C-i が利用
+されています。このキーの機能を利用するためには、次の３つの方法があります。
+- C-i の代わりに C-q C-i を入力する（Cursor や Windsurf でも使える方法です）
+- Fakeymacs の config_peronal.py で fc.use_ctrl_i_as_tab を False に設定し、C-i を使う
+- Fakeymacs の config_peronal.py で fc.vscode_replace_key を次のとおりに設定し、C-A-i キーを使う
+#+BEGIN_EXAMPLE
+fc.vscode_replace_key = [["C-i", "C-A-i"],
+                         ]
+#+END_EXAMPLE
+
+**** 5) PowerShell を Emacs キーバインドで使うための設定を行う
 
 PowerShell を Emacs キーバインドで使うためには、PoserShell で $profile という
 文字列を実行した際に表示されるパスのファイルに次の設定を追加してください。
@@ -76,7 +118,7 @@ Set-PSReadLineOption -EditMode Emacs
 
 - https://atmarkit.itmedia.co.jp/ait/articles/0805/16/news139.html
 
-**** 5) WSL を使う場合の設定を行う
+**** 6) WSL を使う場合の設定を行う
 
 Remote Development 拡張機能を使って WSL を使う場合には、.bashrc に次の設定を追加
 してください。
@@ -87,32 +129,39 @@ if [ -t 1 ]; then
 fi
 #+END_EXAMPLE
 
+**** 7) ブラウザで動作する VS Code Web を使う場合の設定を行う
+
+ブラウザで動作する VS Code Web を使う場合には、VS Code Web の画面をアプリ化してください。
+ブラウザ側にショートカットキーを奪われるのを防ぐことができます。設定の仕方は、このページの
+最後にある留意事項を参照してください。
+
 *** コンフィグレーションパラメータ
 
-|----------------------------------------+-------------------------------------------------------------------------------------------------------|
-| Configuration parameter                | Description                                                                                           |
-|----------------------------------------+-------------------------------------------------------------------------------------------------------|
-| fc.vscode_target                       | VSCode 用のキーバインドを利用するアプリケーションソフト（ブラウザアプリを除く）を指定する             |
-| fc.cursor_target                       | Cursor 用のキーバインドを利用するアプリケーションソフトを指定する                                     |
-| fc.vscode_browser_target               | VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザアプリを指定する                        |
-| fc.vscode_prefix_key                   | 置き換えするプレフィックスキーの組み合わせ（VSCode のキー、Fakeymacs のキー）を指定する（複数指定可） |
-| fc.cursor_prefix_key                   | 置き換えするプレフィックスキーの組み合わせ（Cursor のキー、Fakeymacs のキー）を指定する（複数指定可） |
-| fc.vscode_replace_key                  | 置き換えするキーの組み合わせ（VSCode のキー、Fakeymacs のキー）を指定する（複数指定可）               |
-| fc.cursor_replace_key                  | 置き換えするキーの組み合わせ（Cursor のキー、Fakeymacs のキー）を指定する（複数指定可）               |
-| fc.use_ctrl_atmark_for_mark            | 日本語キーボードを利用する際、VSCode で  C-@ をマーク用のキーとして使うかどうかを指定する             |
-| fc.use_direct_input_in_vscode_terminal | パネルのターミナル内で４つのキー（C-k、C-r、C-s、C-y）のダイレクト入力機能を使うかどうかを指定する    |
-| fc.terminal_list_for_direct_input      | ターミナルをエディタ領域で使う際、ダイレクト入力機能を使うターミナルの種類を指定する                  |
-| fc.esc_mode_in_keyboard_quit           | keyboard_quit 関数コール時の Esc キーの発行方法を指定する                                             |
-|----------------------------------------+-------------------------------------------------------------------------------------------------------|
+|----------------------------------------+---------------------------------------------------------------------------------------------------------|
+| Configuration parameter                | Description                                                                                             |
+|----------------------------------------+---------------------------------------------------------------------------------------------------------|
+| fc.vscode_target                       | VSCode 用のキーバインドを利用するアプリケーションソフト（ブラウザアプリを除く）を指定する               |
+| fc.vscode_browser_target               | VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザアプリを指定する                          |
+| fc.vscode_browser_title                | VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザタブのタイトルを指定する                  |
+| fc.cursor_target                       | Cursor 用のキーバインドを利用するアプリケーションソフトを指定する                                       |
+| fc.windsurf_target                     | Windsurf 用のキーバインドを利用するアプリケーションソフトを指定する                                     |
+| fc.vscode_prefix_key                   | 置き換えするプレフィックスキーの組み合わせ（VSCode のキー、Fakeymacs のキー）を指定する（複数指定可）   |
+| fc.cursor_prefix_key                   | 置き換えするプレフィックスキーの組み合わせ（Cursor のキー、Fakeymacs のキー）を指定する（複数指定可）   |
+| fc.windsurf_prefix_key                 | 置き換えするプレフィックスキーの組み合わせ（Windsurf のキー、Fakeymacs のキー）を指定する（複数指定可） |
+| fc.vscode_replace_key                  | 置き換えするキーの組み合わせ（VSCode のキー、Fakeymacs のキー）を指定する（複数指定可）                 |
+| fc.cursor_replace_key                  | 置き換えするキーの組み合わせ（Cursor のキー、Fakeymacs のキー）を指定する（複数指定可）                 |
+| fc.windsurf_replace_key                | 置き換えするキーの組み合わせ（Windsurf のキー、Fakeymacs のキー）を指定する（複数指定可）               |
+| fc.use_ctrl_atmark_for_mark            | 日本語キーボードを利用する際、VSCode で  C-@ をマーク用のキーとして使うかどうかを指定する               |
+| fc.use_direct_input_in_vscode_terminal | パネルのターミナル内で４つのキー（C-k、C-r、C-s、C-y）のダイレクト入力機能を使うかどうかを指定する      |
+| fc.terminal_list_for_direct_input      | ターミナルをエディタ領域で使う際、ダイレクト入力機能を使うターミナルの種類を指定する                    |
+| fc.esc_mode_in_keyboard_quit           | keyboard_quit 関数実行時（C-g 押下時）の Esc キーの発行方法を指定する                                   |
+|----------------------------------------+---------------------------------------------------------------------------------------------------------|
 
 ※ fc.vscode_browser_target 変数は、ブラウザで VS Code Web の画面にアクセスした際（vscode.dev にアクセス
 したとき等）に、VSCode 用のキーバインドを利用できるようにするための設定です。
 
-※ fc.vscode_prefix_key 変数は、VSCode のプレフィックスキーを使う際、後に入力した文字が全角文字で
-入力されることがある問題を対策するために設けた設定です。
-
-※ fc.cursor_prefix_key 変数は、Cursor のプレフィックスキーを使う際、後に入力した文字が全角文字で
-入力されることがある問題を対策するために設けた設定です。
+※ fc.vscode_prefix_key 変数、fc.cursor_prefix_key 変数、fc.windsurf_prefix_key 変数は、
+プレフィッスクキーの後に入力するキーが Fakeymacs で置き換えられないようにするために設けた設定です。
 
 ※ fc.use_ctrl_atmark_for_mark 変数は、VSCode で C-@ を Toggle Terminal 用のキーとして使えるように
 するために設けた設定です。
@@ -127,7 +176,7 @@ True に設定した場合でも Toggle Terminal 用のキーとして C-<半角
 の設定についても以降の説明を参照してください。
 
 ※ fc.esc_mode_in_keyboard_quit 変数の設定値には、次のいずれかの値を指定できます。
-- 1：Esc キーを常に発行する
+- 1：C-g を押下した際、常に Esc キーを発行する
 - 2：C-g を２回連続して押下した場合に Esc キーを発行する
 設定値 2 の利用は、VSCode で Jupyter Notebook を使う場合などを想定しています。
 設定値 1 の場合でも、C-A-g キーにより Esc キーを発行しない keyboard_quit を利用できます。
@@ -141,9 +190,6 @@ True に設定した場合でも Toggle Terminal 用のキーとして C-<半角
 |-------------------------------------+-------------------------------------+----------------------|
 | fc.vscode_prefix_key[n][0] の設定値 | fc.vscode_prefix_key[n][1] の設定値 | 初期値：C-k → C-A-k |
 |-------------------------------------+-------------------------------------+----------------------|
-
-※ Fakeymacs のプレフィックスキーを利用することにより、プレフィックスキーの後に入力するキーが
-全角文字で入力されることが無くなります。
 
 **** ● キーの置き換え設定
 
@@ -218,6 +264,7 @@ True の場合（C-<数字キー> は数引数の指定用として使われる�
 | C-A-S-f | mark_forward_word          | cursorWordRightSelect                        |                                    |
 | C-A-a   | mark_beginning_of_line     | cursorHomeSelect                             |                                    |
 | C-A-e   | mark_end_of_line           | cursorEndSelect                              |                                    |
+| C-A-S-e | mark_end_of_line           | cursorEndSelect                              | Cursor 利用時の C-A-e の代替用     |
 | C-A-d   | mark_next_like_this        | Add Selection To Next Find Match             |                                    |
 | C-A-S-d | mark_all_like_this         | Select All Occurrences of Find Match         |                                    |
 | C-A-s   | skip_to_next_like_this     | Move Last Selection To Next Find Match       |                                    |
@@ -228,6 +275,9 @@ True の場合（C-<数字キー> は数引数の指定用として使われる�
 | C-A-r   | cursor_redo                | Cursor Redo                                  |                                    |
 | C-A-g   | keyboard_quit2             | -                                            | Esc キーを発行しない keyboard_quit |
 |---------+----------------------------+----------------------------------------------+------------------------------------|
+
+※ Cursor を利用する場合、C-A-e は AI のインラインアシスタント機能を起動するキー（初期値）
+となっています。このため、代替用のキーとして C-A-S-e を設定しています。
 
 ※ マルチカーソルを維持したまま選択したリージョンを解除するには、Esc キーを発行しない
 keyboard_quit（C-A-g）を利用してください。（fc.esc_mode_in_keyboard_quit 変数が 2 の場合は、
@@ -354,10 +404,12 @@ True にした場合に Esc を入力するには、Esc を二回押下してく
 
 - https://code.visualstudio.com/docs/editor/intellisense
 
-*** Cursor AI 専用のキーバインド
+*** Cursor 専用のキーバインド
 
 Cursor を利用する場合、AI のインラインアシスタント機能を起動するショートカットキー Ctrl+k が
-Emacs キーバインドと重複するため、キーの変更が必要となります。
+拡張機能でプレフィックスキーとして設定されているものがあること（Cursor ではプレフィックスキーが
+Ctrl+m に置き換えられていますが、拡張機能の一部でプレフィックスキーが置き換えられずに Ctrl+k
+キーが使われています）やターミナルで kill-line のキーと競合しているため、キーの変更が必要となります。
 Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.json を開き、
 次の設定（Ctrl+k を Ctrl+e に変更する設定）を追加してください。
 本拡張機能は、Cursor にこの設定が追加されていることを前提に、調整が行われています。
@@ -366,12 +418,12 @@ Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.
     {
         "key": "ctrl+k",
         "command": "-aipopup.action.modal.generate",
-        "when": "editorFocus && !composerBarIsVisible && !composerControlPanelIsVisible"
+        "when": "editorFocus && !composerBarIsVisible"
     },
     {
         "key": "ctrl+e",
         "command": "aipopup.action.modal.generate",
-        "when": "editorFocus && !composerBarIsVisible && !composerControlPanelIsVisible"
+        "when": "editorFocus && !composerBarIsVisible"
     },
     {
         "key": "ctrl+k",
@@ -388,16 +440,13 @@ Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.
 また、Cursor には VSCode 用のキーマップ keymap_vscode が適用される他に、Cursor 用のキーマップ
 keymap_cursor が適用されます。このキーマップでは、次の設定により、キーの置き換えが可能となっています。
 
-**** ● Cursor AI 用プレフィックスキーの置き換え設定
+**** ● Cursor 用プレフィックスキーの置き換え設定
 
 |-------------------------------------+-------------------------------------+----------------------|
 | Cursor's prefix key                 | Fakeymacs's prefix key              | Description          |
 |-------------------------------------+-------------------------------------+----------------------|
 | fc.cursor_prefix_key[n][0] の設定値 | fc.cursor_prefix_key[n][1] の設定値 | 初期値：C-m → C-A-m |
 |-------------------------------------+-------------------------------------+----------------------|
-
-※ Fakeymacs のプレフィックスキーを利用することにより、プレフィックスキーの後に入力するキーが
-全角文字で入力されることが無くなります。
 
 ※ Cursor では、VSCode の Ctrl+k キーとは別に、Ctrl+m キーもプレフィックスキーとして利用されます。
 
@@ -412,6 +461,34 @@ keymap_cursor が適用されます。このキーマップでは、次の設定
 ※ Cursor では、AI の機能を追加するために新たなショートカットキーが追加されています。
 これらのショートカットキーは Fakeymacs で設定している Emacs キーバインドと重複するものがあるため、
 fc.cursor_replace_key 変数の設定により、キーの置き換えができるようにしています。
+なお、Fakeymacs では、C-q を前置するか、fc.side_of_ctrl_key で設定した側でない Ctrl キーを使う
+方法でも Windows のショートカットキーを入力することが可能です。
+このため、本設定は、利用頻度の高いキーの置き換えに使用するのが良いと思われます。
+
+*** Windsurf 専用のキーバインド
+
+Windsurf には VSCode 用のキーマップ keymap_vscode が適用される他に、Windsurf 用のキーマップ
+keymap_windsurf が適用されます。このキーマップでは、次の設定により、キーの置き換えが可能となっています。
+
+**** ● Windsurf 用プレフィックスキーの置き換え設定
+
+|---------------------------------------+---------------------------------------+--------------|
+| Windsurf's prefix key                 | Fakeymacs's prefix key                | Description  |
+|---------------------------------------+---------------------------------------+--------------|
+| fc.windsurf_prefix_key[n][0] の設定値 | fc.windsurf_prefix_key[n][1] の設定値 | 初期値：無し |
+|---------------------------------------+---------------------------------------+--------------|
+
+**** ● キーの置き換え設定
+
+|----------------------------------------+----------------------------------------+----------------------|
+| Windsurf's key                         | Fakeymacs's key                        | Description          |
+|----------------------------------------+----------------------------------------+----------------------|
+| fc.windsurf_replace_key[n][0] の設定値 | fc.windsurf_replace_key[n][1] の設定値 | 初期値：C-l → C-A-l |
+|----------------------------------------+----------------------------------------+----------------------|
+
+※ Windsurf では、AI の機能を追加するために新たなショートカットキーが追加されています。
+これらのショートカットキーは Fakeymacs で設定している Emacs キーバインドと重複するものがあるため、
+fc.windsurf_replace_key 変数の設定により、キーの置き換えができるようにしています。
 なお、Fakeymacs では、C-q を前置するか、fc.side_of_ctrl_key で設定した側でない Ctrl キーを使う
 方法でも Windows のショートカットキーを入力することが可能です。
 このため、本設定は、利用頻度の高いキーの置き換えに使用するのが良いと思われます。
