@@ -31,7 +31,8 @@ try:
 except:
     # VS Code Web の画面で VSCode 用のキーバインドを利用するブラウザタブのタイトルを指定する
     fc.vscode_browser_title = ["* - Visual Studio Code*",
-                               "* - Firebase Studio*",
+                               "Codespaces - *",
+                               "Firebase Studio - *",
                                ]
 
 try:
@@ -100,7 +101,8 @@ try:
 except:
     # 置き換えするキーの組み合わせ（Cursor のキー、Fakeymacs のキー）を指定する（複数指定可）
     # （Fakeymacs のキーに Meta キー（M-）は指定できません）
-    fc.cursor_replace_key = [["C-e", "C-A-e"],
+    fc.cursor_replace_key = [["C-i", "C-A-i"],
+                             ["C-e", "C-A-e"],
                              ["C-l", "C-A-l"],
                              ]
 
@@ -110,7 +112,8 @@ try:
 except:
     # 置き換えするキーの組み合わせ（Windsurf のキー、Fakeymacs のキー）を指定する（複数指定可）
     # （Fakeymacs のキーに Meta キー（M-）は指定できません）
-    fc.windsurf_replace_key = [["C-l", "C-A-l"],
+    fc.windsurf_replace_key = [["C-i", "C-A-i"],
+                               ["C-l", "C-A-l"],
                                ]
 
 try:
@@ -129,8 +132,8 @@ try:
 except:
     # パネルのターミナル内で４つのキー（C-k、C-r、C-s、C-y）のダイレクト入力機能を使うかどうかを
     # 指定する（True: 使う、False: 使わない）
-    # （この設定は現在非推奨です。README に記載しているとおり、VSCode の settings.json に
-    #   window.title の設定を行ってご利用ください）
+    # （この設定は、VSCode の settings.json に設定した window.title が有効に機能しないアプリ
+    #   （Firebase Studio など）での利用を想定しています。）
     fc.use_direct_input_in_vscode_terminal = False
 
 try:
@@ -256,8 +259,8 @@ def post(func):
             fakeymacs_vscode.post_processing = None
     return _func
 
-pattern1 = re.compile("|".join([rf" - {v}$" for v in ["Terminal", "ターミナル"]]))
-pattern2 = re.compile("|".join([rf"^{t} .* -$" for t in fc.terminal_list_for_direct_input]))
+pattern1 = re.compile("|".join([rf"(^| - ){v}( -|$)" for v in ["Terminal", "ターミナル"]]))
+pattern2 = re.compile("|".join([rf"(^| - ){t}( -|$)" for t in fc.terminal_list_for_direct_input]))
 
 def is_terminal_for_direct_input():
     title = keymap.getWindow().getText()
