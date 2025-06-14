@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20250524_01"
+fakeymacs_version = "20250607_01"
 
 import time
 import os
@@ -190,20 +190,21 @@ def configure(keymap):
 
     # Emacs のキーバインドに“する”アプリケーションソフトを指定する
     # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
-    #   クラス名称、ウィンドウタイトルのリスト（ワイルドカード指定可、リストの後ろの項目から省略可）
-    #   を指定してください）
+    #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+    #   リストの後ろの項目から省略可）を指定してください）
     # （fc.not_emacs_target の設定より優先します）
     # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
     #   できます）
-    fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "コマンド プロンプト"],
-                       ["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell"],
-                       ["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit"],
+    fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                        ["Windows PowerShell", "コマンド プロンプト", "* - edit", "設定"]],
+                       ["powershell.exe", "ConsoleWindowClass", ["Windows PowerShell*", "* - edit"]],
+                       ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト", "* - edit"]],
                        ]
 
     # Emacs のキーバインドに“しない”アプリケーションソフトを指定する
     # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
-    #   クラス名称、ウィンドウタイトルのリスト（ワイルドカード指定可、リストの後ろの項目から省略可）
-    #   を指定してください）
+    #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+    #   リストの後ろの項目から省略可）を指定してください）
     # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
     #   できます）
     fc.not_emacs_target     = ["wsl.exe",                # WSL
@@ -214,6 +215,8 @@ def configure(keymap):
                                "SLES-*.exe",             # WSL
                                "openSUSE-*.exe",         # WSL
                                "WindowsTerminal.exe",    # Windows Terminal
+                               "powershell.exe",         # Windows PowerShell
+                               "cmd.exe",                # コマンドプロンプト
                                "mintty.exe",             # mintty
                                "Cmder.exe",              # Cmder
                                "ConEmu*.exe",            # ConEmu
@@ -237,8 +240,8 @@ def configure(keymap):
 
     # IME の切り替え“のみをしたい”アプリケーションソフトを指定する
     # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
-    #   クラス名称、ウィンドウタイトルのリスト（ワイルドカード指定可、リストの後ろの項目から省略可）
-    #   を指定してください）
+    #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+    #   リストの後ろの項目から省略可）を指定してください）
     # （指定できるアプリケーションソフトは、not_emacs_target で（除外）指定したものからのみとなります）
     fc.ime_target           = ["wsl.exe",                # WSL
                                "bash.exe",               # WSL
@@ -248,6 +251,8 @@ def configure(keymap):
                                "SLES-*.exe",             # WSL
                                "openSUSE-*.exe",         # WSL
                                "WindowsTerminal.exe",    # Windows Terminal
+                               "powershell.exe",         # Windows PowerShell
+                               "cmd.exe",                # コマンドプロンプト
                                "mintty.exe",             # mintty
                                "Cmder.exe",              # Cmder
                                "ConEmu*.exe",            # ConEmu
@@ -534,6 +539,14 @@ def configure(keymap):
                                # ["msrdc.exe", "RAIL_WINDOW"],  # WSLg
                                ]
 
+    # ウィンドウのタイトルが変わった時にキーバインドの再設定を行うアプリケーションソフトの
+    # プロセス名称（ワイルドカード指定可）を指定する
+    fc.name_change_app_list = ["WindowsTerminal.exe",
+                               "powershell.exe",
+                               "cmd.exe",
+                               "ubuntu*.exe",
+                               ]
+
     # 個人設定ファイルのセクション [section-base-1] を読み込んで実行する
     exec(readConfigPersonal("[section-base-1]"), dict(globals(), **locals()))
 
@@ -550,22 +563,27 @@ def configure(keymap):
 
     def setWinEventHook():
         EVENT_SYSTEM_FOREGROUND = 0x0003
+        EVENT_OBJECT_NAMECHANGE = 0x800C
         WINEVENT_OUTOFCONTEXT   = 0x0000
-        WINEVENT_SKIPOWNPROCESS = 0x0002
 
         user32 = ctypes.windll.user32
         ole32 = ctypes.windll.ole32
 
         try:
-            # 設定されているか？
-            keymap.fakeymacs_hook
-
-            # reload 時の対策
-            user32.UnhookWinEvent(keymap.fakeymacs_hook)
-            ole32.CoUninitialize()
+            # 変数が設定されていて０でない場合、イベントフックを解除する
+            if keymap.fakeymacs_hook2 != 0:
+                user32.UnhookWinEvent(keymap.fakeymacs_hook1)
         except:
             pass
 
+        try:
+            # 変数が設定されていて０でない場合、イベントフックを解除する
+            if keymap.fakeymacs_hook2 != 0:
+                user32.UnhookWinEvent(keymap.fakeymacs_hook2)
+        except:
+            pass
+
+        ole32.CoUninitialize()
         ole32.CoInitialize(None)
 
         WinEventProcType = ctypes.WINFUNCTYPE(
@@ -579,10 +597,23 @@ def configure(keymap):
             ctypes.wintypes.DWORD
         )
 
+        regex = "|".join([fnmatch.translate(p) for p in fc.name_change_app_list])
+        if regex == "": regex = "$." # 絶対にマッチしない正規表現
+        name_change_app = re.compile(regex)
+
         def _callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
             if keymap.hook_enabled:
-                delay()
-                keymap._updateFocusWindow()
+                if event == EVENT_SYSTEM_FOREGROUND:
+                    delay()
+                    keymap._updateFocusWindow()
+
+                elif event == EVENT_OBJECT_NAMECHANGE:
+                    if hwnd == user32.GetForegroundWindow():
+                        if idChild == 0:
+                            wnd = keymap.getWindow()
+                            if wnd:
+                                if name_change_app.match(wnd.getProcessName()):
+                                    updateKeymap(True)
             else:
                 setCursorColor(False)
 
@@ -592,9 +623,20 @@ def configure(keymap):
         WinEventProc = WinEventProcType(_callback)
 
         user32.SetWinEventHook.restype = ctypes.wintypes.HANDLE
-        keymap.fakeymacs_hook = user32.SetWinEventHook(
+
+        keymap.fakeymacs_hook1 = user32.SetWinEventHook(
             EVENT_SYSTEM_FOREGROUND,
             EVENT_SYSTEM_FOREGROUND,
+            None,
+            WinEventProc,
+            0,
+            0,
+            WINEVENT_OUTOFCONTEXT
+        )
+
+        keymap.fakeymacs_hook2 = user32.SetWinEventHook(
+            EVENT_OBJECT_NAMECHANGE,
+            EVENT_OBJECT_NAMECHANGE,
             None,
             WinEventProc,
             0,
@@ -703,6 +745,7 @@ def configure(keymap):
     ###########################################################################
 
     fakeymacs.not_emacs_keybind = []
+    fakeymacs.not_ime_keybind = []
     fakeymacs.ime_cancel = False
     fakeymacs.last_window = None
     fakeymacs.force_update = False
@@ -755,7 +798,7 @@ def configure(keymap):
     game_app_list2 = [app for app in fc.game_app_list if type(app) is list]
 
     def is_base_target(window):
-        if window is not fakeymacs.last_window or fakeymacs.force_update:
+        if window is not fakeymacs.last_window:
             process_name = window.getProcessName()
             class_name   = window.getClassName()
 
@@ -790,14 +833,14 @@ def configure(keymap):
 
             if is_task_switching_window(window) or is_list_window(window):
                 fakeymacs.is_base_target = True
-                fakeymacs.keymap_decided = True
+                fakeymacs.keymap_selected1 = True
 
             elif (transparent_target.match(window.getProcessName()) or
                   transparent_target_class.match(window.getClassName()) or
                   game_app_list1.match(window.getProcessName()) or
                   any(checkWindow(*app, window=window) for app in game_app_list2)):
                 fakeymacs.is_base_target = False
-                fakeymacs.keymap_decided = True
+                fakeymacs.keymap_selected1 = True
             else:
                 if not fakeymacs.force_update:
                     if fc.use_ime_status_reset:
@@ -805,7 +848,7 @@ def configure(keymap):
                     showImeStatus(window.getImeStatus(), window=window)
 
                 fakeymacs.is_base_target = True
-                fakeymacs.keymap_decided = False
+                fakeymacs.keymap_selected1 = False
 
         return fakeymacs.is_base_target
 
@@ -818,7 +861,9 @@ def configure(keymap):
             process_name = window.getProcessName()
             class_name   = window.getClassName()
 
-            if fakeymacs.keymap_decided == False:
+            fakeymacs.keymap_selected2 = fakeymacs.keymap_selected1
+
+            if fakeymacs.keymap_selected2 == False:
                 if emacs_target_class.match(class_name):
                     fakeymacs.is_emacs_target = True
 
@@ -848,19 +893,20 @@ def configure(keymap):
                 else:
                     fakeymacs.emacs_exclusion_key = []
 
-                fakeymacs.keymap_decided = True
+                fakeymacs.keymap_selected2 = True
 
         return fakeymacs.is_emacs_target
 
     def is_ime_target(window):
         if window is not fakeymacs.last_window or fakeymacs.force_update:
-            fakeymacs.last_window = window
-            fakeymacs.force_update = False
-
             process_name = window.getProcessName()
 
-            if fakeymacs.keymap_decided == False:
-                if (ime_target1.match(process_name) or
+            if fakeymacs.keymap_selected2 == False:
+                if process_name in fakeymacs.not_ime_keybind:
+                    setImeStatus(0)
+                    fakeymacs.is_ime_target = False
+
+                elif (ime_target1.match(process_name) or
                     any(checkWindow(*app, window=window) for app in ime_target2)):
                     fakeymacs.is_ime_target = True
 
@@ -951,18 +997,31 @@ def configure(keymap):
         class_name   = keymap.getWindow().getClassName()
         process_name = keymap.getWindow().getProcessName()
 
-        if (not emacs_target_class.match(class_name) and
-            ((emacs_target1.match(process_name) or
-              any(checkWindow(*app) for app in emacs_target2)) or
-             not (not_emacs_target1.match(process_name) or
-                  any(checkWindow(*app) for app in not_emacs_target2)))):
+        if not ((game_app_list1.match(process_name) or
+                 any(checkWindow(*app) for app in game_app_list2)) or
+                emacs_target_class.match(class_name)):
 
-            if process_name in fakeymacs.not_emacs_keybind:
-                fakeymacs.not_emacs_keybind.remove(process_name)
-                keymap.popBalloon("keybind", "[Enable Emacs keybind]", 1000)
-            else:
-                fakeymacs.not_emacs_keybind.append(process_name)
-                keymap.popBalloon("keybind", "[Disable Emacs keybind]", 1000)
+            if ((emacs_target1.match(process_name) or
+                 any(checkWindow(*app) for app in emacs_target2)) or
+                not (not_emacs_target1.match(process_name) or
+                     any(checkWindow(*app) for app in not_emacs_target2))):
+
+                if process_name in fakeymacs.not_emacs_keybind:
+                    fakeymacs.not_emacs_keybind.remove(process_name)
+                    keymap.popBalloon("keybind", "[Enable Emacs keybind]", 1000)
+                else:
+                    fakeymacs.not_emacs_keybind.append(process_name)
+                    keymap.popBalloon("keybind", "[Disable Emacs keybind]", 1000)
+
+            elif (ime_target1.match(process_name) or
+                  any(checkWindow(*app) for app in ime_target2)):
+
+                if process_name in fakeymacs.not_ime_keybind:
+                    fakeymacs.not_ime_keybind.remove(process_name)
+                    keymap.popBalloon("keybind", "[Enable IME keybind]", 1000)
+                else:
+                    fakeymacs.not_ime_keybind.append(process_name)
+                    keymap.popBalloon("keybind", "[Disable IME keybind]", 1000)
 
             updateKeymap(True)
 
@@ -1185,10 +1244,10 @@ def configure(keymap):
             mark(move_end_of_line, True)()
             delay()
 
-            if (checkWindow("cmd.exe", "ConsoleWindowClass", "*コマンド プロンプト") or
-                checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell") or
-                checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "コマンド プロンプト") or
-                checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell")):
+            if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                            ["Windows PowerShell", "コマンド プロンプト"]) or
+                checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell*") or
+                checkWindow("cmd.exe", "ConsoleWindowClass", "*コマンド プロンプト")):
                 kill_region()
 
             elif checkWindow(class_name="HM32CLIENT"): # Hidemaru Software
@@ -1218,8 +1277,8 @@ def configure(keymap):
 
     def kill_region():
         # コマンドプロンプトには Cut に対応するショートカットがない。その対策。
-        if (checkWindow("cmd.exe", "ConsoleWindowClass", "*コマンド プロンプト") or
-            checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "コマンド プロンプト")):
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "コマンド プロンプト") or
+            checkWindow("cmd.exe", "ConsoleWindowClass", "*コマンド プロンプト")):
             copyRegion()
 
             if fakeymacs.forward_direction is not None:
@@ -1273,8 +1332,8 @@ def configure(keymap):
             self_insert_command("Home", "C-S-m", "S-End")()
             fakeymacs.forward_direction = True # 逆の設定にする
 
-        elif (checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell") or
-              checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell")):
+        elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell") or
+              checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell*")):
             self_insert_command("End", "S-Home")()
             fakeymacs.forward_direction = False
 
@@ -1337,20 +1396,17 @@ def configure(keymap):
     ##################################################
 
     def kill_buffer():
-        if checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
-            self_insert_command("C-w")()
-
-        elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "コマンド プロンプト") or
-              checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell")):
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                        ["Windows PowerShell", "コマンド プロンプト"])):
             self_insert_command("C-S-w")()
+
+        elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
+            self_insert_command("C-w")()
         else:
             self_insert_command("C-F4")()
 
-        updateKeymap(True)
-
     def switch_to_buffer():
         self_insert_command("C-Tab")()
-        updateKeymap(True)
 
     def other_window():
         window_list = getWindowList(False)
@@ -1363,8 +1419,8 @@ def configure(keymap):
     ##################################################
 
     def isearch(direction):
-        if (checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell") or
-            checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell")):
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell") or
+            checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell*")):
             self_insert_command({"backward":"C-r", "forward":"C-s"}[direction])()
         else:
             if fakeymacs.is_searching is None:
@@ -1384,10 +1440,8 @@ def configure(keymap):
                 elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
                     self_insert_command("C-g")()
 
-                elif (checkWindow("edit.exe", "ConsoleWindowClass") or
-                      checkWindow("cmd.exe", "ConsoleWindowClass", "* - edit") or
-                      checkWindow("powershell.exe", "ConsoleWindowClass", "* - edit") or
-                      checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit")):
+                elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit") or
+                      checkWindow(None, "ConsoleWindowClass", "* - edit")):
                     self_insert_command({"backward":"S-Enter", "forward":"Enter"}[direction])()
                 else:
                     self_insert_command({"backward":"S-F3", "forward":"F3"}[direction])()
@@ -1399,10 +1453,8 @@ def configure(keymap):
         isearch("forward")
 
     def query_replace():
-        if (checkWindow("edit.exe", "ConsoleWindowClass") or
-            checkWindow("cmd.exe", "ConsoleWindowClass", "* - edit") or
-            checkWindow("powershell.exe", "ConsoleWindowClass", "* - edit") or
-            checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit") or
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit") or
+            checkWindow(None, "ConsoleWindowClass", "* - edit") or
             checkWindow("sakura.exe", "EditorClient") or
             checkWindow("sakura.exe", "SakuraView*")  or
             checkWindow(class_name="HM32CLIENT")):
@@ -1495,13 +1547,13 @@ def configure(keymap):
 
         if esc:
             # Esc を発行して問題ないアプリケーションソフトには Esc を発行する
-            if not (checkWindow("EXCEL.EXE", "EXCEL*", "") or      # Microsoft Excel のセル編集
-                    checkWindow("Evernote.exe", "WebViewHost") or
-                    checkWindow("Notepad.exe", "RichEditD2DPT") or # Windows 11版 Notepad
+            if not (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                                ["Windows PowerShell", "コマンド プロンプト"]) or
+                    checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell*") or
                     checkWindow("cmd.exe", "ConsoleWindowClass", "*コマンド プロンプト") or
-                    checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell") or
-                    checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "コマンド プロンプト") or
-                    checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell")):
+                    checkWindow("EXCEL.EXE", "EXCEL*", "") or      # Microsoft Excel のセル編集
+                    checkWindow("Notepad.exe", "RichEditD2DPT") or # Windows 11版 Notepad
+                    checkWindow("Evernote.exe", "WebViewHost")):
                 escape()
 
         keymap.command_RecordStop()
@@ -1516,10 +1568,9 @@ def configure(keymap):
             fakeymacs.is_searching = None
 
     def kill_emacs():
-        if (checkWindow("edit.exe", "ConsoleWindowClass") or
-            checkWindow("cmd.exe", "ConsoleWindowClass", "* - edit") or
-            checkWindow("powershell.exe", "ConsoleWindowClass", "* - edit") or
-            checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit")):
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit") or
+            checkWindow(None, "ConsoleWindowClass", "* - edit")):
+            setImeStatus(0)
             self_insert_command("C-q")()
         else:
             self_insert_command("A-F4")()
@@ -1615,8 +1666,8 @@ def configure(keymap):
                 else:
                     self_insert_command("Left", "Right")()
 
-            elif (checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell") or
-                  checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell")):
+            elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell") or
+                  checkWindow("powershell.exe", "ConsoleWindowClass", "Windows PowerShell*")):
                 # 選択されているリージョンのハイライトを解除するためにカーソルを移動する
                 if fakeymacs.forward_direction:
                     self_insert_command("Left", "Right")()
@@ -1637,9 +1688,18 @@ def configure(keymap):
             window.getClassName() == "Windows.UI.Input.InputSite.WindowClass"):
             window = window.getParent().getParent()
 
-        return ((process_name is None or fnmatch.fnmatch(window.getProcessName(), process_name)) and
-                (class_name is None or fnmatch.fnmatchcase(window.getClassName(), class_name)) and
-                (text is None or fnmatch.fnmatchcase(window.getText(), text)))
+        if ((process_name is None or fnmatch.fnmatch(window.getProcessName(), process_name)) and
+            (class_name is None or fnmatch.fnmatchcase(window.getClassName(), class_name))):
+            if text is None:
+                return True
+            else:
+                if type(text) is list:
+                    title = window.getText()
+                    return any(fnmatch.fnmatchcase(title, t) for t in text)
+                else:
+                    return fnmatch.fnmatchcase(window.getText(), text)
+        else:
+            return False
 
     def vkeys():
         vkeys = list(usjisFilter(lambda: keyhac_keymap.KeyCondition.vk_str_table))
@@ -2577,11 +2637,19 @@ def configure(keymap):
     ###########################################################################
 
     def is_global_target(window):
-        if (transparent_target.match(window.getProcessName()) or
-            transparent_target_class.match(window.getClassName())):
-            return False
-        else:
-            return True
+        global global_target_status
+
+        if window is not fakeymacs.last_window:
+            if (transparent_target.match(window.getProcessName()) or
+                transparent_target_class.match(window.getClassName())):
+                global_target_status = False
+            else:
+                global_target_status = True
+
+        fakeymacs.last_window = window
+        fakeymacs.force_update = False
+
+        return global_target_status
 
     keymap_global = keymap.defineWindowKeymap(check_func=is_global_target)
 

@@ -169,7 +169,7 @@ _config_personal.py ファイルを config_personal.pyという名称に変更�
 config_personal.py には、Fakeymacs の拡張機能を有効化／無効化するための設定も含まれています。
 
 次のページを参照して、使いたい拡張機能があればその設定を行ってください。
-（拡張機能を有効化する場合には、if 0: を if 1: にしてください。
+（拡張機能を有効化する場合には、if 0: を if 1: に変更してください。
 また、必要であれば、コンフィグレーションパラメータの設定も行ってください。）
 
 - [[/fakeymacs_manuals/extensions.org]]
@@ -213,13 +213,13 @@ keyhac.exe を起動すると、タスクバー（＾アイコンの中）に Ke
 必要に応じて、通知領域に表示するように調整してください。
 このアイコンを左クリックするとコンソールが表示され、右クリックすると機能の一覧が表示されます。
 
-*** 11) レジストリ LowLevelHooksTimeout の設定を行う（必要であれば）
+*** 11) レジストリ LowLevelHooksTimeout の設定を行う
 
 Fakeymacs を利用して、文字が二重に入力されたり、Keyhac のコンソールに「Time stamp inversion happened.」
 と何度も表示される場合には、レジストリ HKEY_CURRENT_USER\Control Panel\Desktop\LowLevelHooksTimeout
 をDWORD形式で作成し、そこに 10進数で 1000（ms の値）を設定して PC を再起動してください。
 （fakeymacs_tools フォルダ配下にある、LowLevelHooksTimeout.reg を実行することでも設定することが
-できます。）
+できます。Windows 11 の場合、この設定は必須ようにに思われます。）
 
 この対応で状況はかなり改善すると思われますが、この設定により生ずる影響は分かっていませんので、
 設定を行う場合は各自の責任でお願いします。（私はこの設定をしてかなりの期間利用していますが、
@@ -230,31 +230,20 @@ Fakeymacs を利用して、文字が二重に入力されたり、Keyhac のコ
 - https://blogs.msdn.microsoft.com/alejacma/2010/10/14/global-hooks-getting-lost-on-windows-7/
 - https://learn.microsoft.com/ja-jp/windows/win32/winmsg/lowlevelkeyboardproc
 
-** Windows Terminal を利用する場合の留意事項について
-
-Windows Terminal を利用する場合は、設定 -> 操作 メニューより、「貼り付けるときに末尾の空白を削除する」
-をオフに設定してください。Microsoft Edit を使う際に複数行のコピペが正しく機能するようになります。
-
-また、タブを切り替えた際にキーマップの再設定をしたい場合は、fc.update_keymap_key に設定した
-キー（初期値：A-S-Enter）を入力してください。キーマップは C-Tab キーでタブを切り替えた際にも
-再設定を行うようにしていますが、ターミナルの新規作成や削除により、開いているターミナルのキーマップ
-に不整合が発生する場合があります。このような場合にこのキーをご利用ください。
-
-このキーの新設により、Emacs キーバインドのオン／オフを切り替えるキーを C-S-Space から
-A-S-Space に変更しました。Shift キーとの組み合わせは、Alt キーの方が使いやすいという判断からです。
-キーは、fc.toggle_emacs_keybind_key 変数の設定により、変更することができます。
-
 ** 個人設定ファイル（config_personal.py）
 
 _config_personal.py というファイルを config_personal.py というファイル名にすることで個人設定ファイル
 として機能します。本ファイルの設定には [ ] で括られたセクション名が定義されており、その単位で config.py
 の中に設定が取り込まれ、exec 関数により実行されます。
+（何のセクションがどこで読み込まれるかについては、config.py ファイル内の exec 関数をコールしている
+ところを検索して確認してください。）
 
 config.py のコンフィグレーションパラメータ等の設定を変更したい内容は、config_personal.py に記載して
 管理することで、config.py のバージョンアップに容易に対応できるようになります。
-
-何のセクションがどこで読み込まれるかについては、config.py ファイル内の exec 関数をコールしている
-ところを検索して確認してください。
+拡張機能も config_personal.py の中で有効化／無効化する設定を行う仕組みとしていますので、有効化する
+場合は config_personal.py の設定を変更してください。
+（config_personal.py の後半に拡張機能を設定する箇所があるので、有効化する場合には、if 0: を if 1: に
+変更してください。）
 
 ** クロージャについて
 
@@ -262,6 +251,55 @@ Fakeymacs では、Python のクロージャの機能を多用しています。
 深まり、Fakeymacs の設定も読みやすくなると思います。
 
 - https://www.lifewithpython.com/2014/09/python-use-closures.html
+
+** Windows Terminal の対応について
+
+Windows Terminal では、複数の種類のターミナルをタブで個別に開くことができます。Fakeymacs では、
+ウィンドウタイトルが変更されたイベントをキャッチすることにより、タブ毎に異なるキーバインドの
+設定を実現しています。
+
+** Microsoft Edit の対応について
+
+Fakeymacs は Microsoft Edit に対応しています。Microsoft Edit は、ターミナルで起動すると、その
+ターミナルのタイトルを「ファイル名 - edit」に置き換える機能をもっています。この機能により、
+Fakeymacs がターミナルで Edit を起動中であることを認識することができます。これは、Windows 版の
+Edit でも Linux 版の Edit でも同様に機能し、さらには ssh で接続した先で Edit を起動した場合でも
+同様に機能します。
+
+Linux 版の Edit は、次からダウンロードすることができます。一つのバイナリファイルとなって
+いますので、これを edit や msedit というファイル名に置き換え、~/bin などのパスの通った
+ディレクトリに格納すると、vim のようなエディタとして使うことができるようになります。
+
+- https://github.com/microsoft/edit/releases
+
+なお、Microsoft Edit を Windows Terminal を利用する場合は、設定 -> 操作 メニューより、
+「貼り付けるときに末尾の空白を削除する」をオフに設定してください。
+Microsoft Edit を使う際に改行を含む行のコピペが正しく機能するようになります。
+
+** Midnight Commander の対応について
+
+Midnight Commander は、Linux、Windows どちらでも動く、テキストベースのファイルマネージャ
+です。Emacs like のキーバインドを持ち、ウィンドウタイトルを変更する機能ももっているので、
+Windows Terminal などのターミナル上で Fakeymacs と共存して利用可能です。
+
+- https://midnight-commander.org
+
+Ubuntu で動かす場合は、sudo apt install mc でインストールが可能です。
+Windows 版は以下からダウンロード可能です。
+
+- https://github.com/adamyg/mcwin32
+
+次のページに書かれている方法で、利用するエディタを先に紹介したMicrosoft Edit にすると、
+シームレスに Emacs キーバインドの環境を利用することができます。
+
+- https://hiroom2.jimdoweb.com/2015/09/06/midnight-commander%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%81%BF%E3%82%8B/#sec-3-4
+
+Midnight Commander の使い方は次のページに紹介されていますので、是非一度お試しください。
+
+- https://bioinfo-dojo.net/2020/08/31/%e7%ab%af%e6%9c%ab%e7%94%a8-cui-%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%83%9e%e3%83%8d%e3%83%bc%e3%82%b8%e3%83%a3%e3%83%bc-midnight-commander-mc-%e4%bd%bf%e3%81%84%e6%96%b9-%e5%9f%ba%e6%9c%ac/
+
+なお、ファンクションキーの無い 60% キーボードなどをお使いの場合は、以降に紹介している
+space_fn 拡張機能との併用もご検討ください。
 
 ** ウィンドウ操作の機能強化について
 

@@ -81,20 +81,21 @@ fc.emacs_target_class   = ["Edit",                   # テキスト入力フィ�
 
 # Emacs のキーバインドに“する”アプリケーションソフトを指定する
 # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
-#   クラス名称、ウィンドウタイトルのリスト（ワイルドカード指定可、リストの後ろの項目から省略可）
-#   を指定してください）
+#   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+#   リストの後ろの項目から省略可）を指定してください）
 # （fc.not_emacs_target の設定より優先します）
 # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
 #   できます）
-fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "コマンド プロンプト"],
-                   ["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "Windows PowerShell"],
-                   ["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit"],
-                   ]
+fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                    ["Windows PowerShell", "コマンド プロンプト", "* - edit"]],
+                   ["powershell.exe", "ConsoleWindowClass", ["Windows PowerShell*", "* - edit"]],
+                   ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト", "* - edit"]],
+                  ]
 
 # Emacs のキーバインドに“しない”アプリケーションソフトを指定する
 # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
-#   クラス名称、ウィンドウタイトルのリスト（ワイルドカード指定可、リストの後ろの項目から省略可）
-#   を指定してください）
+#   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+#   リストの後ろの項目から省略可）を指定してください）
 # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
 #   できます）
 fc.not_emacs_target     = ["wsl.exe",                # WSL
@@ -105,6 +106,8 @@ fc.not_emacs_target     = ["wsl.exe",                # WSL
                            "SLES-*.exe",             # WSL
                            "openSUSE-*.exe",         # WSL
                            "WindowsTerminal.exe",    # Windows Terminal
+                           "powershell.exe",         # Windows PowerShell
+                           "cmd.exe",                # コマンドプロンプト
                            "mintty.exe",             # mintty
                            "Cmder.exe",              # Cmder
                            "ConEmu*.exe",            # ConEmu
@@ -128,8 +131,8 @@ fc.not_emacs_target     = ["wsl.exe",                # WSL
 
 # IME の切り替え“のみをしたい”アプリケーションソフトを指定する
 # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
-#   クラス名称、ウィンドウタイトルのリスト（ワイルドカード指定可、リストの後ろの項目から省略可）
-#   を指定してください）
+#   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+#   リストの後ろの項目から省略可）を指定してください）
 # （指定できるアプリケーションソフトは、not_emacs_target で（除外）指定したものからのみとなります）
 fc.ime_target           = ["wsl.exe",                # WSL
                            "bash.exe",               # WSL
@@ -139,6 +142,8 @@ fc.ime_target           = ["wsl.exe",                # WSL
                            "SLES-*.exe",             # WSL
                            "openSUSE-*.exe",         # WSL
                            "WindowsTerminal.exe",    # Windows Terminal
+                           "powershell.exe",         # Windows PowerShell
+                           "cmd.exe",                # コマンドプロンプト
                            "mintty.exe",             # mintty
                            "Cmder.exe",              # Cmder
                            "ConEmu*.exe",            # ConEmu
@@ -425,6 +430,14 @@ fc.ctrl_button_app_list = [["WINWORD.EXE",  "_WwG"],
 #   https://github.com/smzht/fakeymacs/commit/5ceb921bd754ce348f9cd79b6606086916520945）
 fc.game_app_list        = ["ffxiv_dx11.exe",              # FINAL FANTASY XIV
                            # ["msrdc.exe", "RAIL_WINDOW"],  # WSLg
+                           ]
+
+# ウィンドウのタイトルが変わった時にキーバインドの再設定を行うアプリケーションソフトの
+# プロセス名称（ワイルドカード指定可）を指定する
+fc.name_change_app_list = ["WindowsTerminal.exe",
+                           "powershell.exe",
+                           "cmd.exe",
+                           "ubuntu*.exe",
                            ]
 
 # [section-base-2] ---------------------------------------------------------------------------------
