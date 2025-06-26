@@ -86,11 +86,13 @@ fc.emacs_target_class   = ["Edit",                   # テキスト入力フィ�
 # （fc.not_emacs_target の設定より優先します）
 # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
 #   できます）
+
 fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                    ["Windows PowerShell", "コマンド プロンプト", "* - edit"]],
-                   ["powershell.exe", "ConsoleWindowClass", ["Windows PowerShell*", "* - edit"]],
-                   ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト", "* - edit"]],
-                  ]
+                    ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit", "設定"]],
+                   ["powershell.exe", "ConsoleWindowClass", ["*PowerShell*", "* - edit"]],
+                   ["cmd.exe", "ConsoleWindowClass",
+                    ["*コマンド プロンプト*", "*Command Prompt*", "* - edit"]],
+                   ]
 
 # Emacs のキーバインドに“しない”アプリケーションソフトを指定する
 # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
@@ -434,7 +436,10 @@ fc.game_app_list        = ["ffxiv_dx11.exe",              # FINAL FANTASY XIV
 
 # ウィンドウのタイトルが変わった時にキーバインドの再設定を行うアプリケーションソフトの
 # プロセス名称（ワイルドカード指定可）を指定する
-fc.name_change_app_list = ["WindowsTerminal.exe",
+fc.name_change_app_list = ["chrome.exe",
+                           "msedge.exe",
+                           "firefox.exe",
+                           "WindowsTerminal.exe",
                            "powershell.exe",
                            "cmd.exe",
                            "ubuntu*.exe",
