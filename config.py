@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20250626_03"
+fakeymacs_version = "20250629_01"
 
 import time
 import os
@@ -196,10 +196,10 @@ def configure(keymap):
     # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
     #   できます）
     fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                        ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit", "設定"]],
-                       ["powershell.exe", "ConsoleWindowClass", ["*PowerShell*", "* - edit"]],
-                       ["cmd.exe", "ConsoleWindowClass",
-                        ["*コマンド プロンプト*", "*Command Prompt*", "* - edit"]],
+                        ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit*", "設定"]],
+                       ["powershell.exe", "ConsoleWindowClass", ["*PowerShell*"]],
+                       ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト*", "*Command Prompt*"]],
+                       [None, "ConsoleWindowClass", "* - edit*"],
                        ]
 
     # Emacs のキーバインドに“しない”アプリケーションソフトを指定する
@@ -614,23 +614,9 @@ def configure(keymap):
                 if event == EVENT_SYSTEM_FOREGROUND:
                     delay(0.2)
                     if hwnd == user32.GetForegroundWindow():
-                        window = Window.getFocus()
-                        if window is None:
-                            window = Window.getForeground()
+                        keymap._updateFocusWindow()
 
-                        if window:
-                            fakeymacs.window = window
-                            fakeymacs.process_name = window.getProcessName()
-                            fakeymacs.class_name = window.getClassName()
-
-                            if keymap.getWindow() is not window:
-                                keymap._focusChanged(window)
-                        else:
-                            fakeymacs.window = None
-                            fakeymacs.process_name = None
-                            fakeymacs.class_name = None
-
-                        if window and name_change_app.match(fakeymacs.process_name):
+                        if name_change_app.match(getProcessName()):
                             is_name_change_app = True
                         else:
                             is_name_change_app = False
@@ -772,7 +758,6 @@ def configure(keymap):
 
     fakeymacs.window = None
     fakeymacs.process_name = None
-    fakeymacs.class_name = None
     fakeymacs.not_emacs_keybind = []
     fakeymacs.not_ime_keybind = []
     fakeymacs.ime_cancel = False
@@ -1475,8 +1460,8 @@ def configure(keymap):
                 elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
                     self_insert_command("C-g")()
 
-                elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit") or
-                      checkWindow(None, "ConsoleWindowClass", "* - edit")):
+                elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit*") or
+                      checkWindow(None, "ConsoleWindowClass", "* - edit*")):
                     self_insert_command({"backward":"S-Enter", "forward":"Enter"}[direction])()
                 else:
                     self_insert_command({"backward":"S-F3", "forward":"F3"}[direction])()
@@ -1488,8 +1473,8 @@ def configure(keymap):
         isearch("forward")
 
     def query_replace():
-        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit") or
-            checkWindow(None, "ConsoleWindowClass", "* - edit") or
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit*") or
+            checkWindow(None, "ConsoleWindowClass", "* - edit*") or
             checkWindow("sakura.exe", "EditorClient") or
             checkWindow("sakura.exe", "SakuraView*")  or
             checkWindow(class_name="HM32CLIENT")):
@@ -1604,8 +1589,8 @@ def configure(keymap):
             fakeymacs.is_searching = None
 
     def kill_emacs():
-        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit") or
-            checkWindow(None, "ConsoleWindowClass", "* - edit")):
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit*") or
+            checkWindow(None, "ConsoleWindowClass", "* - edit*")):
             setImeStatus(0)
             self_insert_command("C-q")()
         else:
@@ -1720,40 +1705,26 @@ def configure(keymap):
                     self_insert_command("Left")()
 
     def getProcessName(window=None):
-        if window:
-            if window is fakeymacs.window:
-                process_name = fakeymacs.process_name
-            else:
-                process_name = window.getProcessName()
-        else:
-            if keymap.getWindow() is fakeymacs.window:
-                process_name = fakeymacs.process_name
-            else:
-                process_name = keymap.getWindow().getProcessName()
+        if window is None:
+            window = keymap.getWindow()
 
-        return process_name
+        if window is not fakeymacs.window:
+            fakeymacs.window = window
+            fakeymacs.process_name = window.getProcessName()
+
+        return fakeymacs.process_name
 
     def getClassName(window=None):
-        if window:
-            if window is fakeymacs.window:
-                class_name = fakeymacs.class_name
-            else:
-                class_name = window.getClassName()
-        else:
-            if keymap.getWindow() is fakeymacs.window:
-                class_name = fakeymacs.class_name
-            else:
-                class_name = keymap.getWindow().getClassName()
+        if window is None:
+            window = keymap.getWindow()
 
-        return class_name
+        return window.getClassName()
 
     def getText(window=None):
-        if window:
-            title = window.getText()
-        else:
-            title = keymap.getWindow().getText()
+        if window is None:
+            window = keymap.getWindow()
 
-        return title
+        return window.getText()
 
     def checkWindow(process_name=None, class_name=None, text=None, window=None):
         if window is None:
@@ -2122,6 +2093,18 @@ def configure(keymap):
         def _func():
             func()
             setImeStatus(0)
+        return _func
+
+    def self_insert_command4(*key_list, usjis_conv=True):
+        func = self_insert_command(*key_list, usjis_conv=usjis_conv)
+        def _func():
+            ime_status = getImeStatus()
+            if ime_status:
+                setImeStatus(0)
+            func()
+            if ime_status:
+                delay()
+                setImeStatus(1)
         return _func
 
     def digit(number):

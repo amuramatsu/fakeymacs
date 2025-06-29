@@ -88,10 +88,10 @@ fc.emacs_target_class   = ["Edit",                   # テキスト入力フィ�
 #   できます）
 
 fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                    ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit", "設定"]],
-                   ["powershell.exe", "ConsoleWindowClass", ["*PowerShell*", "* - edit"]],
-                   ["cmd.exe", "ConsoleWindowClass",
-                    ["*コマンド プロンプト*", "*Command Prompt*", "* - edit"]],
+                    ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit*", "設定"]],
+                   ["powershell.exe", "ConsoleWindowClass", ["*PowerShell*"]],
+                   ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト*", "*Command Prompt*"]],
+                   [None, "ConsoleWindowClass", "* - edit*"],
                    ]
 
 # Emacs のキーバインドに“しない”アプリケーションソフトを指定する
@@ -447,6 +447,11 @@ fc.name_change_app_list = ["chrome.exe",
 
 # [section-base-2] ---------------------------------------------------------------------------------
 
+# キーを入力した後に、IME を OFF にする設定
+# define_key(keymap_base, "Esc", self_insert_command3("Esc"))
+# define_key(keymap_base, "C-[", self_insert_command3("C-["))
+# define_key(keymap_base, "C-x", self_insert_command3("C-x"))
+
 # Grave Escape をエミュレーションする設定
 # （https://github.com/qmk/qmk_firmware/blob/master/docs/feature_grave_esc.md）
 # define_key(keymap_base, "S-Esc", self_insert_command("~"))
@@ -635,6 +640,7 @@ if 0:
 # Emacs をターミナルで動かす場合に event-apply-modifier を使ってキーの置き換えを行う
 if 0:
     fc.emacs_terminal = ["ubuntu*.exe",
+                         "WindowsTerminal.exe",
                          [None, None,  "さくらのクラウドシェル*"],
                          ]
     fc.emacs_replace_key = [["C-;", "C-x @ c ;"],
