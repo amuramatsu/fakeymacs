@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20250629_01"
+fakeymacs_version = "20250708_01"
 
 import time
 import os
@@ -197,7 +197,7 @@ def configure(keymap):
     #   できます）
     fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
                         ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit*", "設定"]],
-                       ["powershell.exe", "ConsoleWindowClass", ["*PowerShell*"]],
+                       ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
                        ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト*", "*Command Prompt*"]],
                        [None, "ConsoleWindowClass", "* - edit*"],
                        ]
@@ -605,26 +605,18 @@ def configure(keymap):
         if regex == "": regex = "$." # 絶対にマッチしない正規表現
         name_change_app = re.compile(regex)
 
-        is_name_change_app = False
-
         def _callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
-            nonlocal is_name_change_app
-
             if keymap.hook_enabled:
                 if event == EVENT_SYSTEM_FOREGROUND:
                     delay(0.2)
                     if hwnd == user32.GetForegroundWindow():
                         keymap._updateFocusWindow()
 
-                        if name_change_app.match(getProcessName()):
-                            is_name_change_app = True
-                        else:
-                            is_name_change_app = False
-
                 elif event == EVENT_OBJECT_NAMECHANGE:
                     if hwnd == user32.GetForegroundWindow():
                         if idChild == 0:
-                            if is_name_change_app:
+                            process_name = getProcessName()
+                            if process_name and name_change_app.match(process_name):
                                 updateKeymap(True)
             else:
                 setCursorColor(False)
@@ -1317,7 +1309,10 @@ def configure(keymap):
             resetRegion()
 
     def yank():
-        self_insert_command("C-v")()
+        if checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS"):
+            self_insert_command("C-S-v")()
+        else:
+            self_insert_command("C-v")()
 
     def undo():
         # redo（C-y）の機能を持っていないアプリケーションソフトは常に undo とする
@@ -2950,10 +2945,9 @@ def configure(keymap):
     ##################################################
 
     def lw_newline():
+        self_insert_command("S-Enter")()
         if fakeymacs.is_emacs_target_in_previous_window:
-            self_insert_command("Enter")()
-        else:
-            self_insert_command("S-Enter")()
+            keymap.delayedCall(yank, 200)
 
     def lw_exit_search(func):
         def _func():
