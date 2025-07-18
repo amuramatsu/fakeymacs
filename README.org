@@ -57,8 +57,7 @@ IME のショートカットキーが利用できるようになります。
 
 ※ keymap_remote レイヤーは、capslock_key Extension を有効にしたときに機能するレイヤーです。
 
-※ keymap_vscode レイヤー、keymap_cursor レイヤー、keymap_windsurf レイヤーは、
-vscode_key Extension を有効にしたときに機能するレイヤーです。
+※ keymap_vscode レイヤーは、vscode_key Extension を有効にしたときに機能するレイヤーです。
 
 ※ keymap_ei レイヤーは、fc.use_emacs_ime_mode 変数が True の時に機能するレイヤーです。
 
@@ -267,9 +266,9 @@ Windows Terminal では、複数の種類のターミナルをタブで個別に
 
 Fakeymacs は Microsoft Edit に対応しています。Microsoft Edit は、ターミナルで起動すると、その
 ターミナルのタイトルを「ファイル名 - edit」に置き換える機能をもっています。この機能により、
-Fakeymacs がターミナルで Edit を起動中であることを認識することができます。これは、Windows 版の
-Edit でも Linux 版の Edit でも同様に機能し、さらには ssh で接続した先で Edit を起動した場合でも
-同様に機能します。
+Fakeymacs がターミナルで Edit を起動中であることを認識することができ、Emacs キーバインドに
+切り替えることができます。これは、Windows 版の Edit でも Linux 版の Edit でも同様に機能し、
+さらには ssh で接続した先で Edit を起動した場合でも同様に機能します。
 
 Linux 版の Edit は、次からダウンロードすることができます。一つのバイナリファイルとなって
 いますので、これを edit や msedit というファイル名に置き換え、~/bin などのパスの通った
@@ -277,7 +276,7 @@ Linux 版の Edit は、次からダウンロードすることができます�
 
 - https://github.com/microsoft/edit/releases
 
-なお、Microsoft Edit を Windows Terminal を利用する場合は、設定 -> 操作 メニューより、
+なお、Microsoft Edit を Windows Terminal で利用する場合は、設定 -> 操作 メニューより、
 「貼り付けるときに末尾の空白を削除する」をオフに設定してください。
 Microsoft Edit を使う際に改行を含む行のコピペが正しく機能するようになります。
 
@@ -307,8 +306,9 @@ Midnight Commander の使い方は次のページに紹介されていますの�
 space_fn 拡張機能を利用すると、Space+<数字キー> でファンクションキーが利用できるように
 なるなど、操作性が良くなると思います。
 
-また、config_personal.py の [section-base-2] セクションに次の設定をすると、プレフィックス
-キーの Esc や C-x を使う際に、IME を OFF にする機能が働き、使い勝手が良くなると思います。
+また、config_personal.py の [section-base-2] セクションにある次の設定を有効にすると、
+プレフィックスキーの Esc や C-x を使う際に IME を OFF にする機能が働き、使い勝手が
+良くなると思います。
 
 #+BEGIN_EXAMPLE
 # キーを入力した後に、IME を OFF にする設定
