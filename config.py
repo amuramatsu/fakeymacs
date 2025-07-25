@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20250708_01"
+fakeymacs_version = "20250724_01"
 
 import time
 import os
@@ -196,7 +196,8 @@ def configure(keymap):
     # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
     #   できます）
     fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                        ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit*", "設定"]],
+                        ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit*",
+                         "設定", "Settings"]],
                        ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
                        ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト*", "*Command Prompt*"]],
                        [None, "ConsoleWindowClass", "* - edit*"],
@@ -1569,6 +1570,9 @@ def configure(keymap):
                                 ["*コマンド プロンプト*", "*Command Prompt*"]) or
                     checkWindow("EXCEL.EXE", "EXCEL*", "") or      # Microsoft Excel のセル編集
                     checkWindow("Notepad.exe", "RichEditD2DPT") or # Windows 11版 Notepad
+                    checkWindow("LINE.exe", "Qt*QWindowIcon") or
+                    checkWindow(None, "Chrome_WidgetWin_1", "LINE") or
+                    checkWindow("mstsc.exe", "RAIL_WINDOW", "LINE*") or
                     checkWindow("Evernote.exe", "WebViewHost")):
                 escape()
 
