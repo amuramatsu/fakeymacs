@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20250724_01"
+fakeymacs_version = "20250814_01"
 
 import time
 import os
@@ -552,6 +552,23 @@ def configure(keymap):
                                "ubuntu*.exe",
                                ]
 
+    # keyboard_quit 関数で、Esc を発行しないアプリケーションソフトを指定する
+    # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
+    #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+    #   リストの後ろの項目から省略可）を指定してください）
+    fc.keyboard_quit_no_esc_app_list = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                                         ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*"]],
+                                        ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
+                                        ["cmd.exe", "ConsoleWindowClass",
+                                         ["*コマンド プロンプト*", "*Command Prompt*"]],
+                                        ["EXCEL.EXE", "EXCEL*", ""], # Microsoft Excel のセル編集
+                                        ["Evernote.exe", "WebViewHost"],
+                                        ["LINE.exe", "Qt*QWindowIcon"],
+                                        [None, "Chrome_WidgetWin_1", ["LINE",  "X *", "* / X*"]],
+                                        ["firefox.exe", "MozillaWindowClass", ["X *", "* / X*"]],
+                                        ["mstsc.exe", "RAIL_WINDOW", ["LINE*", "X *", "* / X*"]],
+                                        ]
+
     # 個人設定ファイルのセクション [section-base-1] を読み込んで実行する
     exec(readConfigPersonal("[section-base-1]"), dict(globals(), **locals()))
 
@@ -937,8 +954,10 @@ def configure(keymap):
     keymap_base = keymap.defineWindowKeymap(check_func=is_base_target)
 
     if fc.use_emacs_ime_mode:
-        keymap_emacs = keymap.defineWindowKeymap(check_func=lambda wnd: is_emacs_target(wnd) and not is_emacs_ime_mode(wnd))
-        keymap_ime   = keymap.defineWindowKeymap(check_func=lambda wnd: is_ime_target(wnd)   and not is_emacs_ime_mode(wnd))
+        keymap_emacs = keymap.defineWindowKeymap(check_func=lambda wnd: (is_emacs_target(wnd) and
+                                                                         not is_emacs_ime_mode(wnd)))
+        keymap_ime   = keymap.defineWindowKeymap(check_func=lambda wnd: (is_ime_target(wnd) and
+                                                                         not is_emacs_ime_mode(wnd)))
     else:
         keymap_emacs = keymap.defineWindowKeymap(check_func=is_emacs_target)
         keymap_ime   = keymap.defineWindowKeymap(check_func=is_ime_target)
@@ -1416,7 +1435,8 @@ def configure(keymap):
                         ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*"])):
             self_insert_command("C-S-w")()
 
-        elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
+        elif (checkWindow("TeXworks.exe", "Qt661QWindowIcon") or
+              checkWindow("Obsidian.exe", "Chrome_WidgetWin_1")):
             self_insert_command("C-w")()
         else:
             self_insert_command("C-F4")()
@@ -1558,22 +1578,20 @@ def configure(keymap):
     def indent_for_tab_command():
         self_insert_command("Tab")()
 
+    regex = "|".join([fnmatch.translate(app)
+                      for app in fc.keyboard_quit_no_esc_app_list if type(app) is str])
+    if regex == "": regex = "$." # 絶対にマッチしない正規表現
+    keyboard_quit_no_esc_app_list1 = re.compile(regex)
+    keyboard_quit_no_esc_app_list2 = [app for app in fc.keyboard_quit_no_esc_app_list
+                                      if type(app) is list]
+
     def keyboard_quit(esc=True):
         resetRegion()
 
         if esc:
             # Esc を発行して問題ないアプリケーションソフトには Esc を発行する
-            if not (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                                ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*"]) or
-                    checkWindow("powershell.exe", "ConsoleWindowClass", "*PowerShell*") or
-                    checkWindow("cmd.exe", "ConsoleWindowClass",
-                                ["*コマンド プロンプト*", "*Command Prompt*"]) or
-                    checkWindow("EXCEL.EXE", "EXCEL*", "") or      # Microsoft Excel のセル編集
-                    checkWindow("Notepad.exe", "RichEditD2DPT") or # Windows 11版 Notepad
-                    checkWindow("LINE.exe", "Qt*QWindowIcon") or
-                    checkWindow(None, "Chrome_WidgetWin_1", "LINE") or
-                    checkWindow("mstsc.exe", "RAIL_WINDOW", "LINE*") or
-                    checkWindow("Evernote.exe", "WebViewHost")):
+            if not (keyboard_quit_no_esc_app_list1.match(getProcessName()) or
+                    any(checkWindow(*app) for app in keyboard_quit_no_esc_app_list2)):
                 escape()
 
         keymap.command_RecordStop()
@@ -1911,9 +1929,12 @@ def configure(keymap):
                     window_keymap is locals()["keymap_emacs"]):
 
                     def _command1():
-                        key = key_list[0]
-                        if key in fakeymacs.emacs_exclusion_key:
-                            getKeyCommand(keymap_base, key)()
+                        if key_list[0] in fakeymacs.emacs_exclusion_key:
+                            try:
+                                func = command_dict[(keymap_base, tuple(key_list))]
+                            except:
+                                func = InputKeyCommand(key_list[0])
+                            func()
                         else:
                             command()
                 else:
@@ -1999,8 +2020,8 @@ def configure(keymap):
         return _func
 
     def getKeyCommand(window_keymap, keys):
+        key_list = kbd(keys)[0]
         try:
-            key_list = kbd(keys)[0]
             func = command_dict[(window_keymap, tuple(key_list))]
         except:
             func = None
@@ -2008,9 +2029,10 @@ def configure(keymap):
         return func
 
     def makeKeyCommand(window_keymap, keys, command, check_func):
-        func = getKeyCommand(window_keymap, keys)
-        if func is None:
-            key_list = kbd(keys)[0]
+        key_list = kbd(keys)[0]
+        try:
+            func = command_dict[(window_keymap, tuple(key_list))]
+        except:
             if len(key_list) == 1:
                 func = InputKeyCommand(key_list[0])
             else:

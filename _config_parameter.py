@@ -445,6 +445,22 @@ fc.name_change_app_list = ["chrome.exe",
                            "ubuntu*.exe",
                            ]
 
+ # keyboard_quit 関数で、Esc を発行しないアプリケーションソフトを指定する
+ # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
+ #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+ #   リストの後ろの項目から省略可）を指定してください）
+ fc.keyboard_quit_no_esc_app_list = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                                      ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*"]],
+                                     ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
+                                     ["cmd.exe", "ConsoleWindowClass",
+                                      ["*コマンド プロンプト*", "*Command Prompt*"]],
+                                     ["EXCEL.EXE", "EXCEL*", ""], # Microsoft Excel のセル編集
+                                     ["Evernote.exe", "WebViewHost"],
+                                     ["LINE.exe", "Qt*QWindowIcon"],
+                                     [None, "Chrome_WidgetWin_1", "LINE"],
+                                     ["mstsc.exe", "RAIL_WINDOW", "LINE*"],
+                                     ]
+
 # [section-base-2] ---------------------------------------------------------------------------------
 
 # キーを入力した後に、IME を OFF にする設定
@@ -616,6 +632,14 @@ if 0:
 if 0:
     fc.esc_mode_in_keyboard_quit = 1
     exec(readConfigExtension(r"vscode_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+# ■ Obsidian 関連
+# --------------------------------------------------------------------------------------------------
+
+# Obsidian 用のキーの設定を行う
+if 0:
+    exec(readConfigExtension(r"obsidian_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 # ■ IME 関連
