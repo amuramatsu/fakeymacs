@@ -463,6 +463,27 @@ fc.name_change_app_list = ["chrome.exe",
 
 # [section-base-2] ---------------------------------------------------------------------------------
 
+# アプリケーションソフトをポップアップする設定（define_key を追加してご利用ください）
+# （アプリの切り替え後は、A-o キーで切り替え前のアプリとの間を行き来することができます）
+def popup_app(*app):
+    def _func():
+        for window in getWindowList():
+            if checkWindow(*app, window=window):
+                popWindow(window)()
+                break
+    return _func
+
+popup_prefix_key = "C-A-q" # popup_app 起動用プレフィックスキー
+define_key(keymap_global, f"{popup_prefix_key}", keymap.defineMultiStrokeKeymap(f"{popup_prefix_key}"))
+define_key(keymap_global, f"{popup_prefix_key} k", popup_app("keyhac.exe"))
+define_key(keymap_global, f"{popup_prefix_key} n", popup_app("Notepad.exe"))
+define_key(keymap_global, f"{popup_prefix_key} m", popup_app("msedge.exe"))
+define_key(keymap_global, f"{popup_prefix_key} c", popup_app("chrome.exe"))
+define_key(keymap_global, f"{popup_prefix_key} v", popup_app("Code.exe"))
+define_key(keymap_global, f"{popup_prefix_key} o", popup_app("Obsidian.exe"))
+# define_key(keymap_global, f"{popup_prefix_key} e", popup_app(None, None, "emacs-*"))
+# define_key(keymap_global, f"{popup_prefix_key} s", popup_app(None, None, "さくらのクラウドシェル*"))
+
 # キーを入力した後に、IME を OFF にする設定
 # define_key(keymap_base, "Esc", self_insert_command3("Esc"))
 # define_key(keymap_base, "C-[", self_insert_command3("C-["))
@@ -639,6 +660,8 @@ if 0:
 
 # Obsidian 用のキーの設定を行う
 if 0:
+    # fc.obsidian_language = "US"
+    fc.obsidian_language = "JP"
     exec(readConfigExtension(r"obsidian_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------

@@ -6,6 +6,27 @@
 
 try:
     # 設定されているか？
+    fc.output_line_count
+except:
+    # 実行結果を Keyhac コンソールに出力する行数を指定する
+    fc.output_line_count = 78
+
+try:
+    # 設定されているか？
+    fc.foreground_timeout
+except:
+    # フォアグラウンド処理（C-u の前置が１回以下の場合）のタイムアウト値（秒）を指定する
+    fc.foreground_timeout = 10
+
+try:
+    # 設定されているか？
+    fc.background_timeout
+except:
+    # バックグラウンド処理（C-u を２回前置した場合）のタイムアウト値（秒）を指定する
+    fc.background_timeout = 600
+
+try:
+    # 設定されているか？
     fc.unix_tool
 except:
     # Unix コマンドを起動するために利用する Unix ツールを指定する
@@ -47,14 +68,27 @@ except:
 
 import sys
 import subprocess
+import threading
 
 def shell_command_inputbox():
-    global replace_region
+    global forward_direction
+    global command_mode
+    global clipboard_text
 
-    if fakeymacs.is_universal_argument:
-        replace_region = True
+    forward_direction = fakeymacs.forward_direction
+
+    if not fakeymacs.is_universal_argument:
+        command_mode = 1
     else:
-        replace_region = False
+        if fakeymacs.repeat_counter == 4:
+            command_mode = 2
+        else:
+            command_mode = 3
+
+    setClipboardText("")
+    copyRegion()
+    delay(0.5)
+    clipboard_text = re.sub("\r", "", getClipboardText())
 
     # inputbox_command = dataPath() + r"\fakeymacs_extensions\shell_command_on_region\inputbox.ahk"
     inputbox_command = dataPath() + r"\fakeymacs_extensions\shell_command_on_region\inputbox.exe"
@@ -62,111 +96,124 @@ def shell_command_inputbox():
     keymap.ShellExecuteCommand(None, inputbox_command, "", "")()
 
 def executeShellCommand():
-    shell_command = getClipboardText()
+    shell_command_mode = command_mode
+    shell_command = input_command
+    region_text = clipboard_text
 
-    if shell_command:
-        setClipboardText("")
-        copyRegion()
-        delay(0.5)
-        clipboard_text = re.sub("\r", "", getClipboardText())
+    env = dict(os.environ)
 
-        env = dict(os.environ)
+    # bash に -l オプションを付け実行する場合、bash を起動する環境の .bash_profile に多くの
+    # 設定を記入していると、コマンドの実行が遅かったり、コマンドが正しくフィルタとして機能
+    # しなかったりする場合があります。
+    # このようなときに .bash_profile 内の設定をコントロール（スキップ）できるようにするため、
+    # FAKEYMACS 環境変数を設定しています。
+    env["FAKEYMACS"] = "1"
 
-        # bash に -l オプションを付け実行する場合、bash を起動する環境の .bash_profile に多くの
-        # 設定を記入していると、コマンドの実行が遅かったり、コマンドが正しくフィルタとして機能
-        # しなかったりする場合があります。
-        # このようなときに .bash_profile 内の設定をコントロール（スキップ）できるようにするため、
-        # FAKEYMACS 環境変数を設定しています。
-        env["FAKEYMACS"] = "1"
+    bash_options = []
+    if fc.bash_options:
+        bash_options += fc.bash_options
+    bash_options += ["-c"]
 
-        bash_options = []
-        if fc.bash_options:
-            bash_options += fc.bash_options
-        bash_options += ["-c"]
+    if fc.unix_tool == "WSL":
+        if sys.maxsize > 2*32:
+            # for Keyhac v1.83
+            command = [r"C:\Windows\System32\wsl.exe", "bash"]
+        else:
+            # for Keyhac v1.82
+            command = [r"C:\Windows\SysNative\wsl.exe", "bash"]
 
-        if fc.unix_tool == "WSL":
-            if sys.maxsize > 2*32:
-                # for Keyhac v1.83
-                command = [r"C:\Windows\System32\wsl.exe", "bash"]
-            else:
-                # for Keyhac v1.82
-                command = [r"C:\Windows\SysNative\wsl.exe", "bash"]
+        command += bash_options
+        command += [r"cd; tr -d '\r' | " + re.sub(r"(\$)", r"\\\1", shell_command)]
+        env["LANG"] = "ja_JP.UTF8"
+        env["WSLENV"] = "FAKEYMACS:LANG"
+        encoding = "utf-8"
 
-            command += bash_options
-            command += [r"cd; tr -d '\r' | " + re.sub(r"(\$)", r"\\\1", shell_command)]
-            env["LANG"] = "ja_JP.UTF8"
-            env["WSLENV"] = "FAKEYMACS:LANG"
-            encoding = "utf-8"
+    elif fc.unix_tool == "MSYS2":
+        command = [fc.MSYS2_path + r"\usr\bin\bash.exe"]
+        command += bash_options
+        command += [shell_command]
+        env["LANG"] = "ja_JP.UTF8"
+        encoding = "utf-8"
 
-        elif fc.unix_tool == "MSYS2":
-            command = [fc.MSYS2_path + r"\usr\bin\bash.exe"]
-            command += bash_options
-            command += [shell_command]
-            env["LANG"] = "ja_JP.UTF8"
-            encoding = "utf-8"
+    elif fc.unix_tool == "Cygwin":
+        command = [fc.Cygwin_path + r"\bin\bash.exe"]
+        command += bash_options
+        command += [r"tr -d '\r' | " + shell_command]
+        env["LANG"] = "ja_JP.UTF8"
+        encoding = "utf-8"
 
-        elif fc.unix_tool == "Cygwin":
-            command = [fc.Cygwin_path + r"\bin\bash.exe"]
-            command += bash_options
-            command += [r"tr -d '\r' | " + shell_command]
-            env["LANG"] = "ja_JP.UTF8"
-            encoding = "utf-8"
+    elif fc.unix_tool == "BusyBox":
+        command = [fc.BusyBox_path + r"\busybox64.exe", "bash"]
+        command += bash_options
+        command += [shell_command]
+        encoding = "cp932"
 
-        elif fc.unix_tool == "BusyBox":
-            command = [fc.BusyBox_path + r"\busybox64.exe", "bash"]
-            command += bash_options
-            command += [shell_command]
-            encoding = "cp932"
+    try:
+        if shell_command_mode == 1 or shell_command_mode == 2:
+            timeout = fc.foreground_timeout
+        else:
+            timeout = fc.background_timeout
 
-        try:
-            proc = subprocess.run(command,
-                                  input=clipboard_text,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT,
-                                  timeout=60,
-                                  creationflags=subprocess.CREATE_NO_WINDOW,
-                                  encoding=encoding,
-                                  env=env)
+        proc = subprocess.run(command,
+                              input=region_text,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT,
+                              timeout=timeout,
+                              creationflags=subprocess.CREATE_NO_WINDOW,
+                              encoding=encoding,
+                              env=env)
 
-            stdout_text = proc.stdout
-            stdout_list = stdout_text.splitlines()
+        stdout_text = proc.stdout
+        stdout_list = stdout_text.splitlines()
 
-            print("$ cat region | " + shell_command)
-            print("-" * 80)
+        print("$ cat region | " + shell_command)
+        print("-" * 80)
 
-            # Keyhac コンソールにタブを出力すると出力結果が不正になる場合があるため、expandtabs() で
-            # スペースに変換してから出力する
-            print("\n".join(stdout_list[0:10]).expandtabs())
-            if len(stdout_list) > 10:
-                print("...")
+        # Keyhac コンソールにタブを出力すると出力結果が不正になる場合があるため、expandtabs() で
+        # スペースに変換してから出力する
+        print("\n".join(stdout_list[0:fc.output_line_count]).expandtabs())
+        if len(stdout_list) > fc.output_line_count:
+            print("...")
 
-            print("-" * 80)
-            print("")
+        print("-" * 80)
+        print("")
 
-            setClipboardText(stdout_text)
-            if getProcessName() in fc.not_clipboard_target:
-                keymap.clipboard_history._push(stdout_text)
+        setClipboardText(stdout_text)
+        pushToClipboardList()
 
-            if replace_region:
-                # delay() のコールでは yank に失敗することがあるため、delayedCall() 経由で実行する
-                keymap.delayedCall(yank, 30)
-            else:
-                fakeymacs.forward_direction = True
-                resetRegion()
-                keymap.popBalloon("shell_command_message", "[Stored on the clipboard.]", 2000)
-        except:
-            keymap.popBalloon("shell_command_error", "[An error has occurred (including timeout).]", 3000)
-            print("エラーが発生しました（タイムアウトを含む）\n")
-    else:
-        print("コマンドが指定されていません\n")
+        if shell_command_mode == 1:
+            keymap.popBalloon("shell_command", "[Stored on the clipboard.]", 1000)
 
-    keymap.closeBalloon("shell_command")
+        elif shell_command_mode == 2:
+            # delay() のコールでは yank に失敗することがあるため、delayedCall() 経由で実行する
+            keymap.delayedCall(yank, 30)
+            fakeymacs.forward_direction = None
+            keymap.closeBalloon("shell_command")
+    except:
+        if shell_command_mode == 1 or shell_command_mode == 2:
+            keymap.popBalloon("shell_command", "[An error has occurred (including timeout).]", 2000)
+
+        print(f"エラーが発生しました（タイムアウト（設定値：{timeout}秒）を含む）")
+
+        if shell_command_mode == 1 or shell_command_mode == 2:
+            print("時間の掛かる処理は、C-u を２回前置して、バックグラウンドで処理を実行してください\n")
 
 def shell_command_on_region():
-    keymap.popBalloon("shell_command", "[Processing...]")
+    global input_command
 
-    # キーフックの中で時間のかかる処理を実行できないので、delayedCall() を使って遅延実行する
-    keymap.delayedCall(executeShellCommand, 100)
+    input_command = getClipboardText()
+    fakeymacs.forward_direction = forward_direction
+
+    if input_command:
+        if command_mode == 1 or command_mode == 2:
+            keymap.popBalloon("shell_command", "[Processing...]")
+            keymap.delayedCall(executeShellCommand, 100)
+        else:
+            keymap.popBalloon("shell_command", "[Start in the background]", 1000)
+            keymap.delayedCall(threading.Thread(target=executeShellCommand, daemon=True).start, 100)
+    else:
+        keymap.popBalloon("shell_command", "[No command specified]", 1000)
+        print("コマンドが指定されていません\n")
 
 define_key(keymap_emacs, "M-|", reset_search(reset_undo(reset_counter(reset_mark(shell_command_inputbox)))))
-define_key(keymap_emacs, f"LC-S-{vkToStr(VK_F12)}", reset_search(reset_undo(reset_counter(reset_mark(shell_command_on_region)))))
+define_key(keymap_emacs, f"LC-S-{vkToStr(VK_F12)}", reset_search(reset_undo(reset_counter(shell_command_on_region))))

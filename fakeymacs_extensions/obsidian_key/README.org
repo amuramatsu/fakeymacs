@@ -8,13 +8,26 @@ Obsidian 用のキーの設定を行う拡張機能です。
 
 *** コンフィグレーションパラメータ
 
-|-------------------------+--------------------------------------------------------------------------------------------|
-| Configuration parameter | Description                                                                                |
-|-------------------------+--------------------------------------------------------------------------------------------|
-| fc.obsidian_replace_key | 置き換えするキーの組み合わせ（置き換え元のキー、置き換え先のキー）を指定する（複数指定可） |
-|-------------------------+--------------------------------------------------------------------------------------------|
+|--------------------------+-----------------------------------------------------------------------------------------------------|
+| Configuration parameter  | Description                                                                                         |
+|--------------------------+-----------------------------------------------------------------------------------------------------|
+| fc.obsidian_language     | Obsidian に設定している表示言語を指定する（US: English、JP: 日本語）                                |
+| fc.obsidian_target       | Obsidian 用のキーバインドを利用するアプリケーションソフトを指定する                                 |
+| fc.obsidian_replace_key  | 置き換えするキーの組み合わせ（置き換え元のキー、置き換え先のキー）を指定する（複数指定可）          |
+| fc.obsidian_command_dict | Obsidian の Command pallet で利用するコマンドを指定する（key: 英語コマンド、value: 日本語コマンド） |
+|--------------------------+-----------------------------------------------------------------------------------------------------|
 
 *** キーバインド
+
+**** ● 「バッファ / ウィンドウ操作」のキー設定
+
+|---------+------------------+-------------------+-------------|
+| Keybind | Function         | Obsidian Command  | Description |
+|---------+------------------+-------------------+-------------|
+| M-k     | kill_buffer      | Close current tab |             |
+| Ctl-x k | kill_buffer      | Close current tab |             |
+| Ctl-x b | switch_to_buffer | Go to next tab    |             |
+|---------+------------------+-------------------+-------------|
 
 **** ● 「エディタ操作」のキー設定
 
@@ -36,26 +49,26 @@ Obsidian のコマンドを選択する際に発生する制約事項となり�
 
 ***** fc.use_ctrl_digit_key_for_digit_argument が False（初期値） の場合
 
-|---------+-------------------+---------------------------+------------------|
-| Keybind | Function          | Obsidian Command          | Description      |
-|---------+-------------------+---------------------------+------------------|
-| C-0     | switch_focus(0)   | Files: Show file explorer |                  |
-| C-<n>   | switch_focus(n)   | Go to tab #n              | n は 1 ～ 8 の値 |
-| C-9     | switch_focus(9)   | Go to last tab            |                  |
-|---------+-------------------+---------------------------+------------------|
+|---------+-----------------+---------------------------+------------------|
+| Keybind | Function        | Obsidian Command          | Description      |
+|---------+-----------------+---------------------------+------------------|
+| C-0     | switch_focus(0) | Files: Show file explorer |                  |
+| C-<n>   | switch_focus(n) | Go to tab #n              | n は 1 ～ 8 の値 |
+| C-9     | switch_focus(9) | Go to last tab            |                  |
+|---------+-----------------+---------------------------+------------------|
 
 ※ C-0 で Slidbar エリアに移動した後、別のファイルを選択することなく元の Editer
 エリアに戻るためには、C-g を二回押下すれば良いようです。
 
 ***** fc.use_ctrl_digit_key_for_digit_argument が True の場合
 
-|---------+-------------------+---------------------------+------------------|
-| Keybind | Function          | Obsidian Command          | Description      |
-|---------+-------------------+---------------------------+------------------|
-| C-A-0   | switch_focus(0)   | Files: Show file explorer |                  |
-| C-A-<n> | switch_focus(n)   | Go to tab #n              | n は 1 ～ 8 の値 |
-| C-A-9   | switch_focus(9)   | Go to last tab            |                  |
-|---------+-------------------+---------------------------+------------------|
+|---------+-----------------+---------------------------+------------------|
+| Keybind | Function        | Obsidian Command          | Description      |
+|---------+-----------------+---------------------------+------------------|
+| C-A-0   | switch_focus(0) | Files: Show file explorer |                  |
+| C-A-<n> | switch_focus(n) | Go to tab #n              | n は 1 ～ 8 の値 |
+| C-A-9   | switch_focus(9) | Go to last tab            |                  |
+|---------+-----------------+---------------------------+------------------|
 
 **** ● 「その他」のキー設定
 
@@ -144,6 +157,31 @@ def obsidianExecuteCommand(command, esc=False):
 
 - https://memotora.com/2014/10/05/google-ime-pop-up-setting/
 
+● ブラウザで obsidian-remote を利用する場合、C-F4 がブラウザ側でキャッチされ、ブラウザの
+タブを閉じようとしてしまいます。
+このため、ブラウザで Ctl-x k を実行した場合には、コマンドパレットで Close current tab
+を実行するようにし、obsidian-remote 側のタブを閉じるようにしています。
+M-k は 従来どおり C-F4 を発行するのみの機能としていますので、ブラウザで obsidian-remote
+を利用する場合には、M-k と Ctl-x k を使い分けるようにしてください。
+
+● ブラウザで obsidian-remote を利用する場合、C-Tab がブラウザ側でキャッチされ、ブラウザの
+タブを切り替えてしまいます。
+このため、ブラウザで Ctl-x b を実行した場合には、コマンドパレットで Go to next tab
+を実行するようにし、obsidian-remote 側のタブを切り替えるようにしています。
+C-Tab は従来どおりブラウザで機能しますので、ブラウザで obsidian-remote を利用する場合には、
+C-Tab と Ctl-x b を使い分けるようにしてください。
+
+● Google Chrome を利用している場合、次のサイトに記載のある方法で obsidian-remote の画面の
+ショートカットを「ウィンドウで開く」オプション付きで作成すると、先の２つの問題を回避する
+ことができます。お試しください。
+
+- https://zenn.dev/kato_k/articles/6301d35b3d8d3c#%E5%B0%8F%E6%8A%80
+
+● Micorosoft Edge を利用している場合、次のサイトに記載のある方法で obsidian-remote の画面を
+アプリ化すると、先の２つの問題を回避することができます。お試しください。
+
+- https://kiritsume.com/microsoft-edge-install-as-an-app-feature/
+
 ● Canvas で Space + Drag する機能は Fakeymacs では正常に動作しません。Canvas をスクロールする
 ためには、マウスの Scroll Wheel を利用してください。Shift キーと組み合わせることで、横スクロール
 も可能となります。
@@ -151,3 +189,9 @@ def obsidianExecuteCommand(command, esc=False):
 ● Quick Switcher: Open quick switcher（ショートカットキー：Ctrl+o）は、Fakeymacs のキーバインド
 Ctl-x C-f で開くことができます。この後、ファイルを選択して Enter、C-Enter、C-A-Enter のいずれかの
 キーで確定することにより、ファイルを指定の場所に開くことができます。
+
+● 次の obsidian-remote という docker image を利用する場合には、Obsidian の言語設定を「English」にし、
+fc.obsidian_language 変数の設定を "US" にしてご利用ください。
+「日本語」で利用すると、コマンドの入力遅延により、obsidian の動作が不安定になります。
+
+- https://hub.docker.com/r/linuxserver/obsidian

@@ -6,6 +6,30 @@
 
 try:
     # 設定されているか？
+    fc.obsidian_language
+except:
+    # Obsidian に設定している表示言語を指定する（US: English、JP: 日本語）
+    # fc.obsidian_language = "US"
+    fc.obsidian_language = "JP"
+
+try:
+    # 設定されているか？
+    fc.obsidian_target
+except:
+    # Obsidian 用のキーバインドを利用するアプリケーションソフトを指定する
+    # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
+    #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
+    #   リストの後ろの項目から省略可）を指定してください）
+    fc.obsidian_target = ["Obsidian.exe",
+                          ["chrome.exe",  "Chrome_WidgetWin_1", ["Obsidian", "Obsidian および他*"]],
+                          ["msedge.exe",  "Chrome_WidgetWin_1", ["Obsidian", "Obsidian および他*"]],
+                          ["firefox.exe", "MozillaWindowClass", "Obsidian — Mozilla Firefox"],
+                          ["mstsc.exe",   "RAIL_WINDOW",        ["Obsidian (リモート)",
+                                                                 "Obsidian および他*"]],
+                          ]
+
+try:
+    # 設定されているか？
     fc.obsidian_replace_key
 except:
     # 置き換えするキーの組み合わせ（置き換え元のキー、置き換え先のキー）を指定する（複数指定可）
@@ -24,16 +48,38 @@ except:
                                ]
 
 # Quick Switcher: Open quick switcher で C-Enter のキー操作が RCtrl で動作しない対策
-fc.obsidian_replace_key += [["RC-Enter", "LC-Enter"]]
+fc.obsidian_replace_key += [["RC-Enter", "C-Enter"]]
+
+try:
+    # 設定されているか？
+    fc.obsidian_command_dict
+except:
+    # Obsidian の Command pallet で利用するコマンドを指定する（key: 英語コマンド、value: 日本語コマンド）
+    fc.obsidian_command_dict = {"Close current tab"         : "現在のタブを閉じる",
+                                "Go to next tab"            : "次のタブに移動",
+                                "Close this tab group"      : "このタブグループを閉じる",
+                                "Close all other tabs"      : "他のタブをすべて閉じる",
+                                "Split down"                : "下に分割",
+                                "Split right"               : "右に分割",
+                                "Focus on tab group"        : "タブグループにフォーカス",
+                                "Files: Show file explorer" : "ファイル: ファイルエクスプローラを表示",
+                                "Zoom in"                   : "ズームイン",
+                                }
 
 # --------------------------------------------------------------------------------------------------
+
+regex = "|".join([fnmatch.translate(app) for app in fc.obsidian_target if type(app) is str])
+if regex == "": regex = "$." # 絶対にマッチしない正規表現
+obsidian_target1 = re.compile(regex)
+obsidian_target2 = [app for app in fc.obsidian_target if type(app) is list]
 
 def is_obsidian(window):
     global obsidian_status
 
     if window is not fakeymacs.last_window or fakeymacs.force_update:
         if (fakeymacs.is_emacs_target == True and
-            getProcessName(window) == "Obsidian.exe"):
+            (obsidian_target1.match(getProcessName(window)) or
+             any(checkWindow(*app, window=window) for app in obsidian_target2))):
             obsidian_status = True
         else:
             obsidian_status = False
@@ -51,6 +97,9 @@ def define_key_o(keys, command):
     define_key(keymap_obsidian, keys, command)
 
 def obsidianExecuteCommand(command, esc=False):
+    if fc.obsidian_language == "JP":
+        command = fc.obsidian_command_dict[command]
+
     def _func():
         self_insert_command("C-p")()
         princ(command)
@@ -67,6 +116,21 @@ def obsidianExecuteCommand2(command, esc=False):
         obsidianExecuteCommand(command, esc)()
     return _func
 
+## バッファ / ウィンドウ操作
+def kill_buffer():
+    # Obsidian Command : Close current tab
+    self_insert_command("C-w")()
+
+def kill_buffer_o():
+    # Obsidian-remote 画面で動作するように、C-w の発行とはしていない
+    # Obsidian Command : Close current tab
+    obsidianExecuteCommand("Close current tab")()
+
+def switch_to_buffer():
+    # ブラウザで動作するように、C-Tab の発行とはしていない（C-Tab がブラウザでキャッチされるため）
+    # Obsidian Command : Go to next tab
+    obsidianExecuteCommand("Go to next tab")()
+
 ## エディタ操作
 def delete_window():
     # Obsidian Command : Close this tab group
@@ -79,11 +143,11 @@ def delete_other_windows():
 
 def split_window_below():
     # Obsidian Command : Split down
-    obsidianExecuteCommand("Split down")()
+    obsidianExecuteCommand("Split down", esc=True)()
 
 def split_window_right():
     # Obsidian Command : Split right
-    obsidianExecuteCommand("Split right")()
+    obsidianExecuteCommand("Split right", esc=True)()
 
 def other_window():
     # Obsidian Command : Focus on tab group ...
@@ -132,6 +196,11 @@ def mergeEmacsMultiStrokeKeymap():
 
 ## keymap_emacs キーマップのマルチストロークキーの設定を keymap_obsidian キーマップにマージする
 keymap_obsidian.applying_func = mergeEmacsMultiStrokeKeymap
+
+## 「バッファ / ウィンドウ操作」のキー設定
+define_key_o("M-k",     reset_search(reset_undo(reset_counter(reset_mark(kill_buffer)))))
+define_key_o("Ctl-x k", reset_search(reset_undo(reset_counter(reset_mark(kill_buffer_o)))))
+define_key_o("Ctl-x b", reset_search(reset_undo(reset_counter(reset_mark(switch_to_buffer)))))
 
 ## 「エディタ操作」のキー設定
 define_key_o("Ctl-x 0", reset_search(reset_undo(reset_counter(reset_mark(delete_window)))))
