@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20251009_01"
+fakeymacs_version = "20251017_02"
 
 import time
 import os
@@ -255,6 +255,7 @@ def configure(keymap):
                                "MobaXterm.exe",          # MobaXterm
                                "TurboVNC.exe",           # TurboVNC
                                "vncviewer*.exe",         # UltraVNC
+                               "mc.exe",                 # Midnight Commander
                                [None, None, "さくらのクラウドシェル*"],
                                ]
 
@@ -281,6 +282,7 @@ def configure(keymap):
                                "putty.exe",              # PuTTY
                                "ttermpro.exe",           # TeraTerm
                                "MobaXterm.exe",          # MobaXterm
+                               "mc.exe",                 # Midnight Commander
                                [None, None, "さくらのクラウドシェル*"],
                                ]
 
@@ -568,6 +570,7 @@ def configure(keymap):
                                "powershell.exe",
                                "cmd.exe",
                                "ubuntu*.exe",
+                               "mc.exe",
                                ]
 
     # keyboard_quit 関数で、Esc を発行しないアプリケーションソフトを指定する

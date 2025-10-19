@@ -85,7 +85,7 @@ CapsLock のキーの置き換えは、キーボードの機能で行うか、�
 英語キーボード配列を利用しているユーザにお勧めの方法です。次のレジストリ設定ファイル
 を実行（管理者権限不要）し、Windows に再サインインをすることで利用可能となります。
 
-- [[/fakeymacs_tools/Subsititutes-00000411.reg]]
+- [[/fakeymacs_tools/Substitutes-00000411.reg]]
 
 詳しくは、次の Issue を参照してください。
 
@@ -155,20 +155,21 @@ _config_personal.py ファイルを config_personal.pyという名称に変更�
 
 次は、修正する必要性が高いと思われるコンフィグレーションパラメータです。
 
-|----------------------------+----------------------------------------------------------------------------------|
-| Configuration Parameter    | Description                                                                      |
-|----------------------------+----------------------------------------------------------------------------------|
-| fc.ime                     | 利用している IME を指定する                                                      |
-| fc.transparent_target      | すべてのキーマップを透過するアプリケーションソフトのプロセス名称を指定する       |
-| fc.not_emacs_target        | Emacs のキーバインドに“したくない”アプリケーションソフトを指定する             |
-| fc.ime_target              | IME の切り替え“のみをしたい”アプリケーションソフトを指定する                   |
-| fc.side_of_ctrl_key        | 左右どちらの Ctrl キーを使うかを指定する                                         |
-| fc.use_esc_as_meta         | Esc キーを Meta キーとして使うかどうかを指定する                                 |
-| fc.use_emacs_ime_mode      | Emacs 日本語入力モードを使うかどうかを指定する                                   |
-| fc.toggle_input_method_key | IME をトグルで切り替えるキーを指定する                                           |
-| fc.set_input_method_key    | IME を切り替えるキーの組み合わせ（disable、enable の順）を指定する               |
-| fc.game_app_list           | ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフトを指定する |
-|----------------------------+----------------------------------------------------------------------------------|
+|----------------------------+------------------------------------------------------------------------------------------------------------------------------------|
+| Configuration Parameter    | Description                                                                                                                        |
+|----------------------------+------------------------------------------------------------------------------------------------------------------------------------|
+| fc.ime                     | 利用している IME を指定する                                                                                                        |
+| fc.transparent_target      | すべてのキーマップを透過するアプリケーションソフトのプロセス名称を指定する                                                         |
+| fc.not_emacs_target        | Emacs のキーバインドに“したくない”アプリケーションソフトを指定する                                                               |
+| fc.ime_target              | IME の切り替え“のみをしたい”アプリケーションソフトを指定する                                                                     |
+| fc.side_of_ctrl_key        | 左右どちらの Ctrl キーを使うかを指定する                                                                                           |
+| fc.use_esc_as_meta         | Esc キーを Meta キーとして使うかどうかを指定する                                                                                   |
+| fc.use_emacs_ime_mode      | Emacs 日本語入力モードを使うかどうかを指定する                                                                                     |
+| fc.toggle_input_method_key | IME をトグルで切り替えるキーを指定する                                                                                             |
+| fc.set_input_method_key    | IME を切り替えるキーの組み合わせ（disable、enable の順）を指定する                                                                 |
+| fc.game_app_list           | ゲームなど、キーバインドの設定を極力行いたくないアプリケーションソフトを指定する                                                   |
+| fc.name_change_app_list    | ウィンドウのタイトルが変わった時にキーバインドの再設定を行うアプリケーションソフトのプロセス名称（ワイルドカード指定可）を指定する |
+|----------------------------+------------------------------------------------------------------------------------------------------------------------------------|
 
 ※ 1) で CapsLock に右 Ctrl キーを割り当てた場合には、fc.side_of_ctrl_key 変数を "R" に
 変更する必要があります。この場合、左 Ctrl キーは従来どおり Windows ショートカット用のキー
@@ -184,6 +185,13 @@ _config_personal.py ファイルを config_personal.pyという名称に変更�
 #+BEGIN_EXAMPLE
 # fc.set_input_method_key += [["O-LAlt", "O-RAlt"]]
 #+END_EXAMPLE
+
+※ ウィンドウのタイトルが変わった時にキーバインドの再設定を行うには、fc.name_change_app_list
+変数に対象とするアプリケーションソフトを指定しておく必要があります。
+初期設定では、ブラウザやターミナルソフトを指定しています。
+ブラウザでは さくらのクラウドシェル や VS Code Web の利用を想定しているため、ターミナルソフトでは
+以降で説明する Microsoft Edit や Midnight Commander の利用を想定しているためです。
+必要なアプリケーションソフトがあれば、追加設定を行ってください。
 
 *** 7) 拡張機能の設定を行う
 
@@ -277,14 +285,15 @@ Fakeymacs では、Python のクロージャの機能を多用しています。
 
 ** Windows Terminal の対応について
 
-Windows Terminal では、複数の種類のターミナルをタブで個別に開くことができます。Fakeymacs では、
-ウィンドウタイトルが変更されたイベントをキャッチすることにより、タブ毎に異なるキーバインドの
-設定を実現しています。
+Windows Terminal では、複数の種類のターミナルをタブで個別に開くことができます。
+このため、Fakeymacs ではウィンドウタイトルが変更されたイベントをキャッチすることにより、
+タブ毎に異なるキーバインドの設定を実現しています。
 
 なお、Windows Terminal で Ubuntu 等の Linux を利用する際は、設定 -> 二番目にある操作 メニューより、
-「貼り付け」の Ctrl+v は削除しておかないと、Emacs や 以降で紹介する Midnight Commander での
-スクロールアップが正常に動作しません。Ctrl+v を削除した場合でも、Ctrl+Shift+v が Windows の
-クリップボードからの「貼り付け」として機能しますので、あまり困ることはないと思います。
+「貼り付け」の Ctrl+v を削除してご利用ください。
+削除しないと、Emacs や 以降で紹介する Midnight Commander でのスクロールアップが正常に動作しません。
+Ctrl+v を削除しても、Ctrl+Shift+v が Windows のクリップボードからの「貼り付け」として機能しますので、
+あまり困ることはないと思います。
 
 ** Microsoft Edit の対応について
 
@@ -300,13 +309,13 @@ Linux 版の Edit は、次からダウンロードすることができます�
 
 - https://github.com/microsoft/edit/releases
 
-なお、Microsoft Edit を Windows Terminal で利用する場合は、設定 -> 操作 メニューより、
-「貼り付けるときに末尾の空白を削除する」をオフに設定してください。
+なお、Windows Terminal で Microsoft Edit を利用する際は、設定 -> 操作 メニューより、
+「貼り付けるときに末尾の空白を削除する」をオフに設定してご利用ください。
 Microsoft Edit を使う際に改行を含む行のコピペが正しく機能するようになります。
 
 ** Midnight Commander の対応について
 
-Midnight Commander は、Linux、Windows どちらでも動く、テキストベースのファイルマネージャ
+Midnight Commander は、Linux、Windows どちらでも動くテキストベースのファイルマネージャ
 です。Emacs like のキーバインドを持ち、ウィンドウタイトルを変更する機能ももっているので、
 Windows Terminal などのターミナル上で Fakeymacs と共存して利用可能です。
 
@@ -320,19 +329,20 @@ Windows 版は以下からダウンロード可能です。
 次のページに書かれている方法で、利用するエディタを先に紹介したMicrosoft Edit にすると、
 シームレスに Emacs キーバインドの環境を利用することができます。
 
-- https://hiroom2.jimdoweb.com/2015/09/06/midnight-commander%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%81%BF%E3%82%8B/#sec-3-4
+- https://hiroom2.jimdoweb.com/2015/09/06/midnight-commanderを使ってみる/#sec-3-4
 
 Midnight Commander の使い方は次のページに紹介されていますので、是非一度お試しください。
 
-- https://bioinfo-dojo.net/2020/08/31/%e7%ab%af%e6%9c%ab%e7%94%a8-cui-%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%83%9e%e3%83%8d%e3%83%bc%e3%82%b8%e3%83%a3%e3%83%bc-midnight-commander-mc-%e4%bd%bf%e3%81%84%e6%96%b9-%e5%9f%ba%e6%9c%ac/
+- https://bioinfo-dojo.net/2020/08/31/端末用-cui-ファイルマネージャー-midnight-commander-mc-使い方-基本/
 
-なお、ファンクションキーの無い 60% キーボードなどをお使いの場合は、以降に紹介している
-space_fn 拡張機能を利用すると、Space+<数字キー> でファンクションキーが利用できるように
-なるなど、操作性が良くなると思います。
+なお、Windows Terminal で Midnight Commander を利用する際は、設定 -> 二番目にある操作
+メニューより、「全画面表示に切り替える」の Alt+Enter を削除してご利用ください。
+「ファイル名取得」の機能が利用できるようになります。
+Alt+Enter を削除しても、F11 が同機能のために利用可能です。
 
-また、config_personal.py の [section-base-2] セクションにある次の設定を有効にすると、
-プレフィックスキーの Esc や C-x を使う際に IME を OFF にする機能が働き、使い勝手が
-良くなると思います。
+また、config_personal.py の [section-base-2] セクションにある次の設定を有効にすることを
+検討ください。プレフィックスキーの Esc や C-x を使う際に IME を OFF にする機能が働き、
+使い勝手が良くなると思います。
 
 #+BEGIN_EXAMPLE
 # キーを入力した後に、IME を OFF にする設定
@@ -340,6 +350,12 @@ define_key(keymap_base, "Esc", self_insert_command3("Esc"))
 define_key(keymap_base, "C-[", self_insert_command3("C-["))
 define_key(keymap_base, "C-x", self_insert_command3("C-x"))
 #+END_EXAMPLE
+
+さらに、ファンクションキーの無い 60% キーボードなどをお使いの場合は、以降に紹介している
+space_fn 拡張機能の利用を検討ください（space_fn 拡張機能の config_persona.py は、
+config_personal_2.py を複写してご利用ください）。
+Space+Ctrl+o でコマンドラインへの切り替え（Ctrl+o）が使えたり、Space+<数字キー>
+でファンクションキーが使えるようになるなど、操作性が良くなると思います。
 
 ** ウィンドウ操作の機能強化について
 
