@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20251017_02"
+fakeymacs_version = "20251025_01"
 
 import time
 import os
@@ -214,11 +214,11 @@ def configure(keymap):
     # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
     #   できます）
     fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                        ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*", "* - edit*",
-                         "設定", "Settings"]],
+                        ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*",
+                         "* - edit*", "* - micro*", "設定", "Settings"]],
                        ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
                        ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト*", "*Command Prompt*"]],
-                       [None, "ConsoleWindowClass", "* - edit*"],
+                       [None, "ConsoleWindowClass", ["* - edit*", "* - micro*"]],
                        ]
 
     # Emacs のキーバインドに“しない”アプリケーションソフトを指定する
@@ -1222,7 +1222,9 @@ def configure(keymap):
             checkWindow("sakura.exe", "SakuraView*")):
             self_insert_command3("C-j")()
 
-        elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
+        elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - micro*") or
+              checkWindow(None, "ConsoleWindowClass", "* - micro*") or
+              checkWindow("TeXworks.exe", "Qt661QWindowIcon")):
             self_insert_command3("C-l")()
         else:
             self_insert_command3("C-g")()
@@ -1493,6 +1495,10 @@ def configure(keymap):
                 elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit*") or
                       checkWindow(None, "ConsoleWindowClass", "* - edit*")):
                     self_insert_command({"backward":"S-Enter", "forward":"Enter"}[direction])()
+
+                elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - micro*") or
+                      checkWindow(None, "ConsoleWindowClass", "* - micro*")):
+                    self_insert_command({"backward":"C-p", "forward":"C-n"}[direction])()
                 else:
                     self_insert_command({"backward":"S-F3", "forward":"F3"}[direction])()
 
@@ -1509,6 +1515,12 @@ def configure(keymap):
             checkWindow("sakura.exe", "SakuraView*")  or
             checkWindow(class_name="HM32CLIENT")):
             self_insert_command("C-r")()
+
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - micro*") or
+            checkWindow(None, "ConsoleWindowClass", "* - micro*")):
+            self_insert_command("C-e")()
+            setImeStatus(0)
+            keymap.InputTextCommand("replace ")()
 
         elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
             self_insert_command("C-r")()
@@ -1620,10 +1632,14 @@ def configure(keymap):
             fakeymacs.is_searching = None
 
     def kill_emacs():
-        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - edit*") or
-            checkWindow(None, "ConsoleWindowClass", "* - edit*")):
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["* - edit*", "* - micro*"]) or
+            checkWindow(None, "ConsoleWindowClass", ["* - edit*", "* - micro*"])):
             setImeStatus(0)
             self_insert_command("C-q")()
+
+        # Windows 11版 Notepad の場合、A-F4 が失敗することがあるので、C-S-w を発行する
+        elif checkWindow("Notepad.exe", "RichEditD2DPT"):
+            self_insert_command("C-S-w")()
         else:
             self_insert_command("A-F4")()
 
