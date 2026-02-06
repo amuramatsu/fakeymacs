@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20251129_01"
+fakeymacs_version = "20260126_02"
 
 import time
 import os
@@ -215,7 +215,7 @@ def configure(keymap):
     #   できます）
     fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
                         ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*",
-                         "* - edit*", "* - micro*", "設定", "Settings"]],
+                         "* - edit*", "* - micro*", "* - fresh*", "設定", "Settings"]],
                        ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
                        ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト*", "*Command Prompt*"]],
                        [None, "ConsoleWindowClass", ["* - edit*", "* - micro*"]],
@@ -1294,25 +1294,31 @@ def configure(keymap):
         setMark()
 
         if repeat == 1 and not kill_whole_line:
-            mark(move_end_of_line, True)()
-            delay()
-
-            if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                            ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*"]) or
-                checkWindow("powershell.exe", "ConsoleWindowClass", "*PowerShell*") or
-                checkWindow("cmd.exe", "ConsoleWindowClass",
-                            ["*コマンド プロンプト*", "*Command Prompt*"])):
-                kill_region()
-
-            elif checkWindow(class_name="HM32CLIENT"): # Hidemaru Software
-                kill_region()
-                delay()
-                if getClipboardText() == "":
-                    self_insert_command("Delete")()
+            if checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*"):
+                self_insert_command("C-k")()
             else:
-                # 改行を消せるようにするため Cut にはしていない
-                copyRegion()
-                self_insert_command("Delete")()
+                mark(move_end_of_line, True)()
+                delay()
+
+                if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                                ["*コマンド プロンプト*", "*Command Prompt*"]) or
+                    checkWindow("cmd.exe", "ConsoleWindowClass",
+                                ["*コマンド プロンプト*", "*Command Prompt*"])):
+                    kill_region()
+
+                elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "*PowerShell*") or
+                      checkWindow("powershell.exe", "ConsoleWindowClass", "*PowerShell*")):
+                    cutRegion()
+
+                elif checkWindow(class_name="HM32CLIENT"): # Hidemaru Software
+                    cutRegion()
+                    delay()
+                    if getClipboardText() == "":
+                        self_insert_command("Delete")()
+                else:
+                    # 改行を消せるようにするため Cut にはしていない
+                    copyRegion()
+                    self_insert_command("Delete")()
         else:
             def _move_end_of_region():
                 if checkWindow("WINWORD.EXE", "_WwG"):
@@ -1533,6 +1539,9 @@ def configure(keymap):
             setImeStatus(0)
             keymap.InputTextCommand("replace ")()
 
+        elif checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*"):
+            self_insert_command("C-A-r")()
+
         elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
             self_insert_command("C-r")()
             self_insert_command("Tab", "Tab", "Tab")()
@@ -1644,10 +1653,16 @@ def configure(keymap):
         resetRegion()
 
         if esc:
-            # Esc を発行して問題ないアプリケーションソフトには Esc を発行する
-            if not (keyboard_quit_no_esc_app_list1.match(getProcessName()) or
-                    any(checkWindow(*app) for app in keyboard_quit_no_esc_app_list2)):
-                escape()
+            # Fresh Editor で redo が動作するようにするための対策
+            if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*") and
+                fakeymacs.last_keys[0] is keymap_emacs and
+                fakeymacs.last_keys[1] in ["C-/", "Ctl-x u", "C-z", "C-g"]):
+                pass
+            else:
+                # Esc を発行して問題ないアプリケーションソフトには Esc を発行する
+                if not (keyboard_quit_no_esc_app_list1.match(getProcessName()) or
+                        any(checkWindow(*app) for app in keyboard_quit_no_esc_app_list2)):
+                    escape()
 
         keymap.command_RecordStop()
 
@@ -1661,7 +1676,8 @@ def configure(keymap):
             fakeymacs.is_searching = None
 
     def kill_emacs():
-        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["* - edit*", "* - micro*"]) or
+        if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
+                        ["* - edit*", "* - micro*", "* - fresh*"]) or
             checkWindow(None, "ConsoleWindowClass", ["* - edit*", "* - micro*"])):
             setImeStatus(0)
             self_insert_command("C-q")()
@@ -1765,6 +1781,9 @@ def configure(keymap):
                     self_insert_command("Right", "Left")()
                 else:
                     self_insert_command("Left", "Right")()
+
+            elif checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*"):
+                self_insert_command("Esc")()
 
             elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "*PowerShell*") or
                   checkWindow("powershell.exe", "ConsoleWindowClass", "*PowerShell*")):
