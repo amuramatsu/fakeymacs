@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20260215_01"
+fakeymacs_version = "20260308_01"
 
 import time
 import os
@@ -213,9 +213,14 @@ def configure(keymap):
     # （fc.not_emacs_target の設定より優先します）
     # （Keyhac のメニューから「内部ログ」を ON にすると、processname や classname を確認することが
     #   できます）
-    fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                        ["*PowerShell*", "*コマンド プロンプト*", "*Command Prompt*",
-                         "* - edit*", "* - micro*", "* - fresh*", "設定", "Settings"]],
+    fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["*PowerShell*",
+                                                                                 "*コマンド プロンプト*",
+                                                                                 "*Command Prompt*",
+                                                                                 "* - edit*",
+                                                                                 "* - micro*",
+                                                                                 "* - fresh*",
+                                                                                 "設定",
+                                                                                 "Settings"]],
                        ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
                        ["cmd.exe", "ConsoleWindowClass", ["*コマンド プロンプト*", "*Command Prompt*"]],
                        [None, "ConsoleWindowClass", ["* - edit*", "* - micro*"]],
@@ -657,6 +662,14 @@ def configure(keymap):
                             try:
                                 process_name = getProcessName()
                                 if process_name and name_change_app.match(process_name):
+
+                                    if keymap.debug:
+                                        print("<Fakeymacs>")
+                                        print(f"Window : exe   : {process_name}")
+                                        print(f"       : class : {getClassName()}")
+                                        print(f"       : text  : {getText()}")
+                                        print("")
+
                                     updateKeymap(True)
                             except:
                                 pass
@@ -1813,11 +1826,19 @@ def configure(keymap):
         if window is None:
             window = keymap.getWindow()
 
+        if (getProcessName(window) == "WindowsTerminal.exe" and
+            window.getClassName()  == "Windows.UI.Input.InputSite.WindowClass"):
+            window = window.getParent().getParent()
+
         return window.getClassName()
 
     def getText(window=None):
         if window is None:
             window = keymap.getWindow()
+
+        if (getProcessName(window) == "WindowsTerminal.exe" and
+            window.getClassName()  == "Windows.UI.Input.InputSite.WindowClass"):
+            window = window.getParent().getParent()
 
         return window.getText()
 
@@ -1827,11 +1848,6 @@ def configure(keymap):
 
         window_process_name = getProcessName(window)
         window_class_name   = getClassName(window)
-
-        if (window_process_name == "WindowsTerminal.exe" and
-            window_class_name   == "Windows.UI.Input.InputSite.WindowClass"):
-            window = window.getParent().getParent()
-            window_class_name = getClassName(window)
 
         if ((process_name is None or fnmatch.fnmatch(window_process_name, process_name)) and
             (class_name is None or fnmatch.fnmatchcase(window_class_name, class_name))):

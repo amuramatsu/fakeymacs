@@ -123,6 +123,13 @@ def split_window_right():
 def other_window():
     self_insert_command("A-]")()
 
+## タブ操作
+def previous_tab():
+    self_insert_command("C-PageUp")()
+
+def next_tab():
+    self_insert_command("C-PageDown")()
+
 ## 矩形選択 / マルチカーソル
 def mark_previous_line():
     self_insert_command("C-A-Up")()
@@ -151,7 +158,15 @@ def mark_end_of_line():
 def mark_next_like_this():
     region(self_insert_command("C-d"))()
 
-def keyboard_quit_f():
+def keyboard_quit_f1():
+    if fakeymacs.is_searching:
+        self_insert_command("C-f")()
+        self_insert_command("Esc")()
+        fakeymacs.is_searching = None
+
+    keyboard_quit()
+
+def keyboard_quit_f2():
     keyboard_quit(esc=False)
 
 ## キーボードマクロ
@@ -214,6 +229,10 @@ define_key_f("Ctl-x 2", reset_search(reset_undo(reset_counter(reset_mark(split_w
 define_key_f("Ctl-x 3", reset_search(reset_undo(reset_counter(reset_mark(split_window_right)))))
 define_key_f("Ctl-x o", reset_search(reset_undo(reset_counter(reset_mark(other_window)))))
 
+## タブ操作
+define_key_f("M-Up",   reset_search(reset_undo(reset_counter(reset_mark(previous_tab)))))
+define_key_f("M-Down", reset_search(reset_undo(reset_counter(reset_mark(next_tab)))))
+
 ## 「矩形選択 / マルチカーソル」のキー設定
 define_key_f("C-A-p",   reset_search(reset_undo(reset_counter(repeat(mark_previous_line)))))
 define_key_f("C-A-n",   reset_search(reset_undo(reset_counter(repeat(mark_next_line)))))
@@ -224,7 +243,7 @@ define_key_f("C-A-S-f", reset_search(reset_undo(reset_counter(repeat(mark_forwar
 define_key_f("C-A-a",   reset_search(reset_undo(reset_counter(mark_beginning_of_line))))
 define_key_f("C-A-e",   reset_search(reset_undo(reset_counter(mark_end_of_line))))
 define_key_f("C-A-d",   reset_search(reset_undo(reset_counter(mark_next_like_this))))
-define_key_f("C-A-g",   reset_search(reset_counter(reset_mark(keyboard_quit_f))))
+define_key_f("C-A-g",   reset_search(reset_counter(reset_mark(keyboard_quit_f2))))
 
 ## 「キーボードマクロ」のキー設定
 define_key_f("Ctl-x (", keyboard_macro_start)
@@ -232,6 +251,7 @@ define_key_f("Ctl-x )", keyboard_macro_stop)
 define_key_f("Ctl-x e", reset_search(reset_undo(reset_counter(repeat(keyboard_macro_play)))))
 
 ## 「その他」のキー設定
+define_key_f("C-g", reset_search(reset_counter(reset_mark(keyboard_quit_f1))))
 define_key_f("M-x", reset_search(reset_undo(reset_counter(reset_mark(execute_extended_command)))))
 define_key_f("M-;", reset_search(reset_undo(reset_counter(reset_mark(comment_dwim)))))
 define_key_f("M-|", reset_search(reset_undo(reset_counter(reset_mark(shell_command_on_region)))))
