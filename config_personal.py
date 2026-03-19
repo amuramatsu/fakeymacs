@@ -200,10 +200,11 @@ for t in fc.ctrlm_target:
 #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
-fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab"], # ベース Keymap
+fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab", "Space"], # ベース Keymap
                            "keymap_global"    : [], # グローバル Keymap
                            "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
                            "keymap_vscode"    : [], # Emacs キーバインド VSCode 拡張用 Keymap
+                           "keymap_vim"       : [], # Emacs キーバインド Vim 用 Keymap
                            "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
                            "keymap_ei"        : [
                                "C-b", "C-f", "C-p", "C-n", "C-a", "C-e",
@@ -597,6 +598,12 @@ if 0:
 # Fresh Editor 用のキーの設定を行う
 if 0:
     exec(readConfigExtension(r"fresh_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Vim 用のキーの設定を行う
+if 0:
+    exec(readConfigExtension(r"vim_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
