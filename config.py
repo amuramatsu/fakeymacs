@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20260308_01"
+fakeymacs_version = "20260405_01"
 
 import time
 import os
@@ -246,7 +246,6 @@ def configure(keymap):
                                "Cmder.exe",              # Cmder
                                "ConEmu*.exe",            # ConEmu
                                "emacs*.exe",             # Emacs
-                               "gvim.exe",               # GVim
                                "xyzzy.exe",              # xyzzy
                                "msrdc.exe",              # WSLg
                                "XWin*.exe",              # XWin
@@ -261,6 +260,9 @@ def configure(keymap):
                                "TurboVNC.exe",           # TurboVNC
                                "vncviewer*.exe",         # UltraVNC
                                "mc.exe",                 # Midnight Commander
+                               "*vim.exe",               # Vim 系エディタ
+                               "neovide.exe",            # Neovide
+                               "elecxzy.exe",            # elecxzy
                                [None, None, "さくらのクラウドシェル*"],
                                ]
 
@@ -282,12 +284,14 @@ def configure(keymap):
                                "mintty.exe",             # mintty
                                "Cmder.exe",              # Cmder
                                "ConEmu*.exe",            # ConEmu
-                               "gvim.exe",               # GVim
                                "xyzzy.exe",              # xyzzy
                                "putty.exe",              # PuTTY
                                "ttermpro.exe",           # TeraTerm
                                "MobaXterm.exe",          # MobaXterm
                                "mc.exe",                 # Midnight Commander
+                               "*vim.exe",               # Vim 系エディタ
+                               "neovide.exe",            # Neovide
+                               "elecxzy.exe",            # elecxzy
                                [None, None, "さくらのクラウドシェル*"],
                                ]
 
@@ -296,7 +300,7 @@ def configure(keymap):
     #   のような指定の他に、"M-f" や "Ctl-x d" などの指定も可能です。"M-g*" のようにワイルドカードも
     #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
     # （ここで指定したキーに新たに別のキー設定をしたいときには、define_key2 関数を利用してください）
-    fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab", "Space"], # ベース Keymap
+    fc.skip_mapping_key     = {"keymap_base"      : ["W-g", "A-Tab", "Space"], # ベース Keymap
                                "keymap_global"    : [], # グローバル Keymap
                                "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
                                "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
@@ -309,7 +313,7 @@ def configure(keymap):
     # （リストに指定するキーは、Keyhac で指定可能なマルチストロークではないキーとしてください。
     #   Fakeymacs の記法の "M-f" や "Ctl-x d" などの指定はできません。"A-v"、"C-v" などが指定可能です。）
     # （ここで指定しなくとも、左右のモディファイアキーを使い分けることで入力することは可能です）
-    fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
+    fc.emacs_excluded_key   = {"chrome.exe"       : ["C-l", "C-t"],
                                "msedge.exe"       : ["C-l", "C-t"],
                                "firefox.exe"      : ["C-l", "C-t"],
                                "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
@@ -519,11 +523,11 @@ def configure(keymap):
 
     # ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトのクラス名称を指定する
     # （正規表現で指定してください（複数指定する場合は「|」で連結してください））
-    fc.window_operation_exclusion_class = r"Progman"
+    fc.window_operation_excluded_class = r"Progman"
 
     # ウィンドウ操作（other_window など）の対象としたくないアプリケーションソフトのプロセス名称を指定する
     # （正規表現で指定してください（複数指定する場合は「|」で連結してください））
-    fc.window_operation_exclusion_process = r"RocketDock\.exe"  # サンプルとして RocketDock.exe を登録
+    fc.window_operation_excluded_process = r"RocketDock\.exe"  # サンプルとして RocketDock.exe を登録
 
     # クリップボードリストを起動するキーを指定する
     fc.clipboardList_key = "A-y"
@@ -597,6 +601,13 @@ def configure(keymap):
 
     # 個人設定ファイルのセクション [section-base-1] を読み込んで実行する
     exec(readConfigPersonal("[section-base-1]"), dict(globals(), **locals()))
+
+    # 変数名を変更したことによる誤動作回避の対策
+    if hasattr(fc, "skip_settings_key"):
+        fc.skip_mapping_key = fc.skip_settings_key
+
+    if hasattr(fc, "emacs_exclution_key"):
+        fc.emacs_excluded_key = fc.emacs_exclution_key
 
 
     ###########################################################################
@@ -937,12 +948,12 @@ def configure(keymap):
                 reset_undo(reset_counter(reset_mark(lambda: None)))()
                 fakeymacs.ime_cancel = False
 
-                if process_name in fc.emacs_exclusion_key:
-                    fakeymacs.emacs_exclusion_key = [
+                if process_name in fc.emacs_excluded_key:
+                    fakeymacs.emacs_excluded_key = [
                         keyStrNormalization(addSideOfModifierKey(specialCharToKeyStr(key)))
-                        for key in fc.emacs_exclusion_key[process_name]]
+                        for key in fc.emacs_excluded_key[process_name]]
                 else:
-                    fakeymacs.emacs_exclusion_key = []
+                    fakeymacs.emacs_excluded_key = []
 
                 fakeymacs.keymap_selected2 = True
 
@@ -1870,7 +1881,12 @@ def configure(keymap):
         return vkeys
 
     def vkToStr(vkey):
-        return usjisFilter(keyhac_keymap.KeyCondition.vkToStr, vkey)
+        def _func(vkey):
+            if VK_A <= vkey and vkey <= VK_Z:
+                return keyhac_keymap.KeyCondition.vkToStr(vkey).lower()
+            else:
+                return keyhac_keymap.KeyCondition.vkToStr(vkey)
+        return usjisFilter(_func, vkey)
 
     def strToVk(name):
         return usjisFilter(keyhac_keymap.KeyCondition.strToVk, name)
@@ -2005,12 +2021,12 @@ def configure(keymap):
 
         if skip_check:
             # 設定をスキップするキーの処理を行う
-            for keymap_name in fc.skip_settings_key:
+            for keymap_name in fc.skip_mapping_key:
                 if (keymap_name in locals() and
                     window_keymap is locals()[keymap_name]):
-                    for skey in fc.skip_settings_key[keymap_name]:
+                    for skey in fc.skip_mapping_key[keymap_name]:
                         if fnmatch.fnmatch(keys, skey):
-                            print(f"skip settings key : [{keymap_name}] {keys}")
+                            print(f"skip key mapping : [{keymap_name}] {keys}")
                             return
                     break
 
@@ -2023,7 +2039,7 @@ def configure(keymap):
                     window_keymap is locals()["keymap_emacs"]):
 
                     def _command1():
-                        if key_list[0] in fakeymacs.emacs_exclusion_key:
+                        if key_list[0] in fakeymacs.emacs_excluded_key:
                             try:
                                 func = command_dict[(keymap_base, tuple(key_list))]
                             except:
@@ -2925,8 +2941,8 @@ def configure(keymap):
                         pass
 
                     elif class_name == "Emacs" or title != "":
-                        if (not re.fullmatch(fc.window_operation_exclusion_class, class_name) and
-                            not re.fullmatch(fc.window_operation_exclusion_process, process_name2)):
+                        if (not re.fullmatch(fc.window_operation_excluded_class, class_name) and
+                            not re.fullmatch(fc.window_operation_excluded_process, process_name2)):
 
                             # バックグラウンドで起動している UWPアプリが window_list に登録されるのを抑制する
                             # （http://mrxray.on.coocan.jp/Delphi/plSamples/320_AppList.htm）

@@ -187,10 +187,10 @@ fakeymacs.keymap_vscode = keymap_vscode
 def define_key_v(keys, command, skip_check=True):
     if skip_check:
         # 設定をスキップするキーの処理を行う
-        if "keymap_vscode" in fc.skip_settings_key:
-            for skey in fc.skip_settings_key["keymap_vscode"]:
+        if "keymap_vscode" in fc.skip_mapping_key:
+            for skey in fc.skip_mapping_key["keymap_vscode"]:
                 if fnmatch.fnmatch(keys, skey):
-                    print(f"skip settings key : [keymap_vscode] {keys}")
+                    print(f"skip key mapping : [keymap_vscode] {keys}")
                     return
 
     define_key(keymap_vscode, keys, command, False)
@@ -550,7 +550,7 @@ def keyboard_quit_v2():
         fakeymacs_vscode.post_processing = None
     else:
         if (fakeymacs.last_keys[0] is keymap_vscode and
-            fakeymacs.last_keys[1] in ["C-g", "C-A-G"]):
+            fakeymacs.last_keys[1] in ["C-g", "C-A-g"]):
             keyboard_quit(esc=True)
             fakeymacs_vscode.post_processing = None
         else:

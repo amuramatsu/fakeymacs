@@ -23,7 +23,7 @@ if regex == "": regex = "$." # 絶対にマッチしない正規表現
 mc_target1 = re.compile(regex)
 mc_target2 = [app for app in fc.mc_target if type(app) is list]
 
-def is_mc(window):
+def is_mc_target(window):
     global mc_status
 
     if window is not fakeymacs.last_window or fakeymacs.force_update:
@@ -37,7 +37,7 @@ def is_mc(window):
     return mc_status
 
 if fc.use_emacs_ime_mode:
-    keymap_mc = keymap.defineWindowKeymap(check_func=lambda wnd: (is_mc(wnd) and
+    keymap_mc = keymap.defineWindowKeymap(check_func=lambda wnd: (is_mc_target(wnd) and
                                                                   not is_emacs_ime_mode(wnd)))
 else:
     keymap_mc = keymap.defineWindowKeymap(check_func=is_mc_target)
@@ -67,16 +67,19 @@ for vkey in vkeys():
     if key == "Escape":
         continue
 
-    define_key_m(f"M-{key}",   self_insert_command4(f"A-{key}"))
-    define_key_m(f"M-S-{key}", self_insert_command4(f"A-S-{key}"))
+    define_key_m(f"M-{key}",   self_insert_command(f"A-{key}"))
+    define_key_m(f"M-S-{key}", self_insert_command(f"A-S-{key}"))
 
     for mod1, mod2 in itertools.product(["", "C-"], ["", "S-"]):
         mkey = mod1 + mod2 + key
         define_key_m(f"Ctl-x {mkey}", self_insert_command4("C-x", mkey))
 
 ## Esc キーの設定
-define_key_m(f"Esc Esc", self_insert_command4("Esc","Esc"))
-define_key_m(f"C-[ C-[", self_insert_command4("Esc","Esc"))
+if fc.use_esc_as_meta:
+    define_key_m("Esc Esc", self_insert_command("Esc"))
+
+if fc.use_ctrl_openbracket_as_meta:
+    define_key_m("C-[ C-[", self_insert_command("Esc"))
 
 ## 「カーソル移動」のキー設定
 define_key_m("M-<", beginning_of_buffer)
