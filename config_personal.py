@@ -200,7 +200,7 @@ for t in fc.ctrlm_target:
 #   利用することができます。ワイルドカード文字をエスケープしたい場合は、[] で括ってください。）
 # （ここで指定したキーに新たに別のキー設定をしたいときには、「-2」が付くセクション内で define_key2
 #   関数を利用して定義してください）
-fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab", "Space"], # ベース Keymap
+fc.skip_mapping_key     = {"keymap_base"      : ["W-g", "A-Tab", "Space"], # ベース Keymap
                            "keymap_global"    : [], # グローバル Keymap
                            "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
                            "keymap_vscode"    : [], # Emacs キーバインド VSCode 拡張用 Keymap
@@ -219,7 +219,7 @@ fc.skip_settings_key    = {"keymap_base"      : ["W-g", "A-Tab", "Space"], # ベ
 # （リストに指定するキーは、Keyhac で指定可能なマルチストロークではないキーとしてください。
 #   Fakeymacs の記法の "M-f" や "Ctl-x d" などの指定はできません。"A-v"、"C-v" などが指定可能です。）
 # （ここで指定しなくとも、左右のモディファイアキーを使い分けることで入力することは可能です）
-fc.emacs_exclusion_key  = {"chrome.exe"       : ["C-l", "C-t"],
+fc.emacs_excluded_key   = {"chrome.exe"       : ["C-l", "C-t"],
                            "msedge.exe"       : ["C-l", "C-t"],
                            "firefox.exe"      : ["C-l", "C-t"],
                            "Code.exe"         : ["C-S-b", "C-S-f", "C-S-p", "C-S-n", "C-S-a", "C-S-e"],
@@ -603,7 +603,15 @@ if 0:
 
 # Vim 用のキーの設定を行う
 if 0:
+    fc.vim_keep_in_insert_mode = False
+    fc.vim_insert_normal_mode_key = "C-o"
     exec(readConfigExtension(r"vim_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# elecxzy 用のキーの設定を行う
+if 0:
+    exec(readConfigExtension(r"elecxzy_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
