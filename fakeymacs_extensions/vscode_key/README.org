@@ -1,6 +1,6 @@
 #+STARTUP: showall indent
 
-* Fakeymacs extension - vscode_key -
+* Fakeymacs Extension - vscode_key -
 
 ** ■ VSCode 用のキーの設定を行う
 
@@ -90,6 +90,8 @@ Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.
 |---------------------------------------------+----------------------------|
 | Kiro                                        | C-k → C-A-k               |
 |---------------------------------------------+----------------------------|
+| Google Antigravity                          | C-k → C-A-k               |
+|---------------------------------------------+----------------------------|
 
 ***** ● AI のインラインアシスタント機能用キーの置き換え設定
 
@@ -103,6 +105,8 @@ Cursor の Preferences: Open Keyboard Shortcuts (JSON) の機能で keybindings.
 | Windsurf                                    | C-i → C-i、C-i → C-A-i、C-l → C-A-l               |
 |---------------------------------------------+------------------------------------------------------|
 | Kiro                                        | C-i → C-i、C-i → C-A-i、C-l → C-A-l               |
+|---------------------------------------------+------------------------------------------------------|
+| Google Antigravity                          | C-i → C-i、C-i → C-A-i、C-e → C-A-e、C-l → C-A-l |
 |---------------------------------------------+------------------------------------------------------|
 
 ※ C-i → C-i の設定は、Fakeymacs 本体側で C-i を Tab として使う設定（fc.use_ctrl_i_as_tab

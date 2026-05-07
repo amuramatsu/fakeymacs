@@ -1,8 +1,8 @@
 #+STARTUP: showall indent
 
-* Fakeymacs key bindings manual
+* Fakeymacs Key Binding Referance
 
-** キーバインド（Key bindings）
+** キーバインド（Key Bindings）
 
 Fakeymacs で利用できるキーバインドは以下のとおりです。
 
