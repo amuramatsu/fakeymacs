@@ -95,6 +95,7 @@ fc.emacs_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["*P
                                                                              "* - edit*",
                                                                              "* - micro*",
                                                                              "* - fresh*",
+                                                                             "* — Fresh*",
                                                                              "設定",
                                                                              "Settings"]],
                    ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
@@ -138,6 +139,7 @@ fc.not_emacs_target     = ["wsl.exe",                # WSL
                            "mc.exe",                 # Midnight Commander
                            "*vim.exe",               # Vim 系エディタ
                            "neovide.exe",            # Neovide
+                           "elecxzy.exe",            # elecxzy
                            [None, None, "さくらのクラウドシェル*"],
                            ]
 
@@ -166,6 +168,7 @@ fc.ime_target           = ["wsl.exe",                # WSL
                            "mc.exe",                 # Midnight Commander
                            "*vim.exe",               # Vim 系エディタ
                            "neovide.exe",            # Neovide
+                           "elecxzy.exe",            # elecxzy
                            [None, None, "さくらのクラウドシェル*"],
                            ]
 
@@ -690,7 +693,13 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
-# Vim 用のキーの設定を行う
+# Zed エディタ用のキーの設定を行う
+if 0:
+    exec(readConfigExtension(r"zed_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Vim 系エディタ用のキーの設定を行う
 if 0:
     fc.vim_keep_in_insert_mode = False
     fc.vim_insert_normal_mode_key = "C-o"
@@ -698,7 +707,7 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
-# elecxzy 用のキーの設定を行う
+# elecxzy エディタ用のキーの設定を行う
 if 0:
     exec(readConfigExtension(r"elecxzy_key\config.py"), dict(globals(), **locals()))
 

@@ -1,14 +1,14 @@
 ﻿# -*- mode: python; coding: utf-8-with-signature-dos -*-
 
 ####################################################################################################
-## Vim 用のキーの設定を行う
+## Vim 系エディタ用のキーの設定を行う
 ####################################################################################################
 
 try:
     # 設定されているか？
     fc.vim_target
 except:
-    # Vim 用のキーバインドを利用するアプリケーションソフトを指定する
+    # Vim 系エディタ用のキーバインドを利用するアプリケーションソフトを指定する
     # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
     #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
     #   リストの後ろの項目から省略可）を指定してください）
@@ -52,11 +52,7 @@ class FakeymacsVim:
 
 fakeymacs_vim = FakeymacsVim()
 
-regex = "|".join([fnmatch.translate(app) for app in fc.vim_target if type(app) is str])
-if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-vim_target1 = re.compile(regex)
-vim_target2 = [app for app in fc.vim_target if type(app) is list]
-
+vim_target = targetRegexify(fc.vim_target)
 vim_status = False
 vim_title = ""
 
@@ -66,16 +62,16 @@ def is_vim_target(window):
     if window is not fakeymacs.last_window or fakeymacs.force_update:
         if (fakeymacs.is_emacs_target == False and
             not getText(window).startswith("!") and
-            (vim_target1.match(getProcessName(window)) or
-             any(checkWindow(*app, window=window) for app in vim_target2))):
+            (vim_target[0].match(getProcessName(window)) or
+             any(checkWindow(*app, window=window) for app in vim_target[1]))):
             title = re.sub(r" [-(].*", "", getText(window))
             if vim_status:
                 result1 = title.replace(vim_title, "")
                 result2 = vim_title.replace(title, "")
                 if not (vim_title == title or " +" in [result1, result2]):
-                    vim_reset()
+                    resetVim()
             else:
-                vim_reset()
+                resetVim()
 
             vim_status = True
             vim_title = title
@@ -167,11 +163,11 @@ prefix_key_list_v = [[["g"],
                        [["g"], []]]],
                      ]
 
-def apply_all(xs, func):
+def applyAll(xs, func):
     result = []
     for x in xs:
         if isinstance(x, list):
-            result.append(apply_all(x, func))
+            result.append(applyAll(x, func))
         else:
             if x == None:
                 result.append(None)
@@ -179,15 +175,15 @@ def apply_all(xs, func):
                 result.append(func(x))
     return result
 
-prefix_key_list_n = apply_all(prefix_key_list_n, specialCharToKeyStr)
-prefix_key_list_v = apply_all(prefix_key_list_v, specialCharToKeyStr)
+prefix_key_list_n = applyAll(prefix_key_list_n, specialCharToKeyStr)
+prefix_key_list_v = applyAll(prefix_key_list_v, specialCharToKeyStr)
 
 ## 共通関数
-def vim_reset():
+def resetVim():
     reset_undo(reset_counter(execute_ex_command("noh", esc=True)))()
     fakeymacs.is_searching = None
 
-def check_prefix_key(*key_list):
+def checkPrefixKey(*key_list):
     global p_key_list
 
     for key in key_list:
@@ -292,14 +288,14 @@ def define_key_v2(keys, command, skip_check=True):
 def self_insert_command_v1(*key_list, usjis_conv=True):
     func = self_insert_command(*key_list, usjis_conv=usjis_conv)
     def _func():
-        check_prefix_key(*key_list)
+        checkPrefixKey(*key_list)
         func()
     return _func
 
 def self_insert_command_v2(*key_list, usjis_conv=True):
     func = self_insert_command2(*key_list, usjis_conv=usjis_conv)
     def _func():
-        check_prefix_key(*key_list)
+        checkPrefixKey(*key_list)
         func()
     return _func
 
@@ -310,12 +306,12 @@ def self_insert_command_v3(*key_list, usjis_conv=True):
         if getImeStatus():
             if is_normal_mode() or is_insert_normal_mode():
                 fakeymacs_vim.insert_mode = True
-                adjust_ime_status(self_insert_command_v1("i"))()
+                executeCommandWithImeOff(self_insert_command_v1("i"))()
 
             elif is_visual_mode():
                 fakeymacs_vim.visual_mode = False
                 fakeymacs_vim.insert_mode = True
-                adjust_ime_status(self_insert_command_v1("c"))()
+                executeCommandWithImeOff(self_insert_command_v1("c"))()
         func()
     return _func
 
@@ -325,17 +321,6 @@ def digit(number):
             digit_argument(number)
         else:
             reset_undo(reset_counter(repeat(self_insert_command_v3(str(number)))))()
-    return _func
-
-def adjust_ime_status(command):
-    def _func():
-        ime_status = getImeStatus()
-        if ime_status:
-            setImeStatus(0)
-        command()
-        if ime_status:
-            delay()
-            setImeStatus(1)
     return _func
 
 def execute_nm_command(*key_list, esc=False, vm_reset=True):
@@ -351,7 +336,7 @@ def execute_nm_command(*key_list, esc=False, vm_reset=True):
         if is_insert_mode():
             self_insert_command_v1(fc.vim_insert_normal_mode_key)()
 
-        adjust_ime_status(self_insert_command_v1(*key_list))()
+        executeCommandWithImeOff(self_insert_command_v1(*key_list))()
 
         if vm_reset:
             fakeymacs_vim.visual_mode = False
@@ -379,7 +364,7 @@ def execute_ex_command(ex_command, enter=True, esc=False):
             self_insert_command_v1(fc.vim_insert_normal_mode_key)()
 
         if enter:
-            adjust_ime_status(_command)()
+            executeCommandWithImeOff(_command)()
         else:
             setImeStatus(0)
             _command()
@@ -777,7 +762,7 @@ def newline(enter_im=False):
         if enter_im:
             if is_normal_mode():
                 fakeymacs_vim.insert_mode = True
-                adjust_ime_status(self_insert_command_v1("i"))()
+                executeCommandWithImeOff(self_insert_command_v1("i"))()
 
         self_insert_command_v1("Enter")()
 

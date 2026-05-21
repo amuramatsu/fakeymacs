@@ -6,7 +6,7 @@
 ##  Windows の操作を Emacs のキーバインドで行うための設定（Keyhac版）
 #########################################################################
 
-fakeymacs_version = "20260507_01"
+fakeymacs_version = "20260515_02"
 
 import time
 import os
@@ -106,6 +106,13 @@ def configure(keymap):
     def startupString():
         startup_string_formatter = "Fakeymacs version {}:\n  https://github.com/smzht/fakeymacs\n"
         return startup_string_formatter.format(fakeymacs_version)
+
+    def targetRegexify(target):
+        regex = "|".join([fnmatch.translate(app) for app in target if type(app) is str])
+        if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
+        target1 = re.compile(regex)
+        target2 = [app for app in target if type(app) is list]
+        return [target1, target2]
 
     # 個人設定ファイルのセクション [section-init] を読み込んで実行する
     exec(readConfigPersonal("[section-init]"), dict(globals(), **locals()))
@@ -222,6 +229,7 @@ def configure(keymap):
                                                                                  "* - edit*",
                                                                                  "* - micro*",
                                                                                  "* - fresh*",
+                                                                                 "* — Fresh*",
                                                                                  "設定",
                                                                                  "Settings"]],
                        ["powershell.exe", "ConsoleWindowClass", "*PowerShell*"],
@@ -659,9 +667,7 @@ def configure(keymap):
             ctypes.wintypes.DWORD
         )
 
-        regex = "|".join([fnmatch.translate(p) for p in fc.name_change_app_list])
-        if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-        name_change_app = re.compile(regex)
+        name_change_app = targetRegexify(fc.name_change_app_list)[0]
 
         def _callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
             if keymap.hook_enabled:
@@ -822,45 +828,15 @@ def configure(keymap):
     fakeymacs.shift_down = False
     fakeymacs.shift_down2 = False
 
-    regex = "|".join([fnmatch.translate(p) for p in fc.transparent_target])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    transparent_target = re.compile(regex)
-
-    regex = "|".join([fnmatch.translate(c) for c in fc.transparent_target_class])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    transparent_target_class = re.compile(regex)
-
-    regex = "|".join([fnmatch.translate(p) for p in fc.not_clipboard_target])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    not_clipboard_target = re.compile(regex)
-
-    regex = "|".join([fnmatch.translate(c) for c in fc.not_clipboard_target_class])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    not_clipboard_target_class = re.compile(regex)
-
-    regex = "|".join([fnmatch.translate(c) for c in fc.emacs_target_class])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    emacs_target_class = re.compile(regex)
-
-    regex = "|".join([fnmatch.translate(app) for app in fc.emacs_target if type(app) is str])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    emacs_target1 = re.compile(regex)
-    emacs_target2 = [app for app in fc.emacs_target if type(app) is list]
-
-    regex = "|".join([fnmatch.translate(app) for app in fc.not_emacs_target if type(app) is str])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    not_emacs_target1 = re.compile(regex)
-    not_emacs_target2 = [app for app in fc.not_emacs_target if type(app) is list]
-
-    regex = "|".join([fnmatch.translate(app) for app in fc.ime_target if type(app) is str])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    ime_target1 = re.compile(regex)
-    ime_target2 = [app for app in fc.ime_target if type(app) is list]
-
-    regex = "|".join([fnmatch.translate(app) for app in fc.game_app_list if type(app) is str])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    game_app_list1 = re.compile(regex)
-    game_app_list2 = [app for app in fc.game_app_list if type(app) is list]
+    transparent_target         = targetRegexify(fc.transparent_target)[0]
+    transparent_target_class   = targetRegexify(fc.transparent_target_class)[0]
+    not_clipboard_target       = targetRegexify(fc.not_clipboard_target)[0]
+    not_clipboard_target_class = targetRegexify(fc.not_clipboard_target_class)[0]
+    emacs_target_class         = targetRegexify(fc.emacs_target_class)[0]
+    emacs_target               = targetRegexify(fc.emacs_target)
+    not_emacs_target           = targetRegexify(fc.not_emacs_target)
+    ime_target                 = targetRegexify(fc.ime_target)
+    game_app_list              = targetRegexify(fc.game_app_list)
 
     def is_base_target(window):
         if window is not fakeymacs.last_window:
@@ -902,8 +878,8 @@ def configure(keymap):
 
             elif (transparent_target.match(process_name) or
                   transparent_target_class.match(class_name) or
-                  game_app_list1.match(process_name) or
-                  any(checkWindow(*app, window=window) for app in game_app_list2)):
+                  game_app_list[0].match(process_name) or
+                  any(checkWindow(*app, window=window) for app in game_app_list[1])):
                 fakeymacs.is_base_target = False
                 fakeymacs.keymap_selected1 = True
             else:
@@ -935,12 +911,12 @@ def configure(keymap):
                 elif process_name in fakeymacs.not_emacs_keybind:
                     fakeymacs.is_emacs_target = False
 
-                elif (emacs_target1.match(process_name) or
-                      any(checkWindow(*app, window=window) for app in emacs_target2)):
+                elif (emacs_target[0].match(process_name) or
+                      any(checkWindow(*app, window=window) for app in emacs_target[1])):
                     fakeymacs.is_emacs_target = True
 
-                elif (not_emacs_target1.match(process_name) or
-                      any(checkWindow(*app, window=window) for app in not_emacs_target2)):
+                elif (not_emacs_target[0].match(process_name) or
+                      any(checkWindow(*app, window=window) for app in not_emacs_target[1])):
                     fakeymacs.is_emacs_target = False
                 else:
                     fakeymacs.is_emacs_target = True
@@ -971,17 +947,17 @@ def configure(keymap):
                     setImeStatus(0)
                     fakeymacs.is_ime_target = False
 
-                elif (ime_target1.match(process_name) or
-                    any(checkWindow(*app, window=window) for app in ime_target2)):
+                elif (ime_target[0].match(process_name) or
+                    any(checkWindow(*app, window=window) for app in ime_target[1])):
                     fakeymacs.is_ime_target = True
 
                 elif process_name in fakeymacs.not_emacs_keybind:
-                    if (emacs_target1.match(process_name) or
-                        any(checkWindow(*app, window=window) for app in emacs_target2)):
+                    if (emacs_target[0].match(process_name) or
+                        any(checkWindow(*app, window=window) for app in emacs_target[1])):
                         fakeymacs.is_ime_target = True
 
-                    elif (not_emacs_target1.match(process_name) or
-                        any(checkWindow(*app, window=window) for app in not_emacs_target2)):
+                    elif (not_emacs_target[0].match(process_name) or
+                        any(checkWindow(*app, window=window) for app in not_emacs_target[1])):
                         fakeymacs.is_ime_target = False
                     else:
                         fakeymacs.is_ime_target = True
@@ -1075,14 +1051,14 @@ def configure(keymap):
         process_name = getProcessName()
         class_name   = getClassName()
 
-        if not ((game_app_list1.match(process_name) or
-                 any(checkWindow(*app) for app in game_app_list2)) or
+        if not ((game_app_list[0].match(process_name) or
+                 any(checkWindow(*app) for app in game_app_list[1])) or
                 emacs_target_class.match(class_name)):
 
-            if ((emacs_target1.match(process_name) or
-                 any(checkWindow(*app) for app in emacs_target2)) or
-                not (not_emacs_target1.match(process_name) or
-                     any(checkWindow(*app) for app in not_emacs_target2))):
+            if ((emacs_target[0].match(process_name) or
+                 any(checkWindow(*app) for app in emacs_target[1])) or
+                not (not_emacs_target[0].match(process_name) or
+                     any(checkWindow(*app) for app in not_emacs_target[1]))):
 
                 if process_name in fakeymacs.not_emacs_keybind:
                     fakeymacs.not_emacs_keybind.remove(process_name)
@@ -1091,8 +1067,8 @@ def configure(keymap):
                     fakeymacs.not_emacs_keybind.append(process_name)
                     keymap.popBalloon("keybind", "[Disable Emacs keybind]", 1000)
 
-            elif (ime_target1.match(process_name) or
-                  any(checkWindow(*app) for app in ime_target2)):
+            elif (ime_target[0].match(process_name) or
+                  any(checkWindow(*app) for app in ime_target[1])):
 
                 if process_name in fakeymacs.not_ime_keybind:
                     fakeymacs.not_ime_keybind.remove(process_name)
@@ -1321,7 +1297,8 @@ def configure(keymap):
         setMark()
 
         if repeat == 1 and not kill_whole_line:
-            if checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*"):
+            if checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["* - fresh*",
+                                                                                    "* — Fresh*"]):
                 self_insert_command("C-k")()
             else:
                 mark(move_end_of_line, True)()
@@ -1403,6 +1380,10 @@ def configure(keymap):
                 self_insert_command("C-z")()
             else:
                 self_insert_command("C-y")()
+
+    def redo():
+        if not checkWindow("notepad.exe", "Edit"): # Windows 10版 Notepad
+            self_insert_command("C-y")()
 
     def set_mark_command():
         if fakeymacs.is_marked or fakeymacs.forward_direction is not None:
@@ -1566,7 +1547,8 @@ def configure(keymap):
             setImeStatus(0)
             keymap.InputTextCommand("replace ")()
 
-        elif checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*"):
+        elif checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["* - fresh*",
+                                                                                  "* — Fresh*"]):
             self_insert_command("C-A-r")()
 
         elif checkWindow("TeXworks.exe", "Qt661QWindowIcon"):
@@ -1669,26 +1651,22 @@ def configure(keymap):
     def indent_for_tab_command():
         self_insert_command("Tab")()
 
-    regex = "|".join([fnmatch.translate(app)
-                      for app in fc.keyboard_quit_no_esc_app_list if type(app) is str])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    keyboard_quit_no_esc_app_list1 = re.compile(regex)
-    keyboard_quit_no_esc_app_list2 = [app for app in fc.keyboard_quit_no_esc_app_list
-                                      if type(app) is list]
+    keyboard_quit_no_esc_app_list = targetRegexify(fc.keyboard_quit_no_esc_app_list)
 
     def keyboard_quit(esc=True):
         resetRegion()
 
         if esc:
             # Fresh Editor で redo が動作するようにするための対策
-            if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*") and
+            if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["* - fresh*",
+                                                                                     "* — Fresh*"]) and
                 fakeymacs.last_keys[0] is keymap_emacs and
-                fakeymacs.last_keys[1] in ["C-/", "Ctl-x u", "C-z", "C-g"]):
+                fakeymacs.last_keys[1] in ["C-/", "Ctl-x u", "C-z", "C-_", "C-g"]):
                 pass
             else:
                 # Esc を発行して問題ないアプリケーションソフトには Esc を発行する
-                if not (keyboard_quit_no_esc_app_list1.match(getProcessName()) or
-                        any(checkWindow(*app) for app in keyboard_quit_no_esc_app_list2)):
+                if not (keyboard_quit_no_esc_app_list[0].match(getProcessName()) or
+                        any(checkWindow(*app) for app in keyboard_quit_no_esc_app_list[1])):
                     escape()
 
         keymap.command_RecordStop()
@@ -1704,7 +1682,7 @@ def configure(keymap):
 
     def kill_emacs():
         if (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS",
-                        ["* - edit*", "* - micro*", "* - fresh*"]) or
+                        ["* - edit*", "* - micro*", "* - fresh*", "* — Fresh*"]) or
             checkWindow(None, "ConsoleWindowClass", ["* - edit*", "* - micro*"])):
             setImeStatus(0)
             self_insert_command("C-q")()
@@ -1809,7 +1787,8 @@ def configure(keymap):
                 else:
                     self_insert_command("Left", "Right")()
 
-            elif checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*"):
+            elif checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["* - fresh*",
+                                                                                      "* — Fresh*"]):
                 self_insert_command("Esc")()
 
             elif (checkWindow("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "*PowerShell*") or
@@ -2195,6 +2174,17 @@ def configure(keymap):
                         pyauto.Input.send([pyauto.Key(strToVk("(255)"))])
         return _func
 
+    def executeCommandWithImeOff(command, ime_delay=0.02):
+        def _func():
+            ime_status = getImeStatus()
+            if ime_status:
+                setImeStatus(0)
+            command()
+            if ime_status:
+                delay(ime_delay)
+                setImeStatus(1)
+        return _func
+
     self_insert_command_cache = {}
 
     def self_insert_command(*key_list, usjis_conv=True):
@@ -2231,15 +2221,7 @@ def configure(keymap):
 
     def self_insert_command4(*key_list, usjis_conv=True):
         func = self_insert_command(*key_list, usjis_conv=usjis_conv)
-        def _func():
-            ime_status = getImeStatus()
-            if ime_status:
-                setImeStatus(0)
-            func()
-            if ime_status:
-                delay()
-                setImeStatus(1)
-        return _func
+        return executeCommandWithImeOff(func)
 
     def digit(number):
         def _func():
@@ -2353,13 +2335,7 @@ def configure(keymap):
         return _func
 
     def princ(str):
-        imeStatus = getImeStatus()
-        if imeStatus:
-            setImeStatus(0)
-        keymap.InputTextCommand(str)()
-        if imeStatus:
-            delay()
-            setImeStatus(1)
+        executeCommandWithImeOff(keymap.InputTextCommand(str))()
 
     def reloadConfig(mode):
         if mode == 1:
@@ -2578,6 +2554,7 @@ def configure(keymap):
     define_key(keymap_emacs, "C-v",        reset("sucm", repeat(yank))) # scroll_key の設定で上書きされない場合
     define_key(keymap_emacs, "C-z",        reset("scm",  undo))
     define_key(keymap_emacs, "C-_",        reset("scm",  undo))
+    define_key(keymap_emacs, "M-_",        reset("scm",  redo))
     define_key(keymap_emacs, "C-@",        reset("suc",  set_mark_command))
     define_key(keymap_emacs, "C-Space",    reset("suc",  set_mark_command))
     define_key(keymap_emacs, "Ctl-x h",    reset("suc",  mark_whole_buffer))

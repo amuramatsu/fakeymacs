@@ -4,7 +4,9 @@
 
 ** ■ VSCode 用のキーの設定を行う
 
-VSCode 用のキーの設定を行う拡張機能です。AI Code Editor の Cursor や Windsurf、Kiro にも対応しています。
+VSCode 用のキーの設定を行う拡張機能です。
+
+AI Code Editor の Cursor、Windsurf、Kiro、Google Antigravity にも対応しています。
 また、ブラウザで動作する VS Code Web にも対応しており、vscode.dev、github.dev、Firebase Studio
 などでも利用可能です。
 
@@ -289,26 +291,25 @@ keyboard_quit（C-A-g）を利用してください。（fc.esc_mode_in_keyboard
 
 キーバインドの設定は次の拡張機能の中で行っています。
 
-- https://github.com/smzht/fakeymacs/tree/master/fakeymacs_extensions/vscode_extensions
+- https://github.com/smzht/fakeymacs/tree/master/fakeymacs_extensions/vscode_key/vscode_extensions
 
 ****  ●「ターミナル操作」のキー設定（パネル内ターミナル）
 
-|-------------+-----------------+------------------------------------------+--------------------|
-| Keybind     | Function        | VSCode Command                           | Description        |
-|-------------+-----------------+------------------------------------------+--------------------|
-| C-~ (C-S-`) | create_terminal | Terminal: Create New Terminal            | US Keyboard の場合 |
-| C-`         | toggle_terminal | View: Toggle Terminal                    | US Keyboard の場合 |
-|-------------+-----------------+------------------------------------------+--------------------|
+|-------------+-----------------+-------------------------------+--------------------|
+| Keybind     | Function        | VSCode Command                | Description        |
+|-------------+-----------------+-------------------------------+--------------------|
+| C-~ (C-S-`) | create_terminal | Terminal: Create New Terminal | US Keyboard の場合 |
+| C-`         | toggle_terminal | View: Toggle Terminal         | US Keyboard の場合 |
+|-------------+-----------------+-------------------------------+--------------------|
 
-
-|-----------------+-----------------+------------------------------------------+---------------------|
-| Keybind         | Function        | VSCode Command                           | Description         |
-|-----------------+-----------------+------------------------------------------+---------------------|
-| C-` (C-S-@)     | create_terminal | Terminal: Create New Terminal            | JIS Keyboard の場合 |
-| C-@             | toggle_terminal | View: Toggle Terminal                    | JIS Keyboard の場合 |
-| C-S-<半角/全角> | create_terminal | Terminal: Create New Terminal            | JIS Keyboard の場合 |
-| C-<半角/全角>   | toggle_terminal | View: Toggle Terminal                    | JIS Keyboard の場合 |
-|-----------------+-----------------+------------------------------------------+---------------------|
+|-----------------+-----------------+-------------------------------+---------------------|
+| Keybind         | Function        | VSCode Command                | Description         |
+|-----------------+-----------------+-------------------------------+---------------------|
+| C-` (C-S-@)     | create_terminal | Terminal: Create New Terminal | JIS Keyboard の場合 |
+| C-@             | toggle_terminal | View: Toggle Terminal         | JIS Keyboard の場合 |
+| C-S-<半角/全角> | create_terminal | Terminal: Create New Terminal | JIS Keyboard の場合 |
+| C-<半角/全角>   | toggle_terminal | View: Toggle Terminal         | JIS Keyboard の場合 |
+|-----------------+-----------------+-------------------------------+---------------------|
 
 ※ C-@ は、fc.use_ctrl_atmark_for_mark 変数が False の場合に機能します。
 

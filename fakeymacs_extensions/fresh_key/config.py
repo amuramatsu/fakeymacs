@@ -20,7 +20,8 @@ except:
     # （アプリケーションソフトは、プロセス名称のみ（ワイルドカード指定可）、もしくは、プロセス名称、
     #   クラス名称、ウィンドウタイトル（リストによる複数指定可）のリスト（ワイルドカード指定可、
     #   リストの後ろの項目から省略可）を指定してください）
-    fc.fresh_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", "* - fresh*"],
+    fc.fresh_target = [["WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ["* - fresh*",
+                                                                                 "* — Fresh*"]],
                        ]
 try:
     # 設定されているか？
@@ -40,18 +41,15 @@ except:
 
 # --------------------------------------------------------------------------------------------------
 
-regex = "|".join([fnmatch.translate(app) for app in fc.fresh_target if type(app) is str])
-if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-fresh_target1 = re.compile(regex)
-fresh_target2 = [app for app in fc.fresh_target if type(app) is list]
+fresh_target = targetRegexify(fc.fresh_target)
 
 def is_fresh_target(window):
     global fresh_status
 
     if window is not fakeymacs.last_window or fakeymacs.force_update:
         if (fakeymacs.is_emacs_target == True and
-            (fresh_target1.match(getProcessName(window)) or
-             any(checkWindow(*app, window=window) for app in fresh_target2))):
+            (fresh_target[0].match(getProcessName(window)) or
+             any(checkWindow(*app, window=window) for app in fresh_target[1]))):
             fresh_status = True
         else:
             fresh_status = False

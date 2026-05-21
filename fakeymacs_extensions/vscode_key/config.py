@@ -165,25 +165,19 @@ fakeymacs_vscode.post_processing = None
 
 vscode_target = []
 for n in range(10):
-    try:
+    if hasattr(fc, f"vscode_setting{n + 1}"):
         vscode_setting = getattr(fc, f"vscode_setting{n + 1}")
-        if vscode_setting:
-            vscode_target += vscode_setting["target"]
-    except:
-        pass
+        vscode_target += vscode_setting["target"]
 
-regex = "|".join([fnmatch.translate(app) for app in vscode_target if type(app) is str])
-if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-vscode_target1 = re.compile(regex)
-vscode_target2 = [app for app in vscode_target if type(app) is list]
+vscode_target = targetRegexify(vscode_target)
 
 def is_vscode_target(window):
     global vscode_target_status
 
     if window is not fakeymacs.last_window or fakeymacs.force_update:
         if (fakeymacs.is_emacs_target == True and
-            (vscode_target1.match(getProcessName(window)) or
-             any(checkWindow(*app, window=window) for app in vscode_target2))):
+            (vscode_target[0].match(getProcessName(window)) or
+             any(checkWindow(*app, window=window) for app in vscode_target[1]))):
             vscode_target_status = True
         else:
             vscode_target_status = False
@@ -718,11 +712,7 @@ if use_usjis_keyboard_conversion:
 # エディタターゲット毎のキーバインドの追加設定
 
 def set_vscode_target(vscode_setting):
-    regex = "|".join([fnmatch.translate(app) for app in vscode_setting["target"] if type(app) is str])
-    if regex == "": regex = "(?!)" # 絶対にマッチしない正規表現
-    target1 = re.compile(regex)
-    target2 = [app for app in vscode_setting["target"] if type(app) is list]
-
+    target = targetRegexify(vscode_setting["target"])
     target_status = False
 
     def is_target(window):
@@ -730,8 +720,8 @@ def set_vscode_target(vscode_setting):
 
         if window is not fakeymacs.last_window or fakeymacs.force_update:
             if (vscode_target_status == True and
-                (target1.match(getProcessName(window)) or
-                 any(checkWindow(*app, window=window) for app in target2))):
+                (target[0].match(getProcessName(window)) or
+                 any(checkWindow(*app, window=window) for app in target[1]))):
                 target_status = True
             else:
                 target_status = False
