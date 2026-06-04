@@ -57,7 +57,7 @@ Remote 接続機能を使って WSL を使う場合には、.bashrc に次の設
 
 #+BEGIN_EXAMPLE
 if [[ $- =~ i ]]; then
-   stty -ixon
+    stty -ixon
 fi
 #+END_EXAMPLE
 
