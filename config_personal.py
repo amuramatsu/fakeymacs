@@ -207,6 +207,7 @@ fc.skip_mapping_key     = {"keymap_base"      : ["W-g", "A-Tab", "Space"], # ベ
                            "keymap_global"    : [], # グローバル Keymap
                            "keymap_emacs"     : [], # Emacs キーバインド対象アプリ用 Keymap
                            "keymap_vscode"    : [], # Emacs キーバインド VSCode 拡張用 Keymap
+                           "keymap_zed"       : [], # Emacs キーバインド Zed 拡張用 Keymap
                            "keymap_vim"       : [], # Emacs キーバインド Vim 用 Keymap
                            "keymap_ime"       : [], # IME 切り替え専用アプリ用 Keymap
                            "keymap_ei"        : [
@@ -579,8 +580,16 @@ if 0:
 
 # VSCode 用のキーの設定を行う
 if 0:
-    fc.esc_mode_in_keyboard_quit = 1
+    fc.vscode_esc_mode_in_keyboard_quit = 1
     exec(readConfigExtension(r"vscode_key\config.py"), dict(globals(), **locals()))
+
+# --------------------------------------------------------------------------------------------------
+
+# Zed エディタ用のキーの設定を行う
+if 0:
+    fc.zed_esc_mode_in_keyboard_quit = 1
+    fc.zed_use_direct_input_in_terminal = False
+    exec(readConfigExtension(r"zed_key\config.py"), dict(globals(), **locals()))
 
 # --------------------------------------------------------------------------------------------------
 
@@ -604,13 +613,7 @@ if 0:
 
 # --------------------------------------------------------------------------------------------------
 
-# Zed エディタ用のキーの設定を行う
-if 0:
-    exec(readConfigExtension(r"zed_key\config.py"), dict(globals(), **locals()))
-
-# --------------------------------------------------------------------------------------------------
-
-# Vim 用のキーの設定を行う
+# Vim 系エディタ用のキーの設定を行う
 if 0:
     fc.vim_keep_in_insert_mode = False
     fc.vim_insert_normal_mode_key = "C-o"
